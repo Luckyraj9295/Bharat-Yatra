@@ -1,0 +1,499 @@
+<!-- profile.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/png" href="/images/mountain-sun-solid.png" />
+  <title>User Profile | Bharat Yatra</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js" defer></script>
+</head>
+<body class="bg-orange-50 text-gray-800">
+  
+
+  <div id="toastContainer"></div>
+
+  <div class="max-w-4xl mx-auto mt-12 p-6 rounded-[2rem] shadow-2xl transition-transform duration-300 " style="background: linear-gradient(135deg, rgba(255, 186, 115, 0.25) 0%, rgba(255,255,255,0.35) 100%); backdrop-filter: blur(12px) saturate(160%); -webkit-backdrop-filter: blur(12px) saturate(160%); border: 1.5px solid rgba(255,255,255,0.25);">
+    <div class="mb-4">
+      <a href="index.html" class="inline-block mb-6 text-orange-600 hover:text-orange-800 font-semibold transition"><svg xmlns="http://www.w3.org/2000/svg" class="inline w-5 h-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>Back to Home</a>
+    </div>
+    <div class="flex justify-between items-center mb-6">
+      <h2 class="text-3xl font-bold">My Profile</h2>
+      <button id="logoutBtn" class="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white font-semibold px-4 py-2 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-md">
+        <i class="fas fa-sign-out-alt"></i> Logout
+      </button>
+    </div>
+
+    <div class="flex items-center space-x-6 mb-8">
+  <div class="relative w-24 h-24">
+    <img id="profilePreview" src="https://ui-avatars.com/api/?name=User&background=F59E42&color=fff&rounded=true" alt="Profile Photo" class="rounded-full w-full h-full object-cover border-4 border-orange-300" />
+    <input type="file" id="profilePhoto" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer" />
+  </div>
+  <div>
+    <p class="text-lg font-semibold">Click to change profile photo</p>
+    <p class="text-sm text-gray-500">Max size: 2MB</p>
+    <p id="profilePhotoNote" class="text-sm text-yellow-600 italic hidden">Note: To update your photo, first remove the current one. New photo will only be visible if uploaded after removal.</p>
+    <button id="removePhotoBtn" class="mt-2 text-sm text-red-500 hover:underline hidden">Remove Profile Photo</button>
+  </div>
+</div>
+
+    <form id="profileForm" class="space-y-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label class="block font-medium mb-1">Full Name</label>
+          <input type="text" id="editName" class="w-full border px-4 py-2 rounded-lg focus:ring-2 focus:ring-orange-400" required>
+        </div>
+        <div>
+          <label class="block font-medium mb-1">Email Address</label>
+          <input type="email" id="editEmail" class="w-full border px-4 py-2 rounded-lg focus:ring-2 focus:ring-orange-400" required>
+        </div>
+        <div>
+          <label class="block font-medium mb-1">Phone Number</label>
+          <input type="tel" id="editPhone" class="w-full border px-4 py-2 rounded-lg focus:ring-2 focus:ring-orange-400" required>
+        </div>
+        <div>
+          <label class="block font-medium mb-1">State</label>
+          <input type="text" id="editState" class="w-full border px-4 py-2 rounded-lg focus:ring-2 focus:ring-orange-400">
+        </div>
+        <div>
+          <label class="block font-medium mb-1">City</label>
+          <input type="text" id="editCity" class="w-full border px-4 py-2 rounded-lg focus:ring-2 focus:ring-orange-400">
+        </div>
+        <div>
+          <label class="block font-medium mb-1">PIN Code</label>
+          <input type="text" id="editPin" class="w-full border px-4 py-2 rounded-lg focus:ring-2 focus:ring-orange-400">
+        </div>
+      </div>
+
+      <hr class="my-6">
+
+      
+
+      <div class="flex justify-between items-center mt-6">
+        <button type="button" onclick="openChangePasswordModal()" class="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-semibold px-4 py-2 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-md">
+          <i class="fas fa-key"></i> Change Password
+        </button>
+        <button id="saveBtn" type="submit" class="bg-green-500 hover:bg-green-600 text-white font-bold px-6 py-3 rounded-lg transition-all duration-300">
+  Save Changes
+</button>
+
+      </div>
+    </form>
+  </div>
+
+ <script>
+window.API_BASE = window.API_BASE || 'http://localhost:5000/api';
+window.UPLOADS_BASE = window.UPLOADS_BASE || 'http://localhost:5000';
+const token = localStorage.getItem('token');
+
+function showToast(message) {
+  const container = document.getElementById('toastContainer');
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.textContent = message;
+  container.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
+}
+
+window.addEventListener('DOMContentLoaded', async () => {
+  // Load user info from backend
+  try {
+    const res = await fetch(`${window.API_BASE}/auth/profile`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!res.ok) throw new Error('Failed to load profile');
+    const user = await res.json();
+
+    document.getElementById('editName').value = user.name || '';
+    document.getElementById('editEmail').value = user.email || '';
+    document.getElementById('editPhone').value = user.phone || '';
+    document.getElementById('editState').value = user.state || '';
+    document.getElementById('editCity').value = user.city || '';
+    document.getElementById('editPin').value = user.pin || '';
+
+    const avatarUrl = user.profileImage
+      ? `${window.UPLOADS_BASE}${user.profileImage.replace(/\\/g, '/')}`
+      : `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}&background=F59E42&color=fff&rounded=true`;
+
+    document.getElementById('profilePreview').src = avatarUrl;
+    if (user.profileImage) {
+  document.getElementById('removePhotoBtn').classList.remove('hidden');
+  document.getElementById('profilePhotoNote')?.classList.remove('hidden');
+}
+
+    localStorage.setItem('userInfo', JSON.stringify(user));
+  } catch (err) {
+    showToast('❌ Error loading profile: ' + err.message);
+  }
+
+  // Logout modal events
+  const logoutBtn = document.getElementById('logoutBtn');
+  const logoutModal = document.getElementById('logoutModal');
+  const cancelLogout = document.getElementById('cancelLogout');
+  const confirmLogout = document.getElementById('confirmLogout');
+
+  logoutBtn?.addEventListener('click', () => {
+    document.body.classList.add('overflow-hidden');
+    logoutModal.classList.remove('hidden');
+    document.getElementById('logoutDialog').classList.remove('scale-95');
+    document.getElementById('logoutDialog').classList.add('scale-100');
+  });
+
+  cancelLogout?.addEventListener('click', () => {
+    document.body.classList.remove('overflow-hidden');
+    logoutModal.classList.add('hidden');
+    document.getElementById('logoutDialog').classList.add('scale-95');
+    document.getElementById('logoutDialog').classList.remove('scale-100');
+  });
+
+  confirmLogout?.addEventListener('click', () => {
+    localStorage.removeItem('userInfo');
+    localStorage.removeItem('token');
+    showToast('Logged out successfully!');
+    logoutModal.classList.add('hidden');
+    setTimeout(() => {
+      window.location.href = '/';
+    }, 1500);
+  });
+
+  // ✅ Remove Photo Confirmation Modal Logic
+  const removePhotoBtn = document.getElementById('removePhotoBtn');
+  const removePhotoModal = document.getElementById('removePhotoModal');
+  const cancelRemovePhoto = document.getElementById('cancelRemovePhoto');
+  const confirmRemovePhoto = document.getElementById('confirmRemovePhoto');
+
+  removePhotoBtn?.addEventListener('click', () => {
+    document.body.classList.add('overflow-hidden');
+    removePhotoModal.classList.remove('hidden');
+    document.getElementById('removePhotoDialog').classList.remove('scale-95');
+    document.getElementById('removePhotoDialog').classList.add('scale-100');
+  });
+
+  cancelRemovePhoto?.addEventListener('click', () => {
+    document.body.classList.remove('overflow-hidden');
+    removePhotoModal.classList.add('hidden');
+    document.getElementById('removePhotoDialog').classList.add('scale-95');
+    document.getElementById('removePhotoDialog').classList.remove('scale-100');
+  });
+
+  confirmRemovePhoto?.addEventListener('click', async () => {
+    try {
+      const defaultAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(document.getElementById('editName').value || 'User')}&background=F59E42&color=fff&rounded=true`;
+
+      const res = await fetch(`${window.API_BASE}/auth/profile`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ profileImage: '' })
+      });
+
+      if (!res.ok) throw new Error('Failed to remove photo');
+
+      const updatedUser = await res.json();
+      updatedUser.profileImage = '';
+      document.getElementById('profilePreview').src = defaultAvatar;
+      document.getElementById('removePhotoBtn').classList.add('hidden');
+      localStorage.setItem('userInfo', JSON.stringify(updatedUser));
+
+      showToast('✅ Profile photo removed.');
+      removePhotoModal.classList.add('hidden');
+      document.body.classList.remove('overflow-hidden');
+    } catch (err) {
+      showToast('❌ Failed to remove photo: ' + err.message);
+    }
+  });
+});
+
+// Upload profile photo
+const profilePhotoInput = document.getElementById('profilePhoto');
+profilePhotoInput?.addEventListener('change', async function () {
+  const file = this.files[0];
+  if (!file || file.size > 2 * 1024 * 1024) {
+    showToast('❌ File too large or invalid. Please select an image < 2MB.');
+    return;
+  }
+
+  const progressToast = document.createElement('div');
+  progressToast.className = 'toast';
+  progressToast.innerHTML = `<i class='fas fa-spinner fa-spin'></i> Uploading photo...`;
+  document.getElementById('toastContainer').appendChild(progressToast);
+
+  const formData = new FormData();
+  formData.append('image', file);
+
+  try {
+    const res = await fetch(`${window.API_BASE}/auth/profile-image`, {
+      method: 'PUT',
+      headers: { 'Authorization': `Bearer ${token}` },
+      body: formData
+    });
+
+    const data = await res.json();
+    const imagePath = data.imageUrl || data.profileImage;
+    const newAvatar = imagePath ? `${window.UPLOADS_BASE}${imagePath.replace(/\\/g, '/')}` : '';
+
+    if (newAvatar) {
+      document.getElementById('profilePreview').src = newAvatar;
+      const user = JSON.parse(localStorage.getItem('userInfo') || '{}');
+user.profileImage = imagePath;
+user._avatarUpdated = Date.now(); // ✅ Add timestamp
+localStorage.setItem('userInfo', JSON.stringify(user));
+
+      
+      document.getElementById('removePhotoBtn').classList.remove('hidden');
+      progressToast.remove();
+      showToast('✅ Profile photo uploaded successfully!');
+    } else {
+      throw new Error('Upload completed but no image returned');
+    }
+  } catch (err) {
+    progressToast.remove();
+    showToast('❌ Failed to upload image: ' + err.message);
+  }
+});
+
+// Save profile
+const form = document.getElementById('profileForm');
+form?.addEventListener('submit', async function (e) {
+  e.preventDefault();
+
+  const profileImageSrc = document.getElementById('profilePreview').src;
+  const profileImagePath = profileImageSrc.startsWith(window.UPLOADS_BASE)
+    ? profileImageSrc.replace(window.UPLOADS_BASE, '')
+    : '';
+
+  const body = {
+    name: document.getElementById('editName').value.trim(),
+    email: document.getElementById('editEmail').value.trim(),
+    phone: document.getElementById('editPhone').value.trim(),
+    state: document.getElementById('editState').value.trim(),
+    city: document.getElementById('editCity').value.trim(),
+    pin: document.getElementById('editPin').value.trim(),
+    profileImage: profileImagePath
+  };
+
+  try {
+    const res = await fetch(`${window.API_BASE}/auth/profile`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(body)
+    });
+
+    if (!res.ok) throw new Error('Update failed');
+    const updatedUser = await res.json();
+    localStorage.setItem('userInfo', JSON.stringify(updatedUser));
+
+    showToast('✅ Profile updated successfully!');
+    const saveBtn = document.getElementById('saveBtn');
+    saveBtn.innerHTML = '<i class="fas fa-check-circle mr-2"></i>Saved!';
+    saveBtn.classList.add('animate-pulse');
+    setTimeout(() => {
+      saveBtn.innerHTML = 'Save Changes';
+      saveBtn.classList.remove('animate-pulse');
+    }, 2000);
+  } catch (err) {
+    showToast('❌ Failed to update profile: ' + err.message);
+  }
+});
+</script>
+
+
+  <!-- Logout Confirmation Modal -->
+  <div id="logoutModal" class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 hidden transition-opacity duration-300">
+    <div class="bg-white rounded-lg shadow-lg p-6 w-80 transform scale-95 transition-transform duration-300" id="logoutDialog">
+      <h3 class="text-lg font-semibold mb-4">Are you sure you want to logout?</h3>
+      <div class="flex justify-end space-x-4">
+        <button id="cancelLogout" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-md">No</button>
+        <button id="confirmLogout" class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-md">Yes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Change Password Modal -->
+  <div id="changePassModal" class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 hidden transition-opacity duration-300">
+    <div id="changePassDialog" class="bg-white rounded-lg shadow-lg p-6 w-96 transform scale-95 transition-transform duration-300">
+      <h3 class="text-lg font-semibold mb-4">Change Password</h3>
+      <form id="changePasswordForm" class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium mb-1">Old Password</label>
+          <div class="relative">
+  <input type="password" id="oldPassword" class="w-full border px-4 py-2 rounded-lg focus:ring-2 focus:ring-orange-400 pr-10" required>
+  <span class="absolute inset-y-0 right-3 flex items-center cursor-pointer text-gray-400" onclick="toggleVisibility('oldPassword', this)">
+    <i class="fas fa-eye"></i>
+  </span>
+</div>
+
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">New Password</label>
+          <div class="relative">
+  <input type="password" id="newPasswordModal" class="w-full border px-4 py-2 rounded-lg focus:ring-2 focus:ring-orange-400 pr-10" oninput="checkPasswordStrength(this.value)" required>
+  <span class="absolute inset-y-0 right-3 flex items-center cursor-pointer text-gray-400" onclick="toggleVisibility('newPasswordModal', this)">
+    <i class="fas fa-eye"></i>
+  </span>
+</div>
+<!-- Keep your strength bar and label here -->
+<div class="h-2 mt-2 rounded bg-gray-200 overflow-hidden">
+  <div id="passwordStrengthBar" class="h-full transition-all duration-300"></div>
+</div>
+<p id="passwordStrengthText" class="text-sm mt-1 font-medium text-gray-600"></p>
+
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">Confirm Password</label>
+          <div class="relative">
+  <input type="password" id="confirmPasswordModal" class="w-full border px-4 py-2 rounded-lg focus:ring-2 focus:ring-orange-400 pr-10" required>
+  <span class="absolute inset-y-0 right-3 flex items-center cursor-pointer text-gray-400" onclick="toggleVisibility('confirmPasswordModal', this)">
+    <i class="fas fa-eye"></i>
+  </span>
+</div>
+
+        </div>
+        <div class="flex justify-end gap-4 pt-2">
+          <button type="button" id="cancelChangePass" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-md">Cancel</button>
+          <button type="submit" id="updatePasswordBtn" class="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-md opacity-50 cursor-not-allowed" disabled>
+  Update
+</button>
+
+        </div>
+      </form>
+    </div>
+  </div>
+  <!-- Remove Photo Confirmation Modal -->
+<!-- Remove Photo Confirmation Modal -->
+<div id="removePhotoModal" class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 hidden transition-opacity duration-300">
+  <div class="bg-white rounded-lg shadow-lg p-6 w-80 transform scale-95 transition-transform duration-300" id="removePhotoDialog">
+    <h3 class="text-lg font-semibold mb-4">Are you sure you want to remove your profile photo?</h3>
+    <div class="flex justify-end space-x-4">
+      <button id="cancelRemovePhoto" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-md">No</button>
+      <button id="confirmRemovePhoto" class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-md">Yes</button>
+    </div>
+  </div>
+</div>
+
+
+<script>
+const changePassModal = document.getElementById('changePassModal');
+const changePassDialog = document.getElementById('changePassDialog');
+const cancelBtn = document.getElementById('cancelChangePass');
+
+function openChangePasswordModal() {
+  changePassModal.classList.remove('hidden');
+  changePassDialog.classList.remove('scale-95');
+  changePassDialog.classList.add('scale-100');
+  document.body.classList.add('overflow-hidden');
+}
+
+cancelBtn.addEventListener('click', () => {
+  changePassModal.classList.add('hidden');
+  changePassDialog.classList.remove('scale-100');
+  changePassDialog.classList.add('scale-95');
+  document.body.classList.remove('overflow-hidden');
+});
+
+function toggleVisibility(id, iconSpan) {
+  const input = document.getElementById(id);
+  const icon = iconSpan.querySelector('i');
+  if (input.type === 'password') {
+    input.type = 'text';
+    icon.classList.remove('fa-eye');
+    icon.classList.add('fa-eye-slash');
+  } else {
+    input.type = 'password';
+    icon.classList.remove('fa-eye-slash');
+    icon.classList.add('fa-eye');
+  }
+}
+
+function checkPasswordStrength(password) {
+  const bar = document.getElementById('passwordStrengthBar');
+  const label = document.getElementById('passwordStrengthText');
+  const updateBtn = document.getElementById('updatePasswordBtn');
+
+  let strength = 0;
+  if (password.length >= 8) strength++;            // Length ≥ 8
+  if (/[A-Z]/.test(password)) strength++;          // Has uppercase
+  if (/[a-z]/.test(password)) strength++;          // Has lowercase
+  if (/\d/.test(password)) strength++;             // Has number
+
+  bar.className = 'h-full';
+  if (strength <= 1) {
+    bar.style.width = '33%';
+    bar.style.backgroundColor = '#f87171'; // red
+    label.textContent = 'Weak';
+    label.style.color = '#dc2626';
+    updateBtn.disabled = true;
+    updateBtn.classList.add('opacity-50', 'cursor-not-allowed');
+  } else if (strength === 2 || strength === 3) {
+    bar.style.width = '66%';
+    bar.style.backgroundColor = '#facc15'; // yellow
+    label.textContent = 'Medium';
+    label.style.color = '#ca8a04';
+    updateBtn.disabled = true;
+    updateBtn.classList.add('opacity-50', 'cursor-not-allowed');
+  } else {
+    bar.style.width = '100%';
+    bar.style.backgroundColor = '#4ade80'; // green
+    label.textContent = 'Strong';
+    label.style.color = '#16a34a';
+    updateBtn.disabled = false;
+    updateBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+  }
+}
+
+
+// 🔐 Handle Change Password Form Submission
+document.getElementById('changePasswordForm').addEventListener('submit', async function (e) {
+  e.preventDefault();
+
+  const oldPassword = document.getElementById('oldPassword').value.trim();
+  const newPassword = document.getElementById('newPasswordModal').value.trim();
+  const confirmPassword = document.getElementById('confirmPasswordModal').value.trim();
+
+  if (newPassword !== confirmPassword) {
+    showToast('❌ New passwords do not match');
+    return;
+  }
+
+  try {
+    const res = await fetch(`${window.API_BASE}/auth/change-password`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      },
+      body: JSON.stringify({ oldPassword, newPassword })
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Failed to change password');
+
+    showToast('✅ Password changed successfully!');
+    cancelBtn.click();
+    document.getElementById('changePasswordForm').reset();
+    checkPasswordStrength('');
+  } catch (err) {
+    showToast('❌ ' + err.message);
+  }
+});
+</script>
+
+  <df-messenger
+    chat-icon="https://cdn-icons-png.flaticon.com/512/9732/9732800.png"
+    intent="WELCOME"
+    chat-title="BharatBuddy"
+    agent-id="9feb8c43-9237-4bc7-bfd4-60f85f004402"
+    language-code="en"
+  ></df-messenger>
+  
+  <script src="https://www.gstatic.com/dialogflow-console/fast/messenger/bootstrap.js?v=1"></script>
+</body>
+</html>

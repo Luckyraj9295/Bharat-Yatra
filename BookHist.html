@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" href="/images/mountain-sun-solid.png" />
+  <title>My Trips</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+
+  <style>
+    #downloadInvoiceBtn.animate {
+      animation: bounceOut 0.6s ease-in-out;
+    }
+    @keyframes bounceOut {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.15); }
+      100% { transform: scale(1); }
+    }
+    .checkmark {
+      width: 1.5rem;
+      height: 1.5rem;
+      display: none;
+    }
+    .checkmark path {
+      stroke-dasharray: 24;
+      stroke-dashoffset: 24;
+      animation: drawCheck 0.4s ease forwards;
+    }
+    @keyframes drawCheck {
+      to {
+        stroke-dashoffset: 0;
+      }
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-orange-100 to-white min-h-screen text-gray-800">
+  <div class="max-w-4xl mx-auto p-6">
+    <a href="index.html" class="inline-block mb-6 text-orange-600 hover:text-orange-800 font-semibold transition"><svg xmlns="http://www.w3.org/2000/svg" class="inline w-5 h-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>Back to Home</a>
+    <h1 class="text-4xl font-bold mb-10 text-center text-orange-600">My Bookings</h1>
+    <!-- Tabs for Upcoming/Completed (UI only, both lists still shown below) -->
+    <div class="flex items-center mb-8 max-w-3xl mx-auto">
+      <button id="tabUpcoming" class="tab-btn text-base font-semibold px-3 py-1 border-b-2 border-blue-600 text-blue-600 bg-white focus:outline-none transition-all">Upcoming</button>
+      <button id="tabCompleted" class="tab-btn text-base font-semibold px-3 py-1 border-b-2 border-transparent text-gray-500 bg-white focus:outline-none transition-all">Completed</button>
+    </div>
+    <div id="toastContainer" class="fixed top-4 right-4 z-[9999] space-y-2"></div>
+
+<style>
+  
+  .tab-btn {
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    margin-bottom: -2px;
+  }
+  .tab-btn.active {
+    color: #2563eb; /* blue-600 */
+    border-bottom: 2px solid #2563eb;
+    font-weight: 700;
+  }
+  .tab-btn:not(.active) {
+    color: #6b7280; /* gray-500 */
+    border-bottom: 2px solid transparent;
+    font-weight: 500;
+  }
+</style>
+<script>
+// Tab UI logic: show only completed section when Completed tab is active
+document.addEventListener("DOMContentLoaded", function() {
+  const tabUpcoming = document.getElementById("tabUpcoming");
+  const tabCompleted = document.getElementById("tabCompleted");
+  const upcomingSection = document.querySelector('section:nth-of-type(1)');
+  const completedSection = document.querySelector('section:nth-of-type(2)');
+  if (tabUpcoming && tabCompleted && upcomingSection && completedSection) {
+    tabUpcoming.classList.add("active");
+    tabCompleted.classList.remove("active");
+    upcomingSection.style.display = '';
+    completedSection.style.display = '';
+    tabUpcoming.addEventListener("click", function() {
+      tabUpcoming.classList.add("active");
+      tabCompleted.classList.remove("active");
+      upcomingSection.style.display = '';
+      completedSection.style.display = '';
+    });
+    tabCompleted.addEventListener("click", function() {
+      tabCompleted.classList.add("active");
+      tabUpcoming.classList.remove("active");
+      upcomingSection.style.display = 'none';
+      completedSection.style.display = '';
+    });
+  }
+});
+</script>
+    <!-- Filter bar -->
+    <div class="mb-6 max-w-3xl mx-auto">
+      <h2 class="text-lg font-semibold text-orange-600 mb-2 flex items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-5-5.917V4a2 2 0 10-4 0v1.083A6.002 6.002 0 004 11v3.159c0 .538-.214 1.055-.595 1.436L2 17h5m5 0v1a3 3 0 11-6 0v-1h6z" />
+        </svg>
+        🔍 Filter Your Bookings
+      </h2>
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 w-full">
+        <div class="flex flex-col sm:flex-row gap-4">
+          <div class="relative w-full sm:w-auto">
+            <svg class="w-5 h-5 text-orange-400 absolute left-3 top-1/2 transform -translate-y-1/2 pointer-events-none" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16l-4-4m0 0l4-4m-4 4h16" />
+            </svg>
+            <input type="text" id="filterDestination" placeholder="Filter by Destination" class="w-full sm:w-56 pl-10 pr-4 py-2 rounded-full border border-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-400 shadow-sm transition-all duration-300 ease-in-out">
+          </div>
+          <div class="relative w-full sm:w-auto">
+            <svg class="w-5 h-5 text-orange-400 absolute left-3 top-1/2 transform -translate-y-1/2 pointer-events-none" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <input type="date" id="filterDate" class="w-full sm:w-56 pl-10 pr-4 py-2 rounded-full border border-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-400 shadow-sm transition-all duration-300 ease-in-out">
+          </div>
+        </div>
+        <button id="clearFilters" class="mt-2 sm:mt-0 px-4 py-2 rounded-full bg-orange-100 hover:bg-orange-200 text-orange-600 font-semibold shadow-sm transition">🧹 Clear Filters</button>
+      </div>
+    </div>
+
+    <section>
+      <h2 id="upcomingHeader" class="text-2xl font-semibold mb-4 flex justify-between items-center cursor-pointer max-w-3xl mx-auto">
+  <span>🟦 Upcoming Bookings</span>
+  <svg id="upcomingArrow" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 ml-2 transition-transform transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+  </svg>
+</h2>
+      <ul id="upcomingList" class="grid grid-cols-1 transition-all duration-500 ease-in-out origin-top overflow-hidden max-h-[1000px] gap-6 max-w-3xl mx-auto"></ul>
+      <p id="noUpcoming" class="text-center text-gray-500 hidden">No upcoming bookings found.</p>
+    </section>
+
+    <hr class="my-10 border-orange-300">
+
+    <section>
+      <h2 id="pastHeader" class="text-2xl font-semibold mb-4 flex justify-between items-center cursor-pointer max-w-3xl mx-auto">
+  <span>🟧 Completed Bookings</span>
+  <svg id="pastArrow" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 ml-2 transition-transform transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+  </svg>
+</h2>
+      <ul id="pastList" class="grid grid-cols-1 transition-all duration-500 ease-in-out origin-top overflow-hidden max-h-[1000px] gap-6 max-w-3xl mx-auto"></ul>
+      <p id="noPast" class="text-center text-gray-500 hidden">No past bookings found.</p>
+    </section>
+  </div>
+  <!-- Back to Top Button -->
+<button id="backToTop" class="fixed bottom-6 left-6 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-full shadow-md hidden">
+  ↑ Back to Top
+</button>
+  <script>
+const API_BASE = 'http://localhost:5000/api';
+const UPLOADS_BASE = 'http://localhost:5000';
+
+const upcomingList = document.getElementById("upcomingList");
+const pastList = document.getElementById("pastList");
+const noUpcoming = document.getElementById("noUpcoming");
+const noPast = document.getElementById("noPast");
+const filterDestination = document.getElementById("filterDestination");
+const filterDate = document.getElementById("filterDate");
+
+async function loadBookings() {
+  upcomingList.innerHTML = "";
+  pastList.innerHTML = "";
+
+  const token = localStorage.getItem("token");
+  if (!token) {
+    console.warn("No token found. Please log in.");
+    return;
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const destFilter = filterDestination.value.toLowerCase();
+  const dateFilter = filterDate.value;
+
+  let bookings = [];
+  try {
+  const res = await fetch(`${API_BASE}/bookings/me`, {
+    headers: { Authorization: "Bearer " + token },
+  });
+  if (!res.ok) throw new Error("Failed to fetch bookings");
+  bookings = await res.json();
+} catch (err) {
+  console.error("Error fetching bookings:", err);
+  showToast("Error loading your bookings. Please try again.", "error");
+  return;
+}
+
+
+  const sorted = bookings.sort((a, b) => new Date(a.travelDate) - new Date(b.travelDate));
+  let hasUpcoming = false, hasPast = false;
+
+  for (const booking of sorted) {
+    const bookingDate = new Date(booking.travelDate);
+    bookingDate.setHours(0, 0, 0, 0);
+    const isUpcoming = bookingDate >= today;
+
+    const destTitle = booking.destination?.title?.toLowerCase() || "";
+    if (destFilter && !destTitle.includes(destFilter)) continue;
+    if (dateFilter) {
+      const travelDateStr = new Date(booking.travelDate).toISOString().split("T")[0];
+      if (travelDateStr !== dateFilter) continue;
+    }
+
+    const dest = booking.destination;
+    const imgSrc = dest?.imagePath
+      ? `${UPLOADS_BASE}/${dest.imagePath.replace(/\\/g, "/")}`
+      : "https://via.placeholder.com/400x200";
+
+    const durationStr = dest?.duration || "";
+    const durationBadge = durationStr
+      ? `<span class='ml-2 text-xs font-semibold text-blue-200 bg-blue-700 rounded-full px-2 py-0.5 align-middle'>${durationStr}</span>`
+      : "";
+
+    let totalDays = 1;
+    const match = durationStr.match(/(\d+)\s*Days?/i);
+    if (match) totalDays = parseInt(match[1]);
+
+    const endDate = new Date(bookingDate);
+    endDate.setDate(endDate.getDate() + totalDays - 1);
+
+    const startStr = bookingDate.toLocaleDateString("en-GB", { day: "2-digit", month: "short" });
+    const endStr = endDate.toLocaleDateString("en-GB", { day: "2-digit", month: "short" });
+    const dateRangeHtml = `${startStr} - ${endStr}`;
+
+    const item = document.createElement("li");
+    item.setAttribute("data-id", booking._id);
+    item.style.cursor = "pointer";
+    item.className = "rounded-[2rem] p-0 overflow-hidden border border-white/30 shadow-lg flex flex-col hover:shadow-xl transition-all print:border print:shadow-none print:p-4 bg-white";
+    item.innerHTML = `
+      <div class='relative w-full h-40 sm:h-44 rounded-[2rem] overflow-hidden flex items-end' style="background: url('${imgSrc}') center/cover no-repeat;">
+        <div class='absolute inset-0 rounded-[2rem] pointer-events-none' style="background: linear-gradient(90deg,rgba(0,0,0,0.75)_0%,rgba(0,0,0,0.15)_60%,rgba(0,0,0,0)_100%);"></div>
+        <div class='relative z-10 p-6 flex-1'>
+          <h3 class='text-2xl font-bold text-white mb-1'>${dest?.title || 'Unknown'} ${durationBadge}</h3>
+          <p class='text-white text-base mb-1'>${dateRangeHtml}</p>
+          <p class='text-white text-base'>${booking.packageType} | ${booking.travelers.length} ${booking.travelers.length === 1 ? 'Traveler' : 'Travelers'}</p>
+        </div>
+        <div class='absolute top-4 right-4 z-20'>
+          <span class='inline-flex items-center text-sm font-semibold ${
+            isUpcoming ? "text-blue-700 bg-blue-100" : "text-orange-800 bg-orange-100"
+          } rounded-full px-3 py-1'>${isUpcoming ? "Upcoming" : "Completed"}</span>
+        </div>
+      </div>
+    `;
+
+    // 🔗 Add modal trigger
+    item.addEventListener("click", () => showBookingModal(booking));
+
+    if (isUpcoming) {
+      hasUpcoming = true;
+      upcomingList.appendChild(item);
+    } else {
+      hasPast = true;
+      pastList.appendChild(item);
+    }
+  }
+
+  noUpcoming.classList.toggle("hidden", hasUpcoming);
+  noPast.classList.toggle("hidden", hasPast);
+}
+
+// 🪄 Modal injection function
+function showBookingModal(booking) {
+  const modal = document.getElementById("bookingModal");
+  const modalContent = document.getElementById("modalContent");
+  const downloadBtn = document.getElementById("downloadInvoiceBtn");
+  const bookingId = booking._id;
+
+
+  if (!modal || !modalContent) return;
+
+  const bookingDate = new Date(booking.travelDate);
+  bookingDate.setHours(0, 0, 0, 0);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const isUpcoming = bookingDate >= today;
+  const daysDiff = Math.ceil((bookingDate - today) / (1000 * 60 * 60 * 24));
+
+  const durationStr = booking.destination?.duration || "N/A";
+  const title = booking.destination?.title || "Unknown Destination";
+  const date = new Date(booking.travelDate).toLocaleDateString("en-GB");
+  const type = `${booking.packageType} | ${booking.travelers.length} Traveler(s)`;
+  const ref = booking.bookingRef;
+
+  const basePrice = booking.destination?.price || 0;
+  let adjustedBasePrice = basePrice;
+
+  switch (booking.packageType) {
+    case 'Deluxe': adjustedBasePrice *= 1.5; break;
+    case 'Premium': adjustedBasePrice *= 2; break;
+  }
+
+  const numTravelers = booking.travelers?.length || 1;
+  const totalBeforeTax = adjustedBasePrice * numTravelers;
+  const totalWithTax = (totalBeforeTax * 1.05).toFixed(2);
+  const price = `₹${parseFloat(totalWithTax).toLocaleString("en-IN", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  })}`;
+
+  const special = booking.specialRequests || '';
+
+  let travelersHtml = "";
+  if (Array.isArray(booking.travelers) && booking.travelers.length > 0) {
+    travelersHtml = `<div class='mb-2'><strong>Traveler Details:</strong><ul class='ml-4 mt-1 list-disc'>`;
+    booking.travelers.forEach((t, idx) => {
+      travelersHtml += `<li>Traveler ${idx + 1}: <span class='font-medium'>${t.name}</span>, Age: ${t.age}, Gender: ${t.gender}</li>`;
+    });
+    travelersHtml += `</ul></div>`;
+  }
+
+  let specialRequestSection = "";
+const bookId = booking._id;
+
+if (daysDiff > 1) {
+  const existingRequest = booking.specialRequests?.trim();
+
+  specialRequestSection = `
+    <div id="specialRequestContainer" class="text-sm bg-orange-50 px-3 py-2 rounded-lg mt-3">
+      <div class="flex justify-between items-center mb-1">
+        <span class="font-semibold text-orange-800 flex items-center gap-1">
+          <svg class="w-4 h-4 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m6 4h2a2 2 0 012 2v10a2 2 0 01-2 2H7a2 2 0 01-2-2V9a2 2 0 012-2h2" />
+          </svg>
+          Special Request:
+        </span>
+        <button id="${existingRequest ? "editSpecialRequestBtn" : "addSpecialRequestBtn"}" title="${existingRequest ? "Edit" : "Add"}">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 ${existingRequest ? "text-orange-600" : "text-green-600"} hover:text-orange-800" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            ${existingRequest
+              ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M9 13l6-6m2 2L9 17H7v-2l6-6z" />'
+              : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />'}
+          </svg>
+        </button>
+      </div>
+      ${
+        existingRequest
+          ? `<p id="specialRequestText" class="text-gray-700">${existingRequest}</p>`
+          : `<p class="text-gray-500 italic">No special request given. Click + to add.</p>`
+      }
+    </div>
+  `;
+} else {
+  const existingRequest = booking.specialRequests?.trim();
+  const bookingDate = new Date(booking.travelDate);
+  bookingDate.setHours(0, 0, 0, 0);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const isPast = bookingDate < today;
+
+  specialRequestSection = `
+    <div id="specialRequestContainer" class="text-sm mt-3">
+      ${
+        existingRequest
+          ? `<p class="text-sm text-orange-700 bg-orange-100 px-3 py-2 rounded-lg flex items-start gap-2">
+              <svg class="w-4 h-4 mt-1 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m6 4h2a2 2 0 012 2v10a2 2 0 01-2 2H7a2 2 0 01-2-2V9a2 2 0 012-2h2"/>
+              </svg>
+              <span><strong>Special Request:</strong><br>${existingRequest}</span>
+            </p>`
+          : `<p class="text-sm text-gray-500 bg-gray-100 px-3 py-2 rounded-lg flex items-start gap-2">
+              <svg class="w-4 h-4 mt-1 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16m-7 4h7" />
+              </svg>
+              <span>
+                No special request given.${isPast ? '' : ' (Cannot add within 1 day of travel)'}
+              </span>
+            </p>`
+      }
+    </div>
+  `;
+}
+
+
+
+
+  modalContent.innerHTML = `
+    ${isUpcoming
+      ? '<span class="inline-flex items-center text-sm font-semibold text-blue-700 bg-blue-100 rounded-full px-3 py-1 mb-2"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3" /></svg>Upcoming</span>'
+      : '<span class="inline-flex items-center text-sm font-semibold text-orange-800 bg-orange-100 rounded-full px-3 py-1 mb-2"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6v-2H9v2z" /></svg>Completed</span>'}
+    <h3 class="text-lg font-bold text-orange-600 mb-4 flex items-center gap-2">
+      <svg class="w-5 h-5 text-orange-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2C6.48 2 2 6.48 2 12c0 1.61.38 3.13 1.06 4.48a2 2 0 001.53 1.1l2.66.28a2 2 0 001.98-1.47l.44-1.76a2 2 0 012.41-1.45l1.34.34a2 2 0 001.54-1.38l.84-3.35a2 2 0 012.47-1.42l3.15.91A10.002 10.002 0 0012 2z" />
+      </svg>
+      ${title} <span class='ml-2 text-xs font-semibold text-blue-200 bg-blue-700 rounded-full px-2 py-0.5 align-middle'>${durationStr}</span>
+    </h3>
+    <p class="flex items-center gap-2 text-sm"><svg class="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 2h12a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2zm3 6v10m6-10v10" /></svg> ${type}</p>
+    <p class="flex items-center gap-2 text-sm"><svg class="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg> ${date}</p>
+    <p class="flex items-center gap-2 text-sm"><svg class="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M3 10l6-6h11v11l-6 6H3V10z"/></svg> ${ref}</p>
+    <p class="flex items-center gap-2 text-sm">
+      <svg class="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 1.343-3 3s1.343 3 3 3m0 0c1.657 0 3-1.343 3-3s-1.343-3-3-3m0 0V4m0 10v6"/>
+      </svg> ${price}
+    </p>
+    ${travelersHtml}
+    ${specialRequestSection}
+    ${isUpcoming ? `<button id="popupCancelBtn" class="cancel-btn bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-full text-sm font-semibold transition mt-4 w-full"><svg xmlns="http://www.w3.org/2000/svg" class="inline w-4 h-4 mr-1 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg> Cancel Booking</button>` : ""}
+  `;
+
+  modal.classList.remove("hidden");
+  downloadBtn.dataset.ref = booking.bookingRef;
+
+  // Special Request Save logic
+setTimeout(() => {
+  const container = document.getElementById("specialRequestContainer");
+  const editBtn = document.getElementById("editSpecialRequestBtn");
+  const addBtn = document.getElementById("addSpecialRequestBtn");
+
+  const showInputBox = () => {
+    container.innerHTML = `
+      <label for="specialRequestInput" class="block font-semibold text-orange-800 mb-1">Special Request:</label>
+      <textarea id="specialRequestInput" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring" rows="3">${booking.specialRequests || ""}</textarea>
+      <button id="saveSpecialRequestBtn" class="mt-2 bg-orange-600 text-white px-3 py-1 rounded hover:bg-orange-700">Save</button>
+    `;
+
+    // 🟠 Your working save logic
+    setTimeout(() => {
+      const saveBtn = document.getElementById("saveSpecialRequestBtn");
+      const inputBox = document.getElementById("specialRequestInput");
+
+      if (saveBtn && inputBox) {
+        saveBtn.addEventListener("click", async () => {
+          const newRequest = inputBox.value.trim();
+          const token = localStorage.getItem("token");
+
+          if (!token) return alert("Not authorized");
+
+          try {
+            const res = await fetch(`${API_BASE}/bookings/${bookId}`, {
+              method: "PATCH",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`
+              },
+              body: JSON.stringify({ specialRequests: newRequest })
+            });
+
+            if (!res.ok) throw new Error("Failed to update");
+
+showToast("Special request updated successfully!", "success");
+booking.specialRequests = newRequest;
+showBookingModal(booking);// re-render modal
+          } catch (err) {
+  showToast("Failed to save special request!", "error");
+  console.error(err);
+}
+
+        });
+      }
+    }, 150);
+  };
+
+  if (editBtn) editBtn.addEventListener("click", showInputBox);
+  if (addBtn) addBtn.addEventListener("click", showInputBox);
+}, 200);
+// slightly increased timeout to ensure DOM is rendered
+
+
+  // ⛔ Cancel logic
+  setTimeout(() => {
+    const cancelBtn = document.getElementById("popupCancelBtn");
+    if (!cancelBtn) return;
+
+    if (daysDiff < 7) {
+      cancelBtn.disabled = true;
+      cancelBtn.classList.add("opacity-50", "cursor-not-allowed");
+      cancelBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="inline w-4 h-4 mr-1 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg> Cannot Cancel (< 7 days left for journey)`;
+      return;
+    }
+
+    cancelBtn.addEventListener("click", () => {
+      const confirmBox = document.createElement("div");
+      confirmBox.className = "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50";
+      confirmBox.innerHTML = `
+        <div class='bg-white rounded-xl shadow-lg p-6 text-center w-72'>
+          <h2 class='text-lg font-semibold mb-4 text-orange-700'>Cancel Booking?</h2>
+          <p class='text-sm text-gray-600 mb-6'>Are you sure you want to cancel this booking?</p>
+          <div class='flex justify-center gap-4'>
+            <button id='confirmYes' class='bg-red-500 text-white px-4 py-2 rounded-full hover:bg-red-600 transition'>Yes</button>
+            <button id='confirmNo' class='bg-gray-300 text-gray-800 px-4 py-2 rounded-full hover:bg-gray-400 transition'>No</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(confirmBox);
+
+      confirmBox.querySelector("#confirmYes").addEventListener("click", async () => {
+  try {
+  const token = localStorage.getItem("token");
+  const res = await fetch(`${API_BASE}/bookings/${booking._id}`, {
+    method: "DELETE",
+    headers: { Authorization: "Bearer " + token },
+  });
+
+  if (!res.ok) throw new Error("Cancel failed");
+
+  // ✅ Show success toast
+  showToast("Booking cancelled successfully.", "success");
+
+  // Close modal and confirm box first
+  confirmBox.remove();
+  document.getElementById("bookingModal").classList.add("hidden");
+
+  // Animate card removal
+  const card = document.querySelector(`[data-id="${booking._id}"]`);
+  if (card) {
+    card.classList.add("transition-opacity", "duration-500", "ease-in-out", "opacity-0", "scale-95");
+
+    setTimeout(() => {
+      card.remove();
+      loadBookings();
+    }, 500);
+  }
+} catch (err) {
+  console.error(err);
+  // ❌ Show error toast
+  showToast("Failed to cancel booking. Try again.", "error");
+}
+
+});
+
+
+      confirmBox.querySelector("#confirmNo").addEventListener("click", () => {
+        confirmBox.remove();
+      });
+    });
+  }, 100);
+}
+
+
+document.addEventListener("DOMContentLoaded", () => {
+  loadBookings();
+  filterDestination.addEventListener("input", loadBookings);
+  filterDate.addEventListener("change", loadBookings);
+  document.getElementById("clearFilters").addEventListener("click", () => {
+    filterDestination.value = "";
+    filterDate.value = "";
+    loadBookings();
+  });
+  document.getElementById("closeModal").addEventListener("click", () => {
+    document.getElementById("bookingModal").classList.add("hidden");
+  });
+  document.getElementById("upcomingHeader").addEventListener("click", () => {
+  const list = document.getElementById("upcomingList");
+  const arrow = document.getElementById("upcomingArrow");
+  const isExpanded = list.classList.contains("max-h-[1000px]");
+  list.classList.toggle("max-h-0", isExpanded);
+  list.classList.toggle("max-h-[1000px]", !isExpanded);
+  arrow.classList.toggle("rotate-180", isExpanded);
+});
+
+document.getElementById("pastHeader").addEventListener("click", () => {
+  const list = document.getElementById("pastList");
+  const arrow = document.getElementById("pastArrow");
+  const isExpanded = list.classList.contains("max-h-[1000px]");
+  list.classList.toggle("max-h-0", isExpanded);
+  list.classList.toggle("max-h-[1000px]", !isExpanded);
+  arrow.classList.toggle("rotate-180", isExpanded);
+});
+
+
+});
+function showToast(message, type = 'success') {
+  const container = document.getElementById("toastContainer");
+  if (!container) return;
+
+  const toast = document.createElement("div");
+  toast.className = `toast flex items-start gap-3 px-4 py-3 rounded-xl text-white pointer-events-auto ${getToastColor(type)} animate-slideInRight`;
+  
+  toast.innerHTML = `
+    <div class="icon-circle mt-1">
+      ${getToastIcon(type)}
+    </div>
+    <div class="flex-1">${message}</div>
+    <button class="ml-2 font-bold hover:text-gray-200" onclick="this.parentElement.remove()">×</button>
+    <div class="toast-progress"></div>
+  `;
+
+  container.appendChild(toast);
+
+  // Auto remove toast after 3s
+  setTimeout(() => {
+    toast.style.opacity = "0";
+    toast.style.transform = "translateX(20px)";
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
+function getToastColor(type) {
+  return {
+    success: 'bg-orange-500',
+    error: 'bg-red-600',
+    warning: 'bg-yellow-400 text-gray-900',
+    info: 'bg-blue-600'
+  }[type] || 'bg-orange-500';
+}
+
+
+function getToastIcon(type) {
+  if (type === 'success') {
+    return `
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon w-5 h-5" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="10" fill="#1a1a1a"></circle>
+        <polyline points="9 12 12 15 16 10" stroke="white" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+    `;
+  } else if (type === 'error') {
+    return `
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon w-5 h-5" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="10" fill="#1a1a1a"></circle>
+        <path d="M6 18L18 6M6 6l12 12" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+    `;
+  } else {
+    // default icon
+    return `
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        ${getToastIconPath(type)}
+      </svg>
+    `;
+  }
+}
+
+function getToastIconPath(type) {
+  switch (type) {
+    case 'warning':
+      return '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M12 5a7 7 0 100 14 7 7 0 000-14z" />';
+    case 'info':
+      return '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 1010 10A10 10 0 0012 2z" />';
+    default:
+      return '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6" />';
+  }
+}
+
+
+</script>
+
+<style>
+  .toast {
+  color: #fff;
+  border-radius: 0.75rem;
+  box-shadow: 0 6px 32px 0 rgba(0,0,0,0.18), 0 1.5px 4px 0 rgba(0,0,0,0.12);
+  padding: 1rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  min-width: 220px;
+  max-width: 350px;
+  pointer-events: auto;
+  opacity: 0.98;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+/* Progress bar inside toast */
+.toast .toast-progress {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 4px;
+  background-color: rgba(255, 255, 255, 0.5);
+  width: 100%;
+  animation: toastProgressBar 3s linear forwards;
+}
+
+@keyframes toastProgressBar {
+  from {
+    width: 100%;
+  }
+  to {
+    width: 0%;
+  }
+}
+
+/* Optional tick icon circle */
+.icon-circle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+
+  @keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+.animate-slideInRight {
+  animation: slideInRight 0.3s ease forwards;
+}
+
+  [data-id] {
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+</style>
+
+
+
+ <div id="bookingModal" class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-50 hidden flex items-center justify-center px-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 relative shadow-xl border">
+      <button id="closeModal" class="absolute top-3 right-3 text-gray-400 hover:text-orange-500 transition-transform transform hover:scale-110">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+      <div id="modalContent" class="text-sm text-gray-700 space-y-2 leading-relaxed font-medium px-1">
+        <!-- Dynamic booking details will be injected here -->
+      </div>
+      <button id="downloadInvoiceBtn" class="flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-full text-sm font-semibold transition mt-4 w-full">
+        <svg id="downloadIcon" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 4v12" />
+        </svg>
+        <svg id="checkIcon" class="checkmark text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 6L9 17l-5-5" />
+        </svg>
+        <span id="btnText">Download Invoice</span>
+      </button>
+    </div>
+  </div>
+
+  <script>
+document.addEventListener("click", async function (e) {
+  const downloadBtn = document.getElementById("downloadInvoiceBtn");
+  if (!e.target.closest("#downloadInvoiceBtn")) return;
+
+  const token = localStorage.getItem("token");
+  const ref = downloadBtn.dataset.ref;
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  let y = 44;
+
+  if (!token || !ref) return alert("Missing token or reference.");
+
+  try {
+  const res = await fetch("http://localhost:5000/api/bookings/me", {
+    headers: { Authorization: "Bearer " + token }
+  });
+
+  if (!res.ok) throw new Error("Failed to fetch bookings");
+
+  const bookings = await res.json();
+  const booking = bookings.find(b => b.bookingRef === ref);
+
+  if (!booking) {
+    showToast("Booking not found!", "error");
+    return;
+  }
+
+    const {
+      destination,
+      travelDate,
+      packageType,
+      travelers,
+      bookingRef,
+      totalPrice,
+      paymentMethod,
+      specialRequests
+    } = booking;
+
+    const logo = new Image();
+    logo.src = "images/mountain-sun-solid.png";
+    await new Promise(res => logo.onload = res);
+
+    doc.addImage(logo, "PNG", 15, 10, 12, 12);
+    doc.setFontSize(16);
+    doc.setTextColor(255, 87, 34);
+    doc.setFont("helvetica", "bold");
+    doc.text("BHARAT YATRA", 30, 16);
+    doc.setFontSize(10);
+    doc.setTextColor(80);
+    doc.setFont("helvetica", "normal");
+    doc.text("Explore the Incredible India", 30, 21);
+    doc.setFontSize(20);
+    doc.setTextColor(40);
+    doc.text("Travel Invoice", 20, 36);
+
+    // Watermark
+    doc.setTextColor(240);
+    doc.setFontSize(60);
+    doc.text("BHARAT YATRA", 35, 160, { angle: 45 });
+    doc.setTextColor(0);
+    doc.setGState && doc.setGState(new doc.GState({ opacity: 0.08 }));
+    doc.addImage(logo, "PNG", 60, 100, 100, 100);
+    doc.setGState && doc.setGState(new doc.GState({ opacity: 1 }));
+
+    // --- DESTINATION HEADER ---
+    const cleanTitle = (destination?.title || "").replace(/\s*\d+\s*Days?.*/i, "");
+    doc.setFontSize(13);
+    doc.setFillColor(255, 240, 220);
+    doc.roundedRect(15, y - 6, 180, 10, 3, 3, 'F');
+    doc.setFont("helvetica", "bold");
+    doc.text("Destination:", 20, y);
+    doc.setFont("helvetica", "normal");
+    doc.text(cleanTitle, 80, y);
+    y += 14;
+
+    // --- DATE CALCULATIONS ---
+    const start = new Date(travelDate);
+    const durationMatch = destination?.duration?.match(/\d+/g);
+    const days = durationMatch ? parseInt(durationMatch[0]) : 3;
+    const nights = days - 1;
+    const end = new Date(start);
+    end.setDate(start.getDate() + nights);
+    const dateRange = `${start.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })} - ${end.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}`;
+    const rupee = "₹";
+
+// totalPrice from backend is base
+const basePrice = totalPrice;
+const taxes = +(basePrice * 0.05).toFixed(2);
+const grandTotal = +(basePrice + taxes).toFixed(2);
+
+    // --- INFO FIELDS ---
+    const fields = [
+  { label: "Destination Type", value: packageType },
+  { label: "Travel Date", value: dateRange },
+  { label: "Duration", value: `${days} Days / ${nights} Nights` },
+  { label: "Reference Number", value: bookingRef },
+  { label: "Total Amount", value: `${rupee}${grandTotal.toLocaleString("en-IN")}` },
+  { label: "Special Request", value: (specialRequests?.trim() || "N/A") }
+];
+
+
+    fields.forEach(field => {
+      const valueLines = doc.splitTextToSize(field.value, 80);
+      const rowHeight = Math.max(10, valueLines.length * 6);
+      doc.setDrawColor(200);
+      doc.rect(15, y - 6, 180, rowHeight);
+      doc.setFont("helvetica", "bold");
+      doc.text(field.label + ":", 20, y);
+      doc.setFont("helvetica", "normal");
+      doc.line(100, y - 6, 100, y - 6 + rowHeight);
+      doc.text(valueLines, 105, y);
+      y += rowHeight;
+    });
+
+    // --- TRAVELERS ---
+    if (Array.isArray(travelers)) {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(13);
+      doc.text("Traveler Details:", 20, y + 8);
+      doc.setFont("helvetica", "normal");
+      y += 15;
+      travelers.forEach((t, i) => {
+        const txt = `Traveler ${i + 1}: ${t.name}, Age: ${t.age}, Gender: ${t.gender}`;
+        doc.text(txt, 25, y);
+        y += 7;
+      });
+    }
+
+    // --- PAYMENT METHOD ---
+    const methodMap = {
+      upi: "UPI", creditCard: "Credit Card", netBanking: "Net Banking"
+    };
+    if (paymentMethod) {
+      doc.setFont("helvetica", "bold");
+      doc.text("Payment Method Used:", 20, y);
+      doc.setFont("helvetica", "normal");
+      doc.text(methodMap[paymentMethod] || paymentMethod, 70, y);
+      y += 10;
+    }
+
+    // --- BILLING BOX ---
+    doc.setDrawColor(220);
+doc.setFillColor(245);
+doc.roundedRect(15, y + 2, 180, 30, 3, 3, 'F');
+doc.setTextColor(0);
+doc.setFontSize(14);
+doc.text("Billing Summary:", 20, y + 12);
+
+doc.setFontSize(12);
+doc.setFont("helvetica", "normal");
+doc.text(`Base Price: ${rupee}${basePrice.toLocaleString("en-IN")}`, 20, y + 20);
+doc.text(`Taxes (5%): ${rupee}${taxes.toLocaleString("en-IN")}`, 20, y + 28);
+
+doc.setFont("helvetica", "bold");
+doc.text(`Total: ${rupee}${grandTotal.toLocaleString("en-IN")}`, 120, y + 28);
+
+
+    // --- QR CODE ---
+    const qrText = `BHARAT YATRA BOOKING
+Destination: ${cleanTitle} | ${days}D/${nights}N
+Package: ${packageType} | ${travelers.length}
+Date: ${dateRange}
+Reference: ${bookingRef}
+Total: ₹${grandTotal.toLocaleString("en-IN")}
+Thank you for booking with Bharat Yatra!`;
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(qrText)}&size=80x80`;
+    const qrImg = new Image();
+    qrImg.crossOrigin = "Anonymous";
+    qrImg.src = qrUrl;
+
+    qrImg.onload = () => {
+      doc.setDrawColor(200);
+      doc.rect(148, y + 36, 44, 44);
+      doc.addImage(qrImg, 'PNG', 150, y + 38, 40, 40);
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "italic");
+      doc.text("Scan to verify your trip", 150, y + 82);
+
+      addPage2();
+    };
+    qrImg.onerror = addPage2;
+
+    function addPage2() {
+      doc.addPage();
+      doc.addImage(logo, "PNG", 15, 10, 12, 12);
+      doc.setFontSize(16);
+      doc.setTextColor(255, 87, 34);
+      doc.setFont("helvetica", "bold");
+      doc.text("BHARAT YATRA", 30, 16);
+      doc.setFontSize(10);
+      doc.setTextColor(80);
+      doc.setFont("helvetica", "normal");
+      doc.text("Explore the Incredible India", 30, 21);
+
+      doc.setTextColor(240);
+      doc.setFontSize(60);
+      doc.text("BHARAT YATRA", 35, 160, { angle: 45 });
+      doc.setTextColor(0);
+
+      doc.setFontSize(18);
+      doc.setTextColor(255, 87, 34);
+      doc.text("Terms & Conditions", 20, 40);
+      doc.setDrawColor(255, 200, 150);
+      doc.line(20, 42, 190, 42);
+
+      const terms = [
+        "1. Valid only for traveler listed.",
+        "2. Carry government ID during travel.",
+        "3. Bharat Yatra not liable for delays.",
+        "4. Booking changes 72+ hrs prior.",
+        "5. Cancellations 7+ days before only.",
+        "6. No-shows = no refund.",
+        "7. Tax included per govt norms.",
+      ];
+      let ty = 55;
+      doc.setFontSize(11);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(60);
+      terms.forEach(t => {
+        doc.rect(20, ty - 6, 170, 10);
+        doc.text(t, 22, ty);
+        ty += 10;
+      });
+
+      // Refund Note
+      doc.setFillColor(255, 230, 230);
+      doc.setDrawColor(240, 100, 100);
+      doc.roundedRect(20, ty + 5, 170, 18, 3, 3, 'FD');
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(200, 0, 0);
+      doc.text("NOTE: Cancellations & Refunds allowed ONLY if done 7+ days before travel date.", 25, ty + 17);
+
+      // Signature
+      doc.setFontSize(12);
+      doc.setTextColor(0);
+      doc.text("Warm regards,", 25, 250);
+      doc.setFont("helvetica", "bold");
+      doc.text("BHARAT YATRA TEAM", 25, 257);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.setTextColor(100);
+      doc.text("Support: +91-9876543210", 25, 270);
+      doc.text("Email: bharatyatra001@gmail.com", 25, 276);
+
+      doc.save("Booking_Invoice.pdf");
+    }
+
+    // Button animation
+    downloadBtn.classList.add("animate");
+    document.getElementById("downloadIcon").style.display = "none";
+    document.getElementById("checkIcon").style.display = "block";
+    document.getElementById("btnText").textContent = "Downloaded";
+    setTimeout(() => {
+      downloadBtn.classList.remove("animate");
+      document.getElementById("downloadIcon").style.display = "block";
+      document.getElementById("checkIcon").style.display = "none";
+      document.getElementById("btnText").textContent = "Download Invoice";
+    }, 2000);
+  } catch (err) {
+  console.error(err);
+  showToast("Failed to generate invoice.", "error");
+}
+
+});
+</script>
+
+
+<style>
+  .animate-fadeIn {
+    animation: fadeIn 0.3s ease-out;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+
+
+  <df-messenger
+    chat-icon="https://cdn-icons-png.flaticon.com/512/9732/9732800.png"
+    intent="WELCOME"
+    chat-title="BharatBuddy"
+    agent-id="9feb8c43-9237-4bc7-bfd4-60f85f004402"
+    language-code="en"
+  ></df-messenger>
+
+  <script src="https://www.gstatic.com/dialogflow-console/fast/messenger/bootstrap.js?v=1"></script>
+</body>
+</html>

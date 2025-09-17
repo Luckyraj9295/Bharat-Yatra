@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/png" href="/images/mountain-sun-solid.png" />
+  <title>Contact Us - Bharat Yatra</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://smtpjs.com/v3/smtp.js"></script>
+  <style>
+    .df-close-btn {
+      position: fixed;
+      bottom: 96px;
+      right: 26px;
+      z-index: 1000;
+      background-color: #ef4444;
+      color: white;
+      border: none;
+      padding: 6px 10px;
+      font-size: 18px;
+      font-weight: bold;
+      border-radius: 50%;
+      cursor: pointer;
+      display: none;
+    }
+    .chat-close-top {
+      position: fixed;
+      right: 26px;
+      bottom: 620px;
+      z-index: 1000;
+      background-color: #ef4444;
+      color: white;
+      border: none;
+      padding: 4px 10px;
+      font-size: 18px;
+      font-weight: bold;
+      border-radius: 50%;
+      cursor: pointer;
+      display: none;
+    }
+  </style>
+</head>
+<body class="bg-orange-50 text-gray-800 min-h-screen">
+  <div class="max-w-6xl mx-auto py-8 px-2 sm:py-16 sm:px-4">
+    <div class="flex items-center mb-12">
+      <a href="index.html" class="group flex items-center justify-center h-10 w-10 rounded-full transition duration-200">
+        <span class="flex items-center justify-center h-10 w-10 rounded-full group-hover:bg-orange-100 transition duration-200">
+          <img src="https://cdn-icons-png.flaticon.com/512/271/271220.png" alt="Back Arrow Icon" class="h-5 w-5 transition duration-200 group-hover:scale-125 group-hover:filter group-hover:brightness-0 group-hover:invert group-hover:sepia group-hover:hue-rotate-15 group-hover:saturate-200" style="filter: none;" />
+        </span>
+      </a>
+      <div class="flex-1 flex justify-center grow">
+        <h1 class="text-4xl font-bold text-orange-600">Contact Us</h1>
+      </div>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
+      <!-- AI Chat Card -->
+      <div class="bg-white rounded-xl shadow-lg p-4 sm:p-8 flex flex-col transition-transform transform hover:scale-105 hover:shadow-2xl h-full">
+        <div class="text-center flex flex-col flex-grow">
+          <div class="mb-4">
+            <img src="https://cdn-icons-png.flaticon.com/512/13593/13593850.png" alt="Chatbot Icon" class="mx-auto h-16 w-16 animate-bounce">
+          </div>
+          <h2 class="text-2xl font-semibold text-orange-500 mb-4">Chat with AI Assistant</h2>
+          <p class="text-gray-600 mb-6">Use our AI-powered chatbot for instant help about tours, pricing, duration, and more.</p>
+          <div class="flex justify-center mb-4">
+            <img src="https://cdn-icons-png.flaticon.com/512/14958/14958196.png" alt="Assistant Robot Icon" class="h-40 w-40" style="object-fit:contain;" />
+          </div>
+        </div>
+        <button id="startChatBtn" class="bg-orange-500 text-white font-bold py-2 px-4 sm:px-6 rounded-full hover:bg-orange-600 mt-6 self-center text-sm sm:text-base">
+          Start AI Chat with BharatBuddy
+        </button>
+      </div>
+      <!-- Customer Support Card -->
+      <div class="bg-white rounded-xl shadow-lg p-4 sm:p-8 transition-transform transform hover:scale-105 hover:shadow-2xl">
+        <div class="flex justify-center mb-4">
+          <img src="https://cdn-icons-png.flaticon.com/512/1067/1067566.png" alt="Support Icon" class="h-16 w-16 animate-bounce">
+        </div>
+        <h2 class="text-2xl font-semibold text-orange-500 mb-4 text-center">Customer Support</h2>
+        <p class="text-gray-600 mb-6 text-center">Send us your query and our support team will get back to you shortly.</p>
+        <form onsubmit="sendSupportMail(event)" class="space-y-4">
+          <input type="text" id="name" placeholder="Full Name" required class="w-full px-4 py-2 border rounded-lg">
+          <input type="email" id="email" placeholder="Email Address" required class="w-full px-4 py-2 border rounded-lg">
+          <textarea id="message" placeholder="Your Message" required rows="4" class="w-full px-4 py-2 border rounded-lg"></textarea>
+          <button type="submit" class="bg-orange-500 text-white font-bold py-2 px-4 sm:px-6 rounded-full hover:bg-orange-600 text-sm sm:text-base">
+            Submit Message
+          </button>
+        </form>
+        <div id="supportSuccess" class="mt-4 text-green-600 font-semibold hidden">Message sent successfully!</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Greeting Toast -->
+
+  <!-- Manual Close Button on Top -->
+  <button id="closeChatTop" class="chat-close-top">×</button>
+
+  <!-- Dialogflow Messenger -->
+  <df-messenger
+    chat-icon="https://cdn-icons-png.flaticon.com/512/9732/9732800.png"
+    intent="WELCOME"
+    chat-title="BharatBuddy"
+    agent-id="9feb8c43-9237-4bc7-bfd4-60f85f004402"
+    language-code="en"
+  ></df-messenger>
+
+  <!-- Shadow DOM Logo Override -->
+  <script>
+  </script>
+
+  <!-- Trigger Button Script -->
+  <script>
+    const startBtn = document.getElementById("startChatBtn");
+    const topCloseBtn = document.getElementById("closeChatTop");
+
+    let chatOpenedByButton = false;
+
+    function showCloseBtn() {
+      if (chatOpenedByButton) {
+        topCloseBtn.style.display = 'block';
+      }
+    }
+
+    function hideCloseBtn() {
+      topCloseBtn.style.display = 'none';
+    }
+
+    function listenForChatOpen() {
+      const dfMessenger = document.querySelector("df-messenger");
+      if (!dfMessenger || !dfMessenger.shadowRoot) return;
+
+      const observer = new MutationObserver(() => {
+        const isChatOpen = dfMessenger.shadowRoot.querySelector("df-messenger-chat")?.shadowRoot?.querySelector(".chat-wrapper");
+        if (isChatOpen) {
+          showCloseBtn();
+        } else {
+          hideCloseBtn();
+          chatOpenedByButton = false;
+        }
+      });
+
+      observer.observe(dfMessenger.shadowRoot, { childList: true, subtree: true });
+    }
+
+    startBtn.addEventListener("click", () => {
+      chatOpenedByButton = true;
+      const waitForMessenger = setInterval(() => {
+        const dfMessenger = document.querySelector("df-messenger");
+        if (!dfMessenger || !dfMessenger.shadowRoot) return;
+
+        const chatToggle = dfMessenger.shadowRoot.querySelector("div[aria-label='Chat with BharatBuddy']") ||
+                           dfMessenger.shadowRoot.querySelector("button[aria-label='Open chat']") ||
+                           dfMessenger.shadowRoot.querySelector("button[aria-label='Expand Chat']") ||
+                           dfMessenger.shadowRoot.querySelector("button");
+
+        if (chatToggle) {
+          chatToggle.click();
+          showCloseBtn();
+          clearInterval(waitForMessenger);
+        }
+      }, 300);
+    });
+
+    topCloseBtn.addEventListener("click", () => {
+      const dfMessenger = document.querySelector("df-messenger");
+      if (dfMessenger && dfMessenger.shadowRoot) {
+        const closeBtnInner = dfMessenger.shadowRoot.querySelector("button[aria-label='Close chat']") || dfMessenger.shadowRoot.querySelector("button[aria-label='Minimize chat']") || dfMessenger.shadowRoot.querySelector("button");
+        if (closeBtnInner) closeBtnInner.click();
+        topCloseBtn.style.display = 'none';
+        chatOpenedByButton = false;
+      }
+    });
+
+    window.addEventListener("load", () => {
+      listenForChatOpen();
+    });
+  </script>
+
+  <!-- Email Script -->
+  <script>
+    function sendSupportMail(event) {
+      event.preventDefault();
+      const name = document.getElementById("name").value;
+      const email = document.getElementById("email").value;
+      const message = document.getElementById("message").value;
+
+      Email.send({
+        SecureToken: "YOUR_SMTPJS_SECURE_TOKEN",
+        To: 'youremail@example.com',
+        From: email,
+        Subject: "New Contact Message from Bharat Yatra",
+        Body: `Name: ${name}<br>Email: ${email}<br>Message: ${message}`
+      }).then(() => {
+        document.getElementById("supportSuccess").classList.remove("hidden");
+      });
+    }
+  </script>
+
+  <!-- Load Dialogflow -->
+  <script src="https://www.gstatic.com/dialogflow-console/fast/messenger/bootstrap.js?v=1"></script>
+</body>
+</html>

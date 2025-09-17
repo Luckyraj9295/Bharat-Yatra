@@ -1,0 +1,221 @@
+#loadingScreen {
+  transition: opacity 0.6s ease, visibility 0.6s ease;
+}
+#loadingScreen.hidden {
+  opacity: 0;
+  visibility: hidden;
+}
+/* Custom CSS for elements that need more styling */
+        .hero-slider {
+            position: relative;
+        }
+        /* Add solid background and sticky when scrolled */
+    #mainNav.scrolled {
+        position: sticky;
+        background: rgba(255,255,255,0.85);
+        backdrop-filter: blur(8px);
+        top: 0;
+        left: 0;
+        box-shadow: 0 2px 16px 0 rgba(0,0,0,0.08);
+        color: #222;
+        transition: background 0.3s, box-shadow 0.3s, color 0.3s;
+    }
+    #mainNav.scrolled a, #mainNav.scrolled span {
+        color: #222 !important;
+    }
+    #mainNav.scrolled .hover\:text-orange-400:hover {
+        color: #f59e42 !important;
+    }
+    /* Keep logo icon always orange */
+    .logo-icon {
+        color: #f59e42 !important;
+        transition: color 0.3s;
+    }
+        .slide {
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+            background-size: cover;
+            background-position: center;
+        }
+        
+        .slide.active {
+            opacity: 1;
+            z-index: 1;
+        }
+        
+        .slider-dot.active {
+            background-color: #f97316;
+            /* background-opacity: 1; */
+        }
+        
+        .destination-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+        
+        .payment-method:hover {
+            background-color: #f3f4f6;
+        }
+        
+        #bookingForm, #paymentSection {
+            scroll-margin-top: 100px;
+        }
+        
+        /* Animation for form steps */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .form-step {
+            animation: fadeIn 0.5s ease-out;
+        }
+      /* Testimonial section transparent background */
+    #testimonials {
+        background: transparent !important;
+    }
+      /* Glassy, gradient, translucent testimonial boxes */
+    .testimonial-box {
+        background: linear-gradient(135deg, rgba(255, 186, 115, 0.25) 0%, rgba(255,255,255,0.35) 100%);
+        backdrop-filter: blur(12px) saturate(160%);
+        -webkit-backdrop-filter: blur(12px) saturate(160%);
+        border-radius: 2rem !important;
+        box-shadow: 0 8px 32px 0 rgba(255, 140, 0, 0.18), 0 2px 8px 0 rgba(0,0,0,0.10);
+        border: 1.5px solid rgba(255,255,255,0.25);
+    }
+/* ===================== Animated Auth Modal Entrance ===================== */
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-40px) scale(0.98); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes fadeOutUp {
+  from { opacity: 1; transform: none; }
+  to   { opacity: 0; transform: translateY(-40px) scale(0.98); }
+}
+#authModal .bg-white {
+  animation-duration: 0.35s;
+  animation-fill-mode: both;
+}
+.fadeInDown > .bg-white {
+  animation-name: fadeInDown;
+}
+.fadeOutUp > .bg-white {
+  animation-name: fadeOutUp;
+}
+/* ===================== Animated Destination Cards & Ripple Effect ===================== */
+.destination-card {
+  transition: transform 0.25s cubic-bezier(.4,2,.6,1), box-shadow 0.25s cubic-bezier(.4,2,.6,1);
+  will-change: transform, box-shadow;
+}
+.destination-card:hover {
+  transform: scale(1.035) translateY(-6px);
+  box-shadow: 0 12px 32px 0 rgba(245, 158, 66, 0.18), 0 2px 8px 0 rgba(0,0,0,0.10);
+  z-index: 2;
+}
+/* Ripple effect for Book Now buttons */
+.ripple-btn {
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+}
+.ripple-btn .ripple {
+  position: absolute;
+  border-radius: 50%;
+  transform: scale(0);
+  animation: ripple-anim 0.5s linear;
+  background: rgba(245, 158, 66, 0.25);
+  pointer-events: none;
+}
+@keyframes ripple-anim {
+  to {
+    transform: scale(2.5);
+    opacity: 0;
+  }
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-fadeIn {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+/* Toast Notification Container - Always Visible, Top Layer */
+#toastContainer {
+  position: fixed !important;
+  top: 1.5rem;
+  right: 1.5rem;
+  z-index: 2147483647 !important;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  pointer-events: none;
+  width: auto;
+  max-width: 90vw;
+  isolation: isolate;
+}
+
+body {
+  isolation: isolate;
+}
+.passenger {
+    margin-bottom: 20px;
+  }
+  
+@media (max-width: 640px) {
+  #toastContainer {
+    right: 0.5rem;
+    left: 0.5rem;
+    top: 0.5rem;
+    max-width: unset;
+    align-items: flex-end;
+  }
+}
+
+.toast {
+  background: rgba(255,255,255,0.98);
+  color: #1a202c;
+  border-radius: 0.75rem;
+  box-shadow: 0 6px 32px 0 rgba(0,0,0,0.18), 0 1.5px 4px 0 rgba(0,0,0,0.12);
+  padding: 1rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  min-width: 220px;
+  max-width: 350px;
+  pointer-events: auto;
+  opacity: 0.98;
+  transition: transform 0.3s, opacity 0.3s;
+}
+
+body > #toastContainer {
+  isolation: isolate;
+}
+@keyframes avatar-bounce {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+}
+
+.avatar-bounce {
+  animation: avatar-bounce 0.5s ease-in-out;
+}
+#loadingScreen {
+  transition: opacity 0.5s ease;
+}
+@keyframes jump {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-6px);
+    }
+  }
+  .animate-jump {
+    animation: jump 1s ease-in-out infinite;
+  }
+  
