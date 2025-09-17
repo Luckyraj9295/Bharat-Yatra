@@ -1,0 +1,21 @@
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2ODg4ZTg2Mzg5ZWZhZTY2NzAzNmE3ZDAiLCJpc0FkbWluIjp0cnVlLCJpYXQiOjE3NTM4Njc2MTUsImV4cCI6MTc1NDQ3MjQxNX0.dqxkG7XE60tp_YJLOxJ8hZwRei7mvPjpF0GiowmWPqg",
+  "user": {
+    "_id": "6888e86389efae667036a7d0",
+    "name": "Lucky",
+    "email": "luckykumar9295@gmail.com",
+    "isAdmin": true,
+    "createdAt": "2025-07-29T15:27:31.934Z",
+    "updatedAt": "2025-07-30T09:25:59.762Z",
+    "__v": 0
+  }
+
+
+localStorage.setItem('token', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2ODg4ZTg2Mzg5ZWZhZTY2NzAzNmE3ZDAiLCJpc0FkbWluIjp0cnVlLCJpYXQiOjE3NTM4Njc2MTUsImV4cCI6MTc1NDQ3MjQxNX0.dqxkG7XE60tp_YJLOxJ8hZwRei7mvPjpF0GiowmWPqg');
+
+localStorage.setItem('userInfo', JSON.stringify({
+  _id: "6888e86389efae667036a7d0",
+  name: "Lucky",
+  email: "luckykumar9295@gmail.com",
+  isAdmin: true
+}));
