@@ -5,6 +5,7 @@
 ![Render](https://img.shields.io/badge/Deploy-Render-blue)
 ![Netlify](https://img.shields.io/badge/Frontend-Netlify-purple)
 ![Repo Size](https://img.shields.io/github/repo-size/Luckyraj9295/Bharat-Yatra)
+![GitHub stars](https://img.shields.io/github/stars/Luckyraj9295/Bharat-Yatra?style=social)
 ### Smart Travel Booking Web Application  
 
 Bharat Yatra is a full-stack travel booking web application that allows users to explore destinations, make bookings, manage travel history, and download invoices.  
