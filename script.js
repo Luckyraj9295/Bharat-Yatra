@@ -1,6 +1,7 @@
 const BASE_URL = "https://bharat-yatra.onrender.com";
 const API_BASE = `${BASE_URL}/api`;
 const UPLOADS_BASE = BASE_URL;
+const ADMIN_URL = `${window.location.origin}/admin/admin.html`;
 
 // Toggle more destinations
 const toggleBtn = document.getElementById("toggleDestinationsBtn");
@@ -1254,11 +1255,10 @@ window.addEventListener('DOMContentLoaded', function() {
         showSignInToast('Login successful!', 'success');
 
         if (data.user.isAdmin) {
-  // 👇 Full absolute URL to backend-admin panel
-  window.location.href = `${BASE_URL}/admin/admin.html`;
-} else {
-  window.location.href = `/index.html`; // or reload if user
-}
+          window.location.href = ADMIN_URL;
+        } else {
+          window.location.href = `/index.html`; // or reload if user
+        }
       } else {
         showSignInToast(data.message || 'Login failed.', 'error');
       }
@@ -1461,11 +1461,10 @@ if (signInForm) {
         }, 300);
 
         if (data.user.isAdmin) {
-  // 👇 Full absolute URL to backend-admin panel
-  window.location.href = `${BASE_URL}/admin/admin.html`;
-} else {
-  window.location.href = `/index.html`; // or reload if user
-}
+          window.location.href = ADMIN_URL;
+        } else {
+          window.location.href = `/index.html`; // or reload if user
+        }
 
       } else {
         showSignInToast(data.message || 'Login failed.', 'error');
@@ -1635,7 +1634,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // Redirect based on role
       if (data.user.isAdmin) {
-        window.location.href = "/admin/admin.html";
+        window.location.href = ADMIN_URL;
       } else {
         location.reload(); // or navigate to profile.html
       }

@@ -26,9 +26,6 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Admin panel static
-app.use('/admin', express.static(path.join(__dirname, 'admin')));
-
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/destinations', destinationRoutes);

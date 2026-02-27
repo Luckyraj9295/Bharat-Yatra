@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-  const API_BASE = '/api';
+  const API_BASE = window.API_BASE || 'https://bharat-yatra.onrender.com/api';
   const token = localStorage.getItem('token');
   let userInfo;
 
