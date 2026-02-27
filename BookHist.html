@@ -148,8 +148,8 @@ document.addEventListener("DOMContentLoaded", function() {
   ↑ Back to Top
 </button>
   <script>
-const API_BASE = 'http://localhost:5000/api';
-const UPLOADS_BASE = 'http://localhost:5000';
+const API_BASE = 'https://bharat-yatra.onrender.com/api';
+const UPLOADS_BASE = 'https://bharat-yatra.onrender.com';
 
 const upcomingList = document.getElementById("upcomingList");
 const pastList = document.getElementById("pastList");
@@ -738,7 +738,7 @@ document.addEventListener("click", async function (e) {
   if (!token || !ref) return alert("Missing token or reference.");
 
   try {
-  const res = await fetch("http://localhost:5000/api/bookings/me", {
+  const res = await fetch("https://bharat-yatra.onrender.com/api/bookings/me", {
     headers: { Authorization: "Bearer " + token }
   });
 

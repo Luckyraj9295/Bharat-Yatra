@@ -1,5 +1,6 @@
-const API_BASE = 'http://localhost:5000/api';
-const UPLOADS_BASE = 'http://localhost:5000';
+const BASE_URL = "https://bharat-yatra.onrender.com";
+const API_BASE = `${BASE_URL}/api`;
+const UPLOADS_BASE = BASE_URL;
 
 // Toggle more destinations
 const toggleBtn = document.getElementById("toggleDestinationsBtn");
@@ -1184,7 +1185,7 @@ window.addEventListener('DOMContentLoaded', function() {
     }
 
     try {
-      const res = await fetch('http://localhost:5000/api/auth/register', {
+      const res = await fetch(`${API_BASE}/auth/register`, {
         
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1220,7 +1221,7 @@ window.addEventListener('DOMContentLoaded', function() {
     }
 
     try {
-      const res = await fetch('http://localhost:5000/api/auth/login', {
+      const res = await fetch(`${API_BASE}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
@@ -1239,9 +1240,9 @@ window.addEventListener('DOMContentLoaded', function() {
 
         if (data.user.isAdmin) {
   // 👇 Full absolute URL to backend-admin panel
-  window.location.href = 'http://localhost:5000/admin/admin.html';
+  window.location.href = `${BASE_URL}/admin/admin.html`;
 } else {
-  window.location.href = '/index.html'; // or reload if user
+  window.location.href = `/index.html`; // or reload if user
 }
       } else {
         showSignInToast(data.message || 'Login failed.', 'error');
@@ -1422,7 +1423,7 @@ if (signInForm) {
     }
 
     try {
-      const res = await fetch('http://localhost:5000/api/auth/login', {
+      const res = await fetch(`${API_BASE}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
@@ -1446,9 +1447,9 @@ if (signInForm) {
 
         if (data.user.isAdmin) {
   // 👇 Full absolute URL to backend-admin panel
-  window.location.href = 'http://localhost:5000/admin/admin.html';
+  window.location.href = `${BASE_URL}/admin/admin.html`;
 } else {
-  window.location.href = '/index.html'; // or reload if user
+  window.location.href = `/index.html`; // or reload if user
 }
 
       } else {
@@ -1602,7 +1603,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
   async function handleLogin(email, password) {
   try {
-    const res = await fetch("http://localhost:5000/api/auth/login", {
+    const res = await fetch(`${API_BASE}/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
