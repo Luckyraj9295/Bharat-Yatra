@@ -48,6 +48,35 @@ router.delete(
 // 🔍 Public - Get destination by ID
 router.get('/:id', destinationController.getDestinationById);
 
+// 📥 Public - Proxy brochure download to avoid CORS/auth issues
+router.get('/download-brochure', async (req, res) => {
+  try {
+    const { url } = req.query;
+    if (!url) {
+      return res.status(400).json({ message: 'URL parameter required' });
+    }
+
+    const https = require('https');
+    const http = require('http');
+    const protocol = url.startsWith('https') ? https : http;
+
+    protocol.get(url, (cloudinaryRes) => {
+      // Set headers to force download
+      res.setHeader('Content-Type', cloudinaryRes.headers['content-type'] || 'application/octet-stream');
+      res.setHeader('Content-Disposition', 'attachment');
+      
+      // Pipe the Cloudinary response to client
+      cloudinaryRes.pipe(res);
+    }).on('error', (err) => {
+      console.error('Error fetching from Cloudinary:', err);
+      res.status(500).json({ message: 'Failed to download file' });
+    });
+  } catch (err) {
+    console.error('Download proxy error:', err);
+    res.status(500).json({ message: 'Failed to download file' });
+  }
+});
+
 // ❌ Multer error handler
 router.use((err, req, res, next) => {
   if (err.code === 'LIMIT_FILE_SIZE') {

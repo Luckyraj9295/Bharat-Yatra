@@ -187,8 +187,15 @@ async function downloadBrochure(url, title, originalFileName) {
       console.log('📥 Generated filename:', filename);
     }
 
+    // For PDFs (raw files), use backend proxy to avoid 401 errors
+    let fetchUrl = url;
+    if (url.includes('/raw/upload/')) {
+      fetchUrl = `${API_BASE}/api/destinations/download-brochure?url=${encodeURIComponent(url)}`;
+      console.log('📥 Using proxy for PDF:', fetchUrl);
+    }
+
     // Fetch the file WITHOUT fl_attachment to avoid 401 error
-    const response = await fetch(url);
+    const response = await fetch(fetchUrl);
     if (!response.ok) throw new Error(`Failed to fetch file: ${response.status}`);
     
     const blob = await response.blob();

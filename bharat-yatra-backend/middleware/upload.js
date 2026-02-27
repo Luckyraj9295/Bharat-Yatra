@@ -42,10 +42,9 @@ const buildDynamicStorage = () =>
           : "bharat-yatra/destinations",
         resource_type: isBrochure ? "raw" : "image",
         type: "upload",
-        access_mode: "public",
-        // Disable authentication for public downloads
+        // Make raw files publicly accessible without authentication
         ...(isBrochure && { 
-          access_control: [{ access_type: "anonymous" }]
+          access_mode: "public"
         }),
         allowed_formats: ["jpg", "jpeg", "png", "webp", "pdf"],
       };
