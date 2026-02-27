@@ -116,30 +116,56 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('destForm').addEventListener('submit', async e => {
     e.preventDefault();
-    const id = document.getElementById('destId').value;
-    const fd = new FormData();
-    fd.append('title', document.getElementById('title').value);
-    fd.append('price', document.getElementById('price').value);
-    fd.append('description', document.getElementById('description').value);
+    console.log('Form submission started');
+    
+    try {
+      const id = document.getElementById('destId').value;
+      const fd = new FormData();
+      fd.append('title', document.getElementById('title').value);
+      fd.append('price', document.getElementById('price').value);
+      fd.append('description', document.getElementById('description').value);
 
-    const days = document.getElementById('durationDays').value;
-    const nights = document.getElementById('durationNights').value;
-    fd.append('duration', `${days} Days / ${nights}N`);
+      const days = document.getElementById('durationDays').value;
+      const nights = document.getElementById('durationNights').value;
+      fd.append('duration', `${days} Days / ${nights}N`);
 
-    fd.append('moreDestination', document.getElementById('moreDestination').checked ? 'true' : 'false');
+      fd.append('moreDestination', document.getElementById('moreDestination').checked ? 'true' : 'false');
 
-    const img = document.getElementById('image').files[0];
-    const brochure = document.getElementById('brochure').files[0];
-    if (img) fd.append('image', img);
-    if (brochure) fd.append('brochure', brochure);
+      const img = document.getElementById('image').files[0];
+      const brochure = document.getElementById('brochure').files[0];
+      if (img) fd.append('image', img);
+      if (brochure) fd.append('brochure', brochure);
 
-    const method = id ? 'PUT' : 'POST';
-    const url = id ? `${API_BASE}/destinations/${id}` : `${API_BASE}/destinations`;
-    await fetch(url, { method, headers, body: fd });
+      const method = id ? 'PUT' : 'POST';
+      const url = id ? `${API_BASE}/destinations/${id}` : `${API_BASE}/destinations`;
+      
+      console.log('Sending request to:', url);
+      console.log('Method:', method);
+      console.log('Has image:', !!img);
+      console.log('Has brochure:', !!brochure);
+      
+      const response = await fetch(url, { method, headers, body: fd });
+      
+      console.log('Response status:', response.status);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Error response:', errorText);
+        alert(`Failed to save destination: ${response.status} - ${errorText}`);
+        return;
+      }
+      
+      const result = await response.json();
+      console.log('Success:', result);
+      alert('Destination saved successfully!');
 
-    e.target.reset();
-    document.getElementById('destId').value = '';
-    loadDestinations();
+      e.target.reset();
+      document.getElementById('destId').value = '';
+      loadDestinations();
+    } catch (err) {
+      console.error('Form submission error:', err);
+      alert('Error saving destination: ' + err.message);
+    }
   });
 
   // ✅ Load Bookings

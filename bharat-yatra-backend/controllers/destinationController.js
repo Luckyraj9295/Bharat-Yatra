@@ -22,7 +22,19 @@ const extractCloudinaryPublicId = (url) => {
 const deleteCloudinaryAsset = async (url) => {
   const publicId = extractCloudinaryPublicId(url);
   if (!publicId) return;
-  await cloudinary.uploader.destroy(publicId, { resource_type: 'image' });
+  
+  try {
+    // Detect resource type based on folder path or extension
+    const resourceType = publicId.includes('brochures/') ? 'raw' : 'image';
+    await cloudinary.uploader.destroy(publicId, { resource_type: resourceType });
+  } catch (err) {
+    // If detection fails, try both types
+    try {
+      await cloudinary.uploader.destroy(publicId, { resource_type: 'image' });
+    } catch {
+      await cloudinary.uploader.destroy(publicId, { resource_type: 'raw' });
+    }
+  }
 };
 
 // ➕ Create a new destination

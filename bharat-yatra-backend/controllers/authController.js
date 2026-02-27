@@ -24,7 +24,12 @@ const extractCloudinaryPublicId = (url) => {
 const deleteCloudinaryAsset = async (url) => {
   const publicId = extractCloudinaryPublicId(url);
   if (!publicId) return;
-  await cloudinary.uploader.destroy(publicId, { resource_type: 'image' });
+  try {
+    // Profile images are always 'image' type
+    await cloudinary.uploader.destroy(publicId, { resource_type: 'image' });
+  } catch (err) {
+    console.error('Error deleting Cloudinary asset:', err.message);
+  }
 };
 
 
