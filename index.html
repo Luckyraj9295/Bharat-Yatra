@@ -1,0 +1,1216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="/images/mountain-sun-solid.png" />
+    <title>Bharat Yatra - Explore Incredible India</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://smtpjs.com/v3/smtp.js"></script>
+    
+</head>
+<body class="font-sans min-h-screen bg-gradient-to-br from-white/70 via-orange-100/60 to-orange-300/40 backdrop-blur-xl">
+    <div id="loadingScreen" class="fixed inset-0 bg-white z-[9999] flex items-center justify-center">
+  <div class="w-full flex flex-col items-center justify-center">
+    <!-- Top Images Row -->
+    <div class="flex justify-center gap-2 md:gap-4 mt-4 mb-6">
+      <img src="https://www.maharashtragadkille.com/system/images/000/739/785/af744f9ee458fa033f65cf02b9fcf7e2/banner/HD-wallpaper-baba-kedarnath-kedarnath-lord-shiva.jpg?1711926830" alt="Kedarnath" class="w-20 h-28 object-cover rounded-2xl shadow-md -rotate-6" />
+      <img src="https://images.unsplash.com/photo-1626621331169-5f34be280ed9?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Nnx8a3VsbHUlMjBtYW5hbGl8ZW58MHx8MHx8fDA%3D" alt="Manali" class="w-20 h-28 object-cover rounded-2xl shadow-md rotate-3" />
+      <img src="https://images.unsplash.com/photo-1678966432189-d58296e45ad2?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8aW5kaWElMjBnYXRlfGVufDB8fDB8fHww" alt="India Gate" class="w-20 h-28 object-cover rounded-2xl shadow-md -rotate-3" />
+      <img src="https://plus.unsplash.com/premium_photo-1697730412085-6f10bddf58c7?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8c2lra2ltJTIwdG91cmlzbXxlbnwwfHwwfHx8MA%3D%3D" alt="Sikkim" class="w-20 h-28 object-cover rounded-2xl shadow-md rotate-6" />
+    </div>
+    <!-- Center Logo and Text -->
+    <div class="flex flex-col items-center justify-center flex-1 py-4">
+      <img src="images/mountain-sun-solid.png" alt="Logo" class="w-16 h-16 mx-auto animate-bounce mb-4" />
+      <h1 class="text-3xl font-extrabold text-orange-600 tracking-wide mb-2">Bharat <span class="text-[#1a237e]">Yatra</span></h1>
+      <p class="text-gray-500 text-base mt-2">Explore Incredible India</p>
+    </div>
+    <!-- Bottom Images Row -->
+    <div class="flex justify-center gap-2 md:gap-4 mt-6 mb-4">
+      <img src="https://images.pexels.com/photos/460672/pexels-photo-460672.jpeg" alt="London" class="w-20 h-28 object-cover rounded-2xl shadow-md rotate-3" />
+      <img src="https://images.pexels.com/photos/164631/pexels-photo-164631.jpeg" alt="Santorini" class="w-20 h-28 object-cover rounded-2xl shadow-md -rotate-3" />
+      <img src="https://images.pexels.com/photos/208745/pexels-photo-208745.jpeg" alt="Golden Gate" class="w-20 h-28 object-cover rounded-2xl shadow-md rotate-6" />
+      <img src="https://images.pexels.com/photos/356830/pexels-photo-356830.jpeg" alt="Pagoda" class="w-20 h-28 object-cover rounded-2xl shadow-md -rotate-6" />
+    </div>
+  </div>
+</div>
+    <!-- Navigation -->
+    <nav id="mainNav" class="absolute top-0 left-0 w-full bg-transparent backdrop-blur-none shadow-none z-50 transition-all duration-300 text-white">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center">
+                <i class="fas fa-mountain-sun text-3xl mr-2 logo-icon"></i>
+                <span class="text-xl font-bold logo-text">Bharat Yatra</span>
+            </div>
+            <div class="hidden md:flex space-x-8">
+                <a href="#" class="hover:text-orange-400">Home</a>
+                <a href="#destinations" class="hover:text-orange-400">Destinations</a>
+                <a href="#bookingForm" class="hover:text-orange-400">Book Now</a>
+                <a href="#testimonials" class="hover:text-orange-400">Reviews</a>
+            </div>
+            <div class="md:hidden">
+                <button id="menuBtn" class="focus:outline-none">
+                    <i class="fas fa-bars text-2xl"></i>
+                </button>
+            </div>
+            
+            <!-- Sign In/Sign Up Button -->
+            <div class="ml-4 flex items-center space-x-4">
+                <div id="toastContainer" class="w-auto max-w-xs pointer-events-none translate-x-[-40px]"></div>
+
+                <div id="userMenu" class="relative hidden">
+                    <button id="userMenuBtn" class="flex items-center focus:outline-none">
+                        <img id="userAvatar" src="https://ui-avatars.com/api/?name=User&background=F59E42&color=fff&rounded=true" alt="User Avatar" class="w-10 h-10 rounded-full border-2 border-orange-400 shadow-sm object-cover">
+                    </button>
+                    <div id="userDropdown" class="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg py-4 px-6 z-50 hidden text-gray-800">
+                        <div class="flex items-center space-x-3 mb-2">
+                            <img id="dropdownAvatar" src="https://ui-avatars.com/api/?name=User&background=F59E42&color=fff&rounded=true" alt="User Avatar" class="w-12 h-12 rounded-full border-2 border-orange-400 object-cover">
+                            <div>
+                                <div id="dropdownName" class="font-bold text-lg text-gray-800">User</div>
+                                <div id="dropdownEmail" class="text-sm text-gray-500">user@email.com</div>
+                            </div>
+                        </div>
+                        <button id="profileBtn" onclick="window.location.href='profile.html'" class="flex items-center w-full py-2 px-2 rounded-lg hover:bg-orange-50 hover:text-orange-600 transition-colors duration-200">
+                        <i class="fas fa-user mr-2"></i> My Profile
+                        </button>
+                        <button id="HistoryBtn" onclick="window.location.href='BookHist.html'" class="flex items-center w-full py-2 px-2 rounded-lg hover:bg-orange-50 hover:text-orange-600 transition-colors duration-200">
+                        <i class="fa-solid fa-suitcase-rolling mr-2"></i>  My Trips
+                        </button>
+                        <button id="ContUs" onclick="window.location.href='ContUs.html'" class="flex items-center w-full py-2 px-2 rounded-lg hover:bg-orange-50 hover:text-orange-600 transition-colors duration-200">
+                        <i class="fa-solid fa-headset mr-2"></i>  Support
+                        </button>
+<button id="logoutBtn" type="button" class="flex items-center w-full py-2 px-2 rounded-lg hover:bg-orange-50 text-red-500 font-semibold mt-2">
+    <i class="fas fa-sign-out-alt mr-2"></i> Logout
+</button>
+                        
+                    </div>
+                </div>
+                <button id="authBtn" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-5 rounded-full transition duration-300">Sign In / Sign Up</button>
+            </div>
+        </div>
+        <!-- Mobile Menu -->
+        <div id="mobileMenu" class="hidden md:hidden bg-white/80 backdrop-blur-md py-2 px-4 shadow-lg">
+            <a href="#" class="block py-2 text-gray-800 hover:text-orange-500">Home</a>
+            <a href="#destinations" class="block py-2 text-gray-800 hover:text-orange-500">Destinations</a>
+            <a href="#bookingForm" class="block py-2 text-gray-800 hover:text-orange-500">Book Now</a>
+            <a href="#testimonials" class="block py-2 text-gray-800 hover:text-orange-500">Reviews</a>
+        </div>
+
+
+    </nav>
+
+    <!-- Sign In/Sign Up Modal -->
+    <div id="authModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm transition-opacity duration-300 hidden">
+
+        <div id="authDialog" class="bg-white rounded-2xl shadow-xl w-full max-w-md p-8 relative transform scale-95 transition-transform duration-300">
+
+            <button id="closeAuthModal" class="absolute top-4 right-4 text-gray-400 hover:text-orange-500 text-2xl">&times;</button>
+            <div class="flex mb-6 border-b border-gray-200">
+                <button id="signInTab" class="flex-1 py-2 text-lg font-semibold text-orange-500 border-b-2 border-orange-500 focus:outline-none">Sign In</button>
+                <button id="signUpTab" class="flex-1 py-2 text-lg font-semibold text-gray-500 border-b-2 border-transparent focus:outline-none">Sign Up</button>
+            </div>
+            <!-- Sign In Form -->
+            <form id="signInForm" class="space-y-5">
+                <div id="signInToastArea"></div>
+                <!-- Email -->
+                <div>
+                    <label class="block text-gray-700 mb-1">Email</label>
+                    <input type="email" id="signInEmail" class="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-orange-400" required>
+                </div>
+                <!-- Password -->
+                <div>
+                    <label class="block text-gray-700 mb-1">Password</label>
+                    <div class="relative">
+                        <input type="password" id="signInPassword" class="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-orange-400 pr-12" required>
+                        <button type="button" id="toggleSignInPassword" tabindex="-1" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-orange-500 focus:outline-none">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 rounded-lg transition duration-300">Sign In</button>
+            </form>
+            <!-- Sign Up Form -->
+            <form id="signUpForm" class="space-y-5 hidden">
+                <div>
+                    <label class="block text-gray-700 mb-1">Full Name</label>
+                    <input type="text" id="signUpName" class="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-orange-400" required>
+                </div>
+                <div>
+                    <label class="block text-gray-700 mb-1">Email</label>
+                    <input type="email" id="signUpEmail" class="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-orange-400" required>
+                </div>
+                <div>
+                    <label class="block text-gray-700 mb-1">Password</label>
+                    <div class="relative">
+                        <input type="password" id="signUpPassword" class="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-orange-400 pr-12" required>
+                        <button type="button" id="toggleSignUpPassword" tabindex="-1" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-orange-500 focus:outline-none">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                    <p id="passwordStrengthMsg" class="text-xs mt-1 text-gray-500"></p>
+                </div>
+                <button type="submit" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 rounded-lg transition duration-300">Sign Up</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Hero Slider Section -->
+    <section class="relative h-screen">
+        <!-- Slider Container -->
+        <div class="hero-slider h-full w-full overflow-hidden">
+
+            
+
+            <!-- Slide 1 - Taj Mahal -->
+            <div class="slide absolute inset-0 bg-cover bg-center flex items-center" style="background-image: url('https://images.pexels.com/photos/1603650/pexels-photo-1603650.jpeg');">
+                <div class="absolute inset-0 bg-black bg-opacity-40"></div>
+                <div class="container mx-auto px-4 text-center relative z-10 text-white">
+                    <h1 class="text-4xl md:text-6xl font-bold mb-6">Discover the Taj Mahal</h1>
+                    <p class="text-xl md:text-2xl mb-8">Experience the wonder of this iconic white marble mausoleum</p>
+                    <a href="#bookingForm" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-8 rounded-full text-lg transition duration-300 inline-block">Book Now</a>
+                </div>
+            </div>
+
+            <!-- Slide 2 - Kerala Backwaters -->
+            <div class="slide absolute inset-0 bg-cover bg-center flex items-center" style="background-image: url('https://images.pexels.com/photos/32807880/pexels-photo-32807880.jpeg');">
+                <div class="absolute inset-0 bg-black bg-opacity-40"></div>
+                <div class="container mx-auto px-4 text-center relative z-10 text-white">
+                    <h1 class="text-4xl md:text-6xl font-bold mb-6">Kerala Backwaters</h1>
+                    <p class="text-xl md:text-2xl mb-8">Cruise through palm-fringed canals and serene lagoons</p>
+                    <a href="#bookingForm" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-8 rounded-full text-lg transition duration-300 inline-block">Explore Packages</a>
+                </div>
+            </div>
+
+            <!-- Slide 3 - Rajasthan -->
+            <div class="slide absolute inset-0 bg-cover bg-center flex items-center" style="background-image: url('https://images.pexels.com/photos/6440428/pexels-photo-6440428.jpeg');">
+                <div class="absolute inset-0 bg-black bg-opacity-40"></div>
+                <div class="container mx-auto px-4 text-center relative z-10 text-white">
+                    <h1 class="text-4xl md:text-6xl font-bold mb-6">Royal Rajasthan</h1>
+                    <p class="text-xl md:text-2xl mb-8">Discover the majestic forts and palaces of the desert kingdom</p>
+                    <a href="#bookingForm" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-8 rounded-full text-lg transition duration-300 inline-block">Plan Your Trip</a>
+                </div>
+            </div>
+
+            <!-- Slide 4 - Manali -->
+            <div class="slide absolute inset-0 bg-cover bg-center flex items-center" style="background-image: url('https://images.pexels.com/photos/14161885/pexels-photo-14161885.png');">
+                <div class="absolute inset-0 bg-black bg-opacity-40"></div>
+                <div class="container mx-auto px-4 text-center relative z-10 text-white">
+                    <h1 class="text-4xl md:text-6xl font-bold mb-6">Manali Getaway</h1>
+                    <p class="text-xl md:text-2xl mb-8">Experience the breathtaking beauty of the Himalayas</p>
+                    <a href="#bookingForm" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-8 rounded-full text-lg transition duration-300 inline-block">Explore Now</a>
+                </div>
+            </div>
+
+            <!-- Slide 5 - Ladakh -->
+            <div class="slide absolute inset-0 bg-cover bg-center flex items-center" style="background-image: url('https://images.pexels.com/photos/18646435/pexels-photo-18646435.jpeg');">
+                <div class="absolute inset-0 bg-black bg-opacity-40"></div>
+                <div class="container mx-auto px-4 text-center relative z-10 text-white">
+                    <h1 class="text-4xl md:text-6xl font-bold mb-6">Ladakh Adventure</h1>
+                    <p class="text-xl md:text-2xl mb-8">Journey through the breathtaking landscapes of the Himalayas</p>
+                    <a href="#bookingForm" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-8 rounded-full text-lg transition duration-300 inline-block">Start Adventure</a>
+                </div>
+            </div>
+
+            <!-- Slide 6 - Goa -->
+            <div class="slide absolute inset-0 bg-cover bg-center flex items-center" style="background-image: url('https://images.pexels.com/photos/994605/pexels-photo-994605.jpeg');">
+                <div class="absolute inset-0 bg-black bg-opacity-40"></div>
+                <div class="container mx-auto px-4 text-center relative z-10 text-white">
+                    <h1 class="text-4xl md:text-6xl font-bold mb-6">Goa Beaches</h1>
+                    <p class="text-xl md:text-2xl mb-8">Relax on golden sands and enjoy vibrant nightlife</p>
+                    <a href="#bookingForm" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-8 rounded-full text-lg transition duration-300 inline-block">Book Vacation</a>
+                </div>
+            </div>
+
+            <!-- Slide 7 - Kashmir -->
+            <div class="slide absolute inset-0 bg-cover bg-center flex items-center" style="background-image: url('https://images.pexels.com/photos/25786569/pexels-photo-25786569.jpeg');">
+                <div class="absolute inset-0 bg-black bg-opacity-40"></div>
+                <div class="container mx-auto px-4 text-center relative z-10 text-white">
+                    <h1 class="text-4xl md:text-6xl font-bold mb-6">Kashmir Valley</h1>
+                    <p class="text-xl md:text-2xl mb-8">Experience paradise on earth with breathtaking landscapes</p>
+                    <a href="#bookingForm" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-8 rounded-full text-lg transition duration-300 inline-block">Explore Now</a>
+                </div>
+            </div>
+        </div>
+        <!-- Slide 8 - Char Dham Yatra -->
+            <div class="slide absolute inset-0 bg-cover bg-center flex items-center" style="background-image: url('./images/unnamed.jpg');">
+                <div class="absolute inset-0 bg-black bg-opacity-40"></div>
+                <div class="container mx-auto px-4 text-center relative z-10 text-white">
+                    <h1 class="text-4xl md:text-6xl font-bold mb-6">Char Dham Yatra</h1>
+                    <p class="text-xl md:text-2xl mb-8">Embark on a sacred pilgrimage to Yamunotri, Gangotri, Kedarnath, and Badrinath in the Himalayas</p>
+                    <a href="#bookingForm" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-8 rounded-full text-lg transition duration-300 inline-block">Book Now</a>
+                </div>
+            </div>
+
+        <!-- Slider Navigation Arrows -->
+        <button id="prevSlideBtn" aria-label="Previous Slide" class="absolute left-4 top-1/2 transform -translate-y-1/2 z-20 bg-transparent hover:bg-white hover:bg-opacity-30 rounded-full w-12 h-12 md:w-16 md:h-16 flex items-center justify-center transition duration-300 focus:outline-none">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 32 32" stroke-width="4" class="w-8 h-8 md:w-12 md:h-12">
+                <path stroke="#000" stroke-linecap="round" stroke-linejoin="round" d="M21.75 27.5L10.25 16l11.5-11.5" />
+                <path stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M21.75 27.5L10.25 16l11.5-11.5" />
+            </svg>
+        </button>
+        <button id="nextSlideBtn" aria-label="Next Slide" class="absolute right-4 top-1/2 transform -translate-y-1/2 z-20 bg-transparent hover:bg-white hover:bg-opacity-30 rounded-full w-12 h-12 md:w-16 md:h-16 flex items-center justify-center transition duration-300 focus:outline-none">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 32 32" stroke-width="4" class="w-8 h-8 md:w-12 md:h-12">
+                <path stroke="#000" stroke-linecap="round" stroke-linejoin="round" d="M10.25 4.5l11.5 11.5-11.5 11.5" />
+                <path stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M10.25 4.5l11.5 11.5-11.5 11.5" />
+            </svg>
+        </button>
+        <!-- Slider Dots -->
+        <div class="absolute bottom-8 left-0 right-0 flex justify-center space-x-2 z-10">
+            <button class="slider-dot w-3 h-3 rounded-full bg-white bg-opacity-50 focus:outline-none" data-slide="0"></button>
+            <button class="slider-dot w-3 h-3 rounded-full bg-white bg-opacity-50 focus:outline-none" data-slide="1"></button>
+            <button class="slider-dot w-3 h-3 rounded-full bg-white bg-opacity-50 focus:outline-none" data-slide="2"></button>
+            <button class="slider-dot w-3 h-3 rounded-full bg-white bg-opacity-50 focus:outline-none" data-slide="3"></button>
+            <button class="slider-dot w-3 h-3 rounded-full bg-white bg-opacity-50 focus:outline-none" data-slide="4"></button>
+            <button class="slider-dot w-3 h-3 rounded-full bg-white bg-opacity-50 focus:outline-none" data-slide="5"></button>
+            <button class="slider-dot w-3 h-3 rounded-full bg-white bg-opacity-50 focus:outline-none" data-slide="6"></button>
+            <button class="slider-dot w-3 h-3 rounded-full bg-white bg-opacity-50 focus:outline-none" data-slide="7"></button>
+        </div>
+    </section>
+
+<!-- Popular Destinations -->
+  <section id="destinations" class="py-16 bg-white">
+    <div class="container mx-auto px-4">
+      <h2 class="text-3xl font-bold text-center mb-12 text-gray-800">Popular Indian Destinations</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <!-- Visible destination cards injected dynamically -->
+      </div>
+
+      <!-- Additional Destinations (hidden by default) -->
+      <div id="moreDestinations" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-8">
+        <!-- Hidden destination cards injected dynamically -->
+      </div>
+    </div>
+  </section>
+
+  <!-- Notch + See More Button -->
+  <div class="relative bg-[#f5f6f8] -mt-1">
+    <svg class="w-full h-[60px] block" viewBox="0 0 1440 60" preserveAspectRatio="none">
+      <path d="M0 0 H1440 V60 H0 Z" fill="#f5f6f8" />
+      <path d="M400 0 L660 60 L780 60 L1040 0 Z" fill="white" />
+    </svg>
+    <button id="toggleDestinationsBtn"
+      class="absolute top-[4px] left-1/2 transform -translate-x-1/2 flex flex-col items-center justify-center text-black">
+      <span id="toggleText" class="text-lg font-medium mb-1">See More</span>
+      <i id="toggleIcon" class="fas fa-chevron-down text-2xl animate-jump"></i>
+    </button>
+  </div>
+
+    <!-- Booking Form Section -->
+    <section id="bookingForm" class="py-16 bg-gray-100">
+        <div class="container mx-auto px-4">
+            <h2 class="text-3xl font-bold text-center mb-12 text-gray-800">Book Your Indian Adventure</h2>
+            
+            <div class="max-w-3xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
+                <!-- Progress Steps -->
+                <div class="flex justify-between px-8 py-6 bg-gray-50">
+                    <div class="step flex flex-col items-center">
+                        <div class="w-10 h-10 rounded-full bg-orange-500 text-white flex items-center justify-center font-bold mb-2">1</div>
+                        <span class="text-sm font-medium text-gray-700">Trip Details</span>
+                    </div>
+                    <div class="step flex flex-col items-center">
+                        <div class="w-10 h-10 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center font-bold mb-2">2</div>
+                        <span class="text-sm font-medium text-gray-500">Personal Info</span>
+                    </div>
+                    <div class="step flex flex-col items-center">
+                        <div class="w-10 h-10 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center font-bold mb-2">3</div>
+                        <span class="text-sm font-medium text-gray-500">Payment</span>
+                    </div>
+                </div>
+                
+                <!-- Form Steps -->
+                <div class="p-8">
+                    <!-- Step 1: Trip Details -->
+                    <div id="step1" class="form-step">
+                        <h3 class="text-xl font-bold mb-6 text-gray-800">Select Your Trip Details</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">Destination</label>
+                                <select id="destinationSelect" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500">
+                                <option value="">-- Select a destination --</option>
+                                </select>
+
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">Package Type</label>
+                                <select id="packageType" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500">
+                                    <option value="Standard">Standard (Basic amenities)</option>
+                                    <option value="Deluxe">Deluxe (Comfortable stay + meals)</option>
+                                    <option value="Premium">Premium (Luxury experience)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">Travel Date</label>
+                                <input type="date" id="travelDate" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500">
+                            </div>
+                            <div>
+<label class="block text-gray-700 font-medium mb-2">Number of Travelers</label>
+<input type="number" id="travelersCount" min="1" max="10" value="1" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500">
+                            </div>
+                        </div>
+                        <div class="mt-8">
+                            <label class="block text-gray-700 font-medium mb-2">Special Requests</label>
+                            <textarea id="specialRequests" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500" placeholder="Any dietary restrictions, accessibility needs, etc."></textarea>
+                        </div>
+                        <div class="mt-8 flex justify-end">
+                            <button onclick="nextStep(1)" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-6 rounded-lg transition duration-300">Next</button>
+                        </div>
+                    </div>
+                    
+                            <!-- Step 2: Personal Information -->
+                    <div id="step2" class="form-step hidden">
+                        <h3 class="text-xl font-bold mb-6 text-gray-800">Your Information</h3>
+                        <div id="travelerInfoWrapper">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">Full Name <span class="text-red-500">*</span></label>
+                                <input type="text" id="fullName" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500" placeholder="Enter your full name">
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">Email Address <span class="text-red-500">*</span></label>
+                                <input type="email" id="email" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500" placeholder="Enter your email">
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">Phone Number <span class="text-red-500">*</span></label>
+                                <input type="tel" id="phone" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500" placeholder="Enter your phone number">
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">State <span class="text-red-500">*</span></label>
+                                <select id="state" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500">
+                                    <option value="">Select your state</option>
+                                    <option value="Andhra Pradesh">Andhra Pradesh</option>
+                                    <option value="Arunachal Pradesh">Arunachal Pradesh</option>
+                                    <option value="Assam">Assam</option>
+                                    <option value="Bihar">Bihar</option>
+                                    <option value="Chhattisgarh">Chhattisgarh</option>
+                                    <option value="Goa">Goa</option>
+                                    <option value="Gujarat">Gujarat</option>
+                                    <option value="Haryana">Haryana</option>
+                                    <option value="Himachal Pradesh">Himachal Pradesh</option>
+                                    <option value="Jharkhand">Jharkhand</option>
+                                    <option value="Karnataka">Karnataka</option>
+                                    <option value="Kerala">Kerala</option>
+                                    <option value="Madhya Pradesh">Madhya Pradesh</option>
+                                    <option value="Maharashtra">Maharashtra</option>
+                                    <option value="Manipur">Manipur</option>
+                                    <option value="Meghalaya">Meghalaya</option>
+                                    <option value="Mizoram">Mizoram</option>
+                                    <option value="Nagaland">Nagaland</option>
+                                    <option value="Odisha">Odisha</option>
+                                    <option value="Punjab">Punjab</option>
+                                    <option value="Rajasthan">Rajasthan</option>
+                                    <option value="Sikkim">Sikkim</option>
+                                    <option value="Tamil Nadu">Tamil Nadu</option>
+                                    <option value="Telangana">Telangana</option>
+                                    <option value="Tripura">Tripura</option>
+                                    <option value="Uttar Pradesh">Uttar Pradesh</option>
+                                    <option value="Uttarakhand">Uttarakhand</option>
+                                    <option value="West Bengal">West Bengal</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">City <span class="text-red-500">*</span></label>
+                                <input type="text" id="city" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500" placeholder="Enter your city">
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">PIN Code <span class="text-red-500">*</span></label>
+                                <input type="text" id="pincode" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500" placeholder="Enter your PIN code">
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">Age <span class="text-red-500">*</span></label>
+                                <input type="number" id="age" name="age" 
+                                min="1" inputmode="numeric" pattern="[0-9]*" 
+                                onwheel="this.blur()" 
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500" 
+                                placeholder="Enter your age">
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">Gender <span class="text-red-500">*</span></label>
+                                <select id="gender" name="gender" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+                                    <option value="">Select your gender</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+                        </div>
+                        <button id="addTravelerBtn" class="block mx-auto mt-6 bg-green-600 text-white font-semibold py-2 px-6 rounded-full shadow-md hover:shadow-lg transition-all duration-300 hidden">+ Add Traveler</button>
+
+
+                        <div class="mt-8 flex justify-between">
+                            <button onclick="prevStep(2)" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-6 rounded-lg transition duration-300">Back</button>
+                            <button onclick="nextStep(2)" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-6 rounded-lg transition duration-300">Next</button>
+                        </div>
+                        
+                    </div>
+
+                    
+                    <!-- Step 3: Payment Information -->
+                    <div id="step3" class="form-step hidden">
+                        <h3 class="text-xl font-bold mb-6 text-gray-800">Payment Details</h3>
+                        <div id="travelerSummary" class="mt-4"></div>
+
+                        <div class="bg-gray-50 p-6 rounded-lg mb-6">
+                            <h4 class="font-bold text-lg mb-4">Booking Summary</h4>
+                            <div class="grid grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <p class="text-gray-600">Destination:</p>
+                                    <p id="summaryDestination" class="font-medium">-</p>
+                                </div>
+                                <div>
+                                    <p class="text-gray-600">Package:</p>
+                                    <p id="summaryPackage" class="font-medium">-</p>
+                                </div>
+                                <div>
+                                    <p class="text-gray-600">Travel Date:</p>
+                                    <p id="summaryDate" class="font-medium">-</p>
+                                </div>
+                                <div>
+                                    <p class="text-gray-600">Travelers:</p>
+                                    <p id="summaryTravelers" class="font-medium">-</p>
+                                </div>
+                            </div>
+                            <div class="border-t border-gray-200 pt-4">
+                                <div class="flex justify-between mb-2">
+                                    <span class="text-gray-600">Base Price:</span>
+                                    <span id="basePrice" class="font-medium">₹0</span>
+                                </div>
+                                <div class="flex justify-between mb-2">
+                                    <span class="text-gray-600">Taxes & Fees:</span>
+                                    <span id="taxes" class="font-medium">₹0</span>
+                                </div>
+                                <div class="flex justify-between font-bold text-lg">
+                                    <span>Total Amount:</span>
+                                    <span id="totalAmount" class="text-orange-500">₹0</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-6">
+                            <h4 class="font-bold text-lg mb-4">Select Payment Method</h4>
+                            <div class="space-y-3">
+                                <label class="payment-method flex items-center p-4 border border-gray-300 rounded-lg cursor-pointer">
+                                    <input type="radio" name="paymentMethod" value="creditCard" class="mr-3" checked>
+                                    <i class="far fa-credit-card text-2xl text-gray-700 mr-3"></i>
+                                    <span>Credit/Debit Card</span>
+                                </label>
+                                <label class="payment-method flex items-center p-4 border border-gray-300 rounded-lg cursor-pointer">
+                                    <input type="radio" name="paymentMethod" value="upi" class="mr-3">
+                                    <i class="fas fa-mobile-alt text-2xl text-gray-700 mr-3"></i>
+                                    <span>UPI Payment</span>
+                                </label>
+                                <label class="payment-method flex items-center p-4 border border-gray-300 rounded-lg cursor-pointer">
+                                    <input type="radio" name="paymentMethod" value="netBanking" class="mr-3">
+                                    <i class="fas fa-university text-2xl text-gray-700 mr-3"></i>
+                                    <span>Net Banking</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Credit Card Form (shown by default) -->
+                        <div id="creditCardForm">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-gray-700 font-medium mb-2">Card Number</label>
+                                    <input type="text" id="cardNumber" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500" placeholder="1234 5678 9012 3456">
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 font-medium mb-2">Card Holder Name</label>
+                                    <input type="text" id="cardName" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500" placeholder="Name on card">
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 font-medium mb-2">Expiry Date</label>
+                                    <input type="text" id="cardExpiry" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500" placeholder="MM/YY">
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 font-medium mb-2">CVV</label>
+                                    <input type="text" id="cardCvv" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500" placeholder="123">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- UPI Form (hidden by default) -->
+                        <div id="upiForm" class="hidden">
+                            <div class="mb-4">
+                                <label class="block text-gray-700 font-medium mb-2">UPI ID</label>
+                                <input type="text" id="upiId" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500" placeholder="yourname@upi">
+                            </div>
+                            <p class="text-sm text-gray-600">You'll be redirected to your UPI app to complete the payment</p>
+                        </div>
+                        
+                        <!-- Net Banking Form (hidden by default) -->
+                        <div id="netBankingForm" class="hidden">
+                            <div class="mb-4">
+                                <label class="block text-gray-700 font-medium mb-2">Select Bank</label>
+                                <select id="bankSelect" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500">
+                                    <option value="">Select your bank</option>
+                                    <option value="SBI">State Bank of India</option>
+                                    <option value="HDFC">HDFC Bank</option>
+                                    <option value="ICICI">ICICI Bank</option>
+                                    <option value="Axis">Axis Bank</option>
+                                    <option value="PNB">Punjab National Bank</option>
+                                    <option value="BOB">Bank of Baroda</option>
+                                    <option value="Canara">Canara Bank</option>
+                                    <option value="Kotak">Kotak Mahindra Bank</option>
+                                </select>
+                            </div>
+                            <p class="text-sm text-gray-600">You'll be redirected to your bank's website to complete the payment</p>
+                        </div>
+                        
+                        <div class="mt-8">
+                            <label class="flex items-center">
+                                <input type="checkbox" id="termsCheck" class="mr-2">
+                                <span class="text-sm text-gray-700">I agree to the <a href="#" class="text-orange-500 hover:underline">Terms & Conditions</a> and <a href="#" class="text-orange-500 hover:underline">Cancellation Policy</a></span>
+                            </label>
+                        </div>
+                        
+                        <div class="mt-8 flex justify-between">
+                            <button onclick="prevStep(3)" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-6 rounded-lg transition duration-300">Back</button>
+                            <button onclick="processPayment()" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-6 rounded-lg transition duration-300">Complete Booking</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Payment Confirmation Modal -->
+    <div id="paymentModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4">
+            <div class="text-center mb-6">
+                <i class="fas fa-check-circle text-5xl text-green-500 mb-4"></i>
+                <h3 class="text-2xl font-bold text-gray-800 mb-2">Payment Successful!</h3>
+                <p class="text-gray-600">Your booking has been confirmed.</p>
+            </div>
+            <div class="bg-gray-50 p-4 rounded-lg mb-6">
+                <p class="font-medium mb-2">Booking Reference: <span id="bookingRef" class="font-bold">IN2023XYZ123</span></p>
+                <p class="text-sm text-gray-600">We've sent the booking details to your email. Please check your inbox.</p>
+            </div>
+            <button onclick="closeModal()" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300">Done</button>
+        </div>
+    </div>
+
+    <!-- Testimonials -->
+    <section id="testimonials" class="py-16 bg-white">
+        <div class="container mx-auto px-4">
+            <h2 class="text-3xl font-bold text-center mb-12 text-gray-800">What Our Travelers Say</h2>
+            <div class="relative">
+                <!-- Slider Controls -->
+                <button id="testimonialPrev" class="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/30 hover:bg-white/60 text-orange-500 rounded-full p-2 transition duration-200 shadow-md"><i class="fas fa-chevron-left fa-lg"></i></button>
+                <button id="testimonialNext" class="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/30 hover:bg-white/60 text-orange-500 rounded-full p-2 transition duration-200 shadow-md"><i class="fas fa-chevron-right fa-lg"></i></button>
+                <!-- Slider Wrapper -->
+                <div id="testimonialSlider" class="overflow-hidden">
+                    <div class="flex transition-transform duration-700 ease-in-out" style="will-change: transform;" id="testimonialSlides">
+                        <!-- Testimonial 1 -->
+                        <div class="testimonial-box bg-gray-50 p-6 rounded-lg shadow-sm mx-2 min-w-[320px] max-w-[350px] flex-1">
+                            <div class="flex items-center mb-4">
+                                <div class="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center text-orange-500 font-bold mr-4">RK</div>
+                                <div>
+                                    <h4 class="font-bold">Rajesh Kumar</h4>
+                                    <div class="flex text-yellow-400">
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="text-gray-600">"The Taj Mahal tour was exceptional. Our guide was knowledgeable and the arrangements were perfect. Highly recommend Bharat Yatra for Indian destinations!"</p>
+                        </div>
+                        <!-- Testimonial 2 -->
+                        <div class="testimonial-box bg-gray-50 p-6 rounded-lg shadow-sm mx-2 min-w-[320px] max-w-[350px] flex-1">
+                            <div class="flex items-center mb-4">
+                                <div class="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center text-orange-500 font-bold mr-4">PM</div>
+                                <div>
+                                    <h4 class="font-bold">Priya Malhotra</h4>
+                                    <div class="flex text-yellow-400">
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star-half-alt"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="text-gray-600">"Kerala backwaters experience was magical. The houseboat was comfortable and the food was delicious. Will definitely travel with Bharat Yatra again."</p>
+                        </div>
+                        <!-- Testimonial 3 -->
+                        <div class="testimonial-box bg-gray-50 p-6 rounded-lg shadow-sm mx-2 min-w-[320px] max-w-[350px] flex-1">
+                            <div class="flex items-center mb-4">
+                                <div class="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center text-orange-500 font-bold mr-4">AS</div>
+                                <div>
+                                    <h4 class="font-bold">Amit Sharma</h4>
+                                    <div class="flex text-yellow-400">
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="text-gray-600">"The Ladakh adventure was the trip of a lifetime! Everything was well-organized, from the permits to the accommodations. Excellent service throughout."</p>
+                        </div>
+                        <!-- Testimonial 4 -->
+                        <div class="testimonial-box bg-gray-50 p-6 rounded-lg shadow-sm mx-2 min-w-[320px] max-w-[350px] flex-1">
+                            <div class="flex items-center mb-4">
+                                <div class="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center text-orange-500 font-bold mr-4">SM</div>
+                                <div>
+                                    <h4 class="font-bold">Sneha Mehra</h4>
+                                    <div class="flex text-yellow-400">
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star-half-alt"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="text-gray-600">"Loved the Goa beach vacation! The itinerary was perfect and the team was very responsive. Will book again."</p>
+                        </div>
+                        <!-- Testimonial 5 -->
+                        <div class="testimonial-box bg-gray-50 p-6 rounded-lg shadow-sm mx-2 min-w-[320px] max-w-[350px] flex-1">
+                            <div class="flex items-center mb-4">
+                                <div class="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center text-orange-500 font-bold mr-4">VK</div>
+                                <div>
+                                    <h4 class="font-bold">Vikas Khanna</h4>
+                                    <div class="flex text-yellow-400">
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="text-gray-600">"Rajasthan heritage tour was a dream come true. The guides were friendly and knowledgeable."</p>
+                        </div>
+                        <!-- Testimonial 6 -->
+                        <div class="testimonial-box bg-gray-50 p-6 rounded-lg shadow-sm mx-2 min-w-[320px] max-w-[350px] flex-1">
+                            <div class="flex items-center mb-4">
+                                <div class="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center text-orange-500 font-bold mr-4">DS</div>
+                                <div>
+                                    <h4 class="font-bold">Deepika Singh</h4>
+                                    <div class="flex text-yellow-400">
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="text-gray-600">"Kashmir valley was breathtaking. The arrangements were seamless and safe."</p>
+                        </div>
+                        <!-- Testimonial 7 -->
+                        <div class="testimonial-box bg-gray-50 p-6 rounded-lg shadow-sm mx-2 min-w-[320px] max-w-[350px] flex-1">
+                            <div class="flex items-center mb-4">
+                                <div class="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center text-orange-500 font-bold mr-4">AM</div>
+                                <div>
+                                    <h4 class="font-bold">Ankit Mehta</h4>
+                                    <div class="flex text-yellow-400">
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star-half-alt"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="text-gray-600">"Rishikesh adventure was thrilling! The rafting and camping were well organized."</p>
+                        </div>
+                        <!-- Testimonial 8 -->
+                        <div class="testimonial-box bg-gray-50 p-6 rounded-lg shadow-sm mx-2 min-w-[320px] max-w-[350px] flex-1">
+                            <div class="flex items-center mb-4">
+                                <div class="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center text-orange-500 font-bold mr-4">NP</div>
+                                <div>
+                                    <h4 class="font-bold">Neha Patel</h4>
+                                    <div class="flex text-yellow-400">
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="text-gray-600">"Udaipur palace tour was royal and luxurious. Loved every moment!"</p>
+                        </div>
+                        <!-- Testimonial 9 -->
+                        <div class="testimonial-box bg-gray-50 p-6 rounded-lg shadow-sm mx-2 min-w-[320px] max-w-[350px] flex-1">
+                            <div class="flex items-center mb-4">
+                                <div class="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center text-orange-500 font-bold mr-4">RS</div>
+                                <div>
+                                    <h4 class="font-bold">Rohit Sinha</h4>
+                                    <div class="flex text-yellow-400">
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="text-gray-600">"Andaman trip was paradise! The beaches and water sports were amazing."</p>
+                        </div>
+                        <!-- Testimonial 10 -->
+                        <div class="testimonial-box bg-gray-50 p-6 rounded-lg shadow-sm mx-2 min-w-[320px] max-w-[350px] flex-1">
+                            <div class="flex items-center mb-4">
+                                <div class="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center text-orange-500 font-bold mr-4">MG</div>
+                                <div>
+                                    <h4 class="font-bold">Meera Gupta</h4>
+                                    <div class="flex text-yellow-400">
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star-half-alt"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="text-gray-600">"Spiritual tour to Varanasi was peaceful and enlightening. Great arrangements."</p>
+                        </div>
+                        <!-- Testimonial 11 -->
+                        <div class="testimonial-box bg-gray-50 p-6 rounded-lg shadow-sm mx-2 min-w-[320px] max-w-[350px] flex-1">
+                            <div class="flex items-center mb-4">
+                                <div class="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center text-orange-500 font-bold mr-4">AK</div>
+                                <div>
+                                    <h4 class="font-bold">Arjun Kapoor</h4>
+                                    <div class="flex text-yellow-400">
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="text-gray-600">"Family trip to Jaipur was fun and safe. Kids loved the elephant ride!"</p>
+                        </div>
+                        <!-- Testimonial 12 -->
+                        <div class="testimonial-box bg-gray-50 p-6 rounded-lg shadow-sm mx-2 min-w-[320px] max-w-[350px] flex-1">
+                            <div class="flex items-center mb-4">
+                                <div class="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center text-orange-500 font-bold mr-4">SB</div>
+                                <div>
+                                    <h4 class="font-bold">Sonal Bansal</h4>
+                                    <div class="flex text-yellow-400">
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star-half-alt"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="text-gray-600">"North East India tour was mesmerizing. Loved the local food and culture."</p>
+                        </div>
+                        <!-- Testimonial 13 -->
+                        <div class="testimonial-box bg-gray-50 p-6 rounded-lg shadow-sm mx-2 min-w-[320px] max-w-[350px] flex-1">
+                            <div class="flex items-center mb-4">
+                                <div class="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center text-orange-500 font-bold mr-4">YS</div>
+                                <div>
+                                    <h4 class="font-bold">Yash Saxena</h4>
+                                    <div class="flex text-yellow-400">
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="text-gray-600">"Golden Triangle tour was well planned and comfortable. Highly recommend!"</p>
+                        </div>
+                        <!-- Testimonial 14 -->
+                        <div class="testimonial-box bg-gray-50 p-6 rounded-lg shadow-sm mx-2 min-w-[320px] max-w-[350px] flex-1">
+                            <div class="flex items-center mb-4">
+                                <div class="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center text-orange-500 font-bold mr-4">PR</div>
+                                <div>
+                                    <h4 class="font-bold">Pooja Rathi</h4>
+                                    <div class="flex text-yellow-400">
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star-half-alt"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="text-gray-600">"South India temples tour was spiritual and beautiful. Great guides!"</p>
+                        </div>
+                        <!-- Testimonial 15 -->
+                        <div class="testimonial-box bg-gray-50 p-6 rounded-lg shadow-sm mx-2 min-w-[320px] max-w-[350px] flex-1">
+                            <div class="flex items-center mb-4">
+                                <div class="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center text-orange-500 font-bold mr-4">TS</div>
+                                <div>
+                                    <h4 class="font-bold">Tanvi Sood</h4>
+                                    <div class="flex text-yellow-400">
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="text-gray-600">"Best travel company for family vacations. Everything was smooth and safe."</p>
+                        </div>
+                        <!-- Testimonial 16 -->
+                        <div class="testimonial-box bg-gray-50 p-6 rounded-lg shadow-sm mx-2 min-w-[320px] max-w-[350px] flex-1">
+                            <div class="flex items-center mb-4">
+                                <div class="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center text-orange-500 font-bold mr-4">SK</div>
+                                <div>
+                                    <h4 class="font-bold">Suresh Kumar</h4>
+                                    <div class="flex text-yellow-400">
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star-half-alt"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="text-gray-600">"Our trip to Manali was unforgettable. The arrangements were top-notch and the staff was very helpful."</p>
+                        </div>
+                        <!-- Testimonial 17 -->
+                        <div class="testimonial-box bg-gray-50 p-6 rounded-lg shadow-sm mx-2 min-w-[320px] max-w-[350px] flex-1">
+                            <div class="flex items-center mb-4">
+                                <div class="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center text-orange-500 font-bold mr-4">RJ</div>
+                                <div>
+                                    <h4 class="font-bold">Ritika Jain</h4>
+                                    <div class="flex text-yellow-400">
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="text-gray-600">"Darjeeling tea tour was a dream come true. Loved the scenic train ride and the local experiences."</p>
+                        </div>
+                        <!-- Testimonial 18 -->
+                        <div class="testimonial-box bg-gray-50 p-6 rounded-lg shadow-sm mx-2 min-w-[320px] max-w-[350px] flex-1">
+                            <div class="flex items-center mb-4">
+                                <div class="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center text-orange-500 font-bold mr-4">AP</div>
+                                <div>
+                                    <h4 class="font-bold">Aarav Patel</h4>
+                                    <div class="flex text-yellow-400">
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="text-gray-600">"Booking with Bharat Yatra was easy and efficient. The Kashmir trip was well organized and beautiful."</p>
+                        </div>
+                        <!-- Testimonial 19 -->
+                        <div class="testimonial-box bg-gray-50 p-6 rounded-lg shadow-sm mx-2 min-w-[320px] max-w-[350px] flex-1">
+                            <div class="flex items-center mb-4">
+                                <div class="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center text-orange-500 font-bold mr-4">MS</div>
+                                <div>
+                                    <h4 class="font-bold">Mona Singh</h4>
+                                    <div class="flex text-yellow-400">
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star-half-alt"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="text-gray-600">"The Varanasi spiritual tour was enlightening. The guides were knowledgeable and friendly."</p>
+                        </div>
+                        <!-- Testimonial 20 -->
+                        <div class="testimonial-box bg-gray-50 p-6 rounded-lg shadow-sm mx-2 min-w-[320px] max-w-[350px] flex-1">
+                            <div class="flex items-center mb-4">
+                                <div class="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center text-orange-500 font-bold mr-4">DP</div>
+                                <div>
+                                    <h4 class="font-bold">Dev Patel</h4>
+                                    <div class="flex text-yellow-400">
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="text-gray-600">"Goa trip was fantastic! The beach activities and nightlife were well planned."</p>
+                        </div>
+                        <!-- Testimonial 21 -->
+                        <div class="testimonial-box bg-gray-50 p-6 rounded-lg shadow-sm mx-2 min-w-[320px] max-w-[350px] flex-1">
+                            <div class="flex items-center mb-4">
+                                <div class="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center text-orange-500 font-bold mr-4">KB</div>
+                                <div>
+                                    <h4 class="font-bold">Kiran Bedi</h4>
+                                    <div class="flex text-yellow-400">
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="text-gray-600">"Udaipur was magical. The palace tour was luxurious and the arrangements were perfect."</p>
+                        </div>
+                        <!-- Testimonial 22 -->
+                        <div class="testimonial-box bg-gray-50 p-6 rounded-lg shadow-sm mx-2 min-w-[320px] max-w-[350px] flex-1">
+                            <div class="flex items-center mb-4">
+                                <div class="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center text-orange-500 font-bold mr-4">SG</div>
+                                <div>
+                                    <h4 class="font-bold">Sanjay Gupta</h4>
+                                    <div class="flex text-yellow-400">
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star-half-alt"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="text-gray-600">"Rajasthan heritage tour was a great experience for our family. Highly recommended!"</p>
+                        </div>
+                        <!-- Testimonial 23 -->
+                        <div class="testimonial-box bg-gray-50 p-6 rounded-lg shadow-sm mx-2 min-w-[320px] max-w-[350px] flex-1">
+                            <div class="flex items-center mb-4">
+                                <div class="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center text-orange-500 font-bold mr-4">NM</div>
+                                <div>
+                                    <h4 class="font-bold">Nisha Mehta</h4>
+                                    <div class="flex text-yellow-400">
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="text-gray-600">"Andaman Islands getaway was paradise. The water sports and beaches were amazing!"</p>
+                        </div>
+                        <!-- Testimonial 24 -->
+                        <div class="testimonial-box bg-gray-50 p-6 rounded-lg shadow-sm mx-2 min-w-[320px] max-w-[350px] flex-1">
+                            <div class="flex items-center mb-4">
+                                <div class="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center text-orange-500 font-bold mr-4">AA</div>
+                                <div>
+                                    <h4 class="font-bold">Aditi Arora</h4>
+                                    <div class="flex text-yellow-400">
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star-half-alt"></i>
+                                                                                                    </div>
+                                </div>
+                            </div>
+                            <p class="text-gray-600">"North East India tour was a unique experience. Loved the local culture and food!"</p>
+                        </div>
+                        <!-- Testimonial 25 -->
+                        <div class="testimonial-box bg-gray-50 p-6 rounded-lg shadow-sm mx-2 min-w-[320px] max-w-[350px] flex-1">
+                            <div class="flex items-center mb-4">
+                                <div class="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center text-orange-500 font-bold mr-4">VS</div>
+                                <div>
+                                    <h4 class="font-bold">Vivek Sharma</h4>
+                                    <div class="flex text-yellow-400">
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="text-gray-600">"Golden Triangle tour was well organized and comfortable. Will book again!"</p>
+                        </div>
+                        <!-- Testimonial 26 -->
+                        <div class="testimonial-box bg-gray-50 p-6 rounded-lg shadow-sm mx-2 min-w-[320px] max-w-[350px] flex-1">
+                            <div class="flex items-center mb-4">
+                                <div class="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center text-orange-500 font-bold mr-4">RA</div>
+                                <div>
+                                    <h4 class="font-bold">Rhea Anand</h4>
+                                    <div class="flex text-yellow-400">
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star-half-alt"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="text-gray-600">"Amazing experience with Bharat Yatra! The team made our North East trip truly memorable and hassle-free."</p>
+                        </div>
+                        <!-- Testimonial 27 -->
+                        <div class="testimonial-box bg-gray-50 p-6 rounded-lg shadow-sm mx-2 min-w-[320px] max-w-[350px] flex-1">
+                            <div class="flex items-center mb-4">
+                                <div class="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center text-orange-500 font-bold mr-4">MT</div>
+                                <div>
+                                    <h4 class="font-bold">Manoj Tiwari</h4>
+                                    <div class="flex text-yellow-400">
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="text-gray-600">"The trip to Ladakh was breathtaking. Well-planned itinerary and excellent support from the team."</p>
+                        </div>
+                        <!-- 🔽 Dynamic Reviews Will Go Here -->
+
+    <div id="dynamicReviewContainer" class="flex space-x-4"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Add Review Section -->
+<section id="addReview" class="py-12 bg-white border-t border-gray-200">
+  <div class="container mx-auto px-4 max-w-xl">
+    <h3 class="text-2xl font-bold text-center mb-6 text-gray-800">Share Your Experience</h3>
+
+    <!-- ✅ User Info / Avatar Display (unique IDs) -->
+    <div id="userReviewInfo" class="flex items-center gap-3 mb-4 hidden">
+      <img id="reviewUserAvatar" class="w-10 h-10 rounded-full border border-orange-300 object-cover" />
+      <span class="text-gray-700 font-medium">Reviewing as <span id="reviewUserName"></span></span>
+    </div>
+
+    <!-- ✅ Login Prompt -->
+    <p id="loginPrompt" class="text-sm text-gray-500 mt-2 italic hidden">
+      Please <a href="/login" class="text-orange-500 underline">log in</a> to submit a review with your name and profile picture.
+    </p>
+
+    <!-- ✅ Review Form -->
+    <form id="reviewForm" class="bg-gray-50 rounded-lg shadow-md p-6">
+      <div class="mb-4">
+        <!-- ✅ Destination Display (instead of dropdown) -->
+<div class="mb-4">
+  <label class="block text-gray-700 font-medium mb-2">Reviewing Destination</label>
+  <p id="selectedDestinationDisplay" class="text-base font-semibold text-orange-600 bg-orange-50 px-4 py-2 rounded border border-orange-200">
+    (No destination selected)
+  </p>
+</div>
+
+
+        <label class="block text-gray-700 font-medium mb-2">Your Experience</label>
+        <div id="reviewStars" class="flex space-x-2 text-2xl text-gray-300 cursor-pointer">
+          <span data-star="1">&#9733;</span>
+          <span data-star="2">&#9733;</span>
+          <span data-star="3">&#9733;</span>
+          <span data-star="4">&#9733;</span>
+          <span data-star="5">&#9733;</span>
+        </div>
+        <input type="hidden" id="reviewRating" value="0" required>
+      </div>
+
+      <div class="mb-4">
+        <label class="block text-gray-700 font-medium mb-2">Your Comment</label>
+        <textarea id="reviewComment" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500" placeholder="Share your experience..." required></textarea>
+      </div>
+
+      <button type="submit" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300">
+        Submit Review
+      </button>
+    </form>
+  </div>
+</section>
+
+
+    <!-- Why Choose Us -->
+    <section class="py-16 bg-gray-100">
+        <div class="container mx-auto px-4">
+            <h2 class="text-3xl font-bold text-center mb-12 text-gray-800">Why Choose Bharat Yatra</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="text-center">
+                    <div class="bg-orange-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-rupee-sign text-2xl text-orange-500"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2 text-gray-800">Best Price Guarantee</h3>
+                    <p class="text-gray-600">We promise the best rates for all Indian destinations. Found a better price? We'll match it!</p>
+                </div>
+                <div class="text-center">
+                    <div class="bg-orange-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-headset text-2xl text-orange-500"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2 text-gray-800">24/7 Customer Support</h3>
+                    <p class="text-gray-600">Our travel experts are available round the clock to assist you during your journey across India.</p>
+                </div>
+                <div class="text-center">
+                    <div class="bg-orange-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-shield-alt text-2xl text-orange-500"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2 text-gray-800">Safe & Secure Booking</h3>
+                    <p class="text-gray-600">Your payments are secure with our PCI-DSS compliant payment gateway and data protection.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-12">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div>
+                    <h3 class="text-xl font-bold mb-4 flex items-center">
+                        <i class="fas fa-mountain-sun text-2xl text-orange-500 mr-2"></i>
+                        Bharat Yatra
+                    </h3>
+                    <p class="text-gray-400">Discover the diversity and beauty of India with our expertly curated travel experiences.</p>
+                </div>
+                <div>
+                    <h4 class="text-lg font-bold mb-4">Quick Links</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-white transition duration-300">Home</a></li>
+                        <li><a href="#destinations" class="text-gray-400 hover:text-white transition duration-300">Destinations</a></li>
+                        <li><a href="#bookingForm" class="text-gray-400 hover:text-white transition duration-300">Book Now</a></li>
+                        <li><a href="#testimonials" class="text-gray-400 hover:text-white transition duration-300">Reviews</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-lg font-bold mb-4">Contact Us</h4>
+                    <ul class="space-y-2 text-gray-400">
+                        <li class="flex items-center"><i class="fas fa-map-marker-alt mr-2 text-orange-500"></i> 123 Travel Street, Mumbai, India</li>
+                        <li class="flex items-center"><i class="fas fa-phone-alt mr-2 text-orange-500"></i> +91 98765 43210</li>
+                        <li class="flex items-center"><i class="fas fa-envelope mr-2 text-orange-500"></i> bharatyatra001@gmail.com</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-lg font-bold mb-4">Newsletter</h4>
+                    <p class="text-gray-400 mb-4">Subscribe for travel deals and updates</p>
+                    <div class="flex">
+                        <input type="email" placeholder="Your email" class="px-4 py-2 rounded-l-lg w-full focus:outline-none text-gray-800">
+                        <button class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-r-lg transition duration-300">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-gray-700 mt-8 pt-8 text-center text-gray-400">
+                <p>&copy; 2023 Bharat Yatra. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+    <!-- Toast Notification Container -->
+<div id="toastContainer" class="fixed top-6 right-6 z-[9999] flex flex-col space-y-3 pointer-events-none"></div>
+
+    <script src="script.js"></script>
+</body>
+<!-- Logout Confirmation Modal -->
+<div id="logoutModal" class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 hidden transition-opacity duration-300">
+  <div class="bg-white rounded-lg shadow-lg p-6 w-80 transform scale-95 transition-transform duration-300" id="logoutDialog">
+    <h3 class="text-lg font-semibold mb-4">Are you sure you want to logout?</h3>
+    <div class="flex justify-end space-x-4">
+      <button id="cancelLogout" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-md">No</button>
+      <button id="confirmLogout" class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-md">Yes</button>
+    </div>
+  </div>
+</div>
+
+
+</html>

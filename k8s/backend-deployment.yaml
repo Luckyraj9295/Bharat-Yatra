@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+      - name: backend
+        image: thatsluckyy/bharat-backend:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 5000
+
+        # ✅ ENV VARIABLES (MOST IMPORTANT FIX)
+        env:
+        - name: MONGO_URI
+          value: "Your_mongodb_URI"
+
+        - name: JWT_SECRET
+          value: "yourJWT_Secret"
+
+        - name: PORT
+          value: "5000"
