@@ -55,6 +55,11 @@ const deleteCloudinaryAsset = async (url) => {
 // ➕ Create a new destination
 exports.createDestination = async (req, res) => {
   try {
+    console.log('➕ Create request received');
+    console.log('   Title:', req.body.title);
+    console.log('   Has image:', req.files?.image?.length > 0);
+    console.log('   Has brochure:', req.files?.brochure?.length > 0);
+    
     const { title, description, price, duration, moreDestination } = req.body;
 
     const imagePath = req.files?.image?.[0]?.path || '';
@@ -71,9 +76,10 @@ exports.createDestination = async (req, res) => {
     });
 
     const saved = await newDestination.save();
+    console.log('✅ Destination created:', saved._id);
     res.status(201).json(saved);
   } catch (err) {
-    console.error('❌ Error creating destination:', err);
+    console.error('❌ Error creating destination:', err.message);
     res.status(500).json({ message: 'Failed to create destination', error: err.message });
   }
 };
@@ -120,48 +126,68 @@ exports.getDestinationById = async (req, res) => {
 exports.updateDestination = async (req, res) => {
   try {
     console.log('🔍 Update request received for ID:', req.params.id);
-    console.log('📋 Request body:', Object.keys(req.body));
-    console.log('📁 Request files:', req.files ? Object.keys(req.files) : 'none');
+    console.log('📋 Request body keys:', Object.keys(req.body));
+    console.log('📁 Request files detected:', req.files ? Object.keys(req.files) : 'none');
     
     const { id } = req.params;
     const destination = await Destination.findById(id);
     if (!destination) return res.status(404).json({ message: 'Destination not found' });
 
     const updates = { ...req.body };
+    
+    // Remove file paths from body if they somehow get there
+    delete updates.imagePath;
+    delete updates.brochurePath;
 
     // 🧹 Replace image if a new one is uploaded
-    if (req.files?.image?.[0]) {
+    if (req.files?.image?.length > 0) {
       console.log('🖼️ New image detected:', req.files.image[0].path);
       const oldImagePath = destination.imagePath;
       const newImagePath = req.files.image[0].path;
       updates.imagePath = newImagePath;
 
-      if (oldImagePath) {
+      if (oldImagePath && oldImagePath.trim()) {
         console.log('🗑️ Deleting old image:', oldImagePath);
-        await deleteCloudinaryAsset(oldImagePath);
+        try {
+          await deleteCloudinaryAsset(oldImagePath);
+        } catch (delErr) {
+          console.error('⚠️ Error deleting old image (continuing anyway):', delErr.message);
+        }
       }
     }
 
     // 🧹 Replace brochure if a new one is uploaded
-    if (req.files?.brochure?.[0]) {
+    if (req.files?.brochure?.length > 0) {
       console.log('📄 New brochure detected:', req.files.brochure[0].path);
       const oldBrochurePath = destination.brochurePath;
       const newBrochurePath = req.files.brochure[0].path;
       updates.brochurePath = newBrochurePath;
 
-      if (oldBrochurePath) {
+      if (oldBrochurePath && oldBrochurePath.trim()) {
         console.log('🗑️ Deleting old brochure:', oldBrochurePath);
-        await deleteCloudinaryAsset(oldBrochurePath);
+        try {
+          await deleteCloudinaryAsset(oldBrochurePath);
+        } catch (delErr) {
+          console.error('⚠️ Error deleting old brochure (continuing anyway):', delErr.message);
+        }
       }
     }
 
+    // Clean up numeric fields
     if (updates.price) updates.price = parseFloat(updates.price);
     if (updates.moreDestination !== undefined) {
       updates.moreDestination = updates.moreDestination === 'true' || updates.moreDestination === true;
     }
-    if (updates.duration === undefined) updates.duration = '';
+    if (updates.duration === undefined || updates.duration === '') {
+      updates.duration = destination.duration || '';
+    }
 
-    console.log('💾 Updating database with:', { title: updates.title, price: updates.price });
+    console.log('💾 Updating database with:', { 
+      title: updates.title, 
+      hasImage: !!updates.imagePath,
+      hasBrochure: !!updates.brochurePath
+    });
+    
     const updated = await Destination.findByIdAndUpdate(id, updates, { new: true });
     console.log('✅ Update successful');
     res.json(updated);
@@ -169,7 +195,6 @@ exports.updateDestination = async (req, res) => {
     console.error('❌ Error updating destination:');
     console.error('   Message:', err.message);
     console.error('   Stack:', err.stack);
-    if (err.response) console.error('   Response:', err.response);
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
