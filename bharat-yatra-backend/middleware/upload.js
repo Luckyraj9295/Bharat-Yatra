@@ -27,6 +27,14 @@ const buildDynamicStorage = () =>
     cloudinary,
     params: (req, file) => {
       const isBrochure = file.fieldname === "brochure";
+      
+      console.log('📤 Uploading file:', {
+        fieldname: file.fieldname,
+        originalname: file.originalname,
+        mimetype: file.mimetype,
+        isBrochure
+      });
+      
       return {
         folder: isBrochure
           ? "bharat-yatra/brochures"
@@ -35,10 +43,10 @@ const buildDynamicStorage = () =>
         resource_type: isBrochure ? "raw" : "image",
         type: "upload",
         access_mode: "public",
-        // Keep original filename+extension for brochures.
-        use_filename: isBrochure,
-        unique_filename: !isBrochure, // Don't make unique for brochures to keep filename
-        format: isBrochure ? "pdf" : undefined, // Force PDF format for brochures
+        // Preserve original filename and extension for brochures
+        use_filename: true,
+        unique_filename: true,
+        // Don't apply format transformation to raw files
         allowed_formats: ["jpg", "jpeg", "png", "webp", "pdf"],
       };
     },

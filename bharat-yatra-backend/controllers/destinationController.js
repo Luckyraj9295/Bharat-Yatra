@@ -26,7 +26,18 @@ const extractCloudinaryPublicId = (value) => {
 
 const getCloudinaryUrl = (file) => {
   if (!file) return '';
-  return file.path || file.secure_url || file.url || '';
+  const url = file.path || file.secure_url || file.url || '';
+  console.log('📎 Cloudinary file object:', {
+    path: file.path,
+    secure_url: file.secure_url,
+    url: file.url,
+    filename: file.filename,
+    originalname: file.originalname,
+    format: file.format,
+    resource_type: file.resource_type
+  });
+  console.log('✅ Using URL:', url);
+  return url;
 };
 
 const deleteCloudinaryAsset = async (url) => {
