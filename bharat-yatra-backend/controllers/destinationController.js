@@ -1,10 +1,15 @@
 const cloudinary = require('../config/cloudinary');
 const Destination = require('../models/Destination');
 
-const extractCloudinaryPublicId = (url) => {
-  if (!url) return null;
+const extractCloudinaryPublicId = (value) => {
+  if (!value) return null;
   try {
-    const parsed = new URL(url);
+    if (!value.startsWith('http')) {
+      const cleaned = value.split('?')[0].replace(/^\/+/, '');
+      return cleaned.replace(/\.[^/.]+$/, '');
+    }
+
+    const parsed = new URL(value);
     const parts = parsed.pathname.split('/');
     const uploadIndex = parts.findIndex((part) => part === 'upload');
     if (uploadIndex === -1) return null;
@@ -17,6 +22,11 @@ const extractCloudinaryPublicId = (url) => {
   } catch {
     return null;
   }
+};
+
+const getCloudinaryUrl = (file) => {
+  if (!file) return '';
+  return file.path || file.secure_url || file.url || '';
 };
 
 const deleteCloudinaryAsset = async (url) => {
@@ -62,8 +72,8 @@ exports.createDestination = async (req, res) => {
     
     const { title, description, price, duration, moreDestination } = req.body;
 
-    const imagePath = req.files?.image?.[0]?.path || '';
-    const brochurePath = req.files?.brochure?.[0]?.path || '';
+    const imagePath = getCloudinaryUrl(req.files?.image?.[0]);
+    const brochurePath = getCloudinaryUrl(req.files?.brochure?.[0]);
 
     const newDestination = new Destination({
       title,
@@ -143,7 +153,7 @@ exports.updateDestination = async (req, res) => {
     if (req.files?.image?.length > 0) {
       console.log('🖼️ New image detected:', req.files.image[0].path);
       const oldImagePath = destination.imagePath;
-      const newImagePath = req.files.image[0].path;
+      const newImagePath = getCloudinaryUrl(req.files.image[0]);
       updates.imagePath = newImagePath;
 
       if (oldImagePath && oldImagePath.trim()) {
@@ -160,7 +170,7 @@ exports.updateDestination = async (req, res) => {
     if (req.files?.brochure?.length > 0) {
       console.log('📄 New brochure detected:', req.files.brochure[0].path);
       const oldBrochurePath = destination.brochurePath;
-      const newBrochurePath = req.files.brochure[0].path;
+      const newBrochurePath = getCloudinaryUrl(req.files.brochure[0]);
       updates.brochurePath = newBrochurePath;
 
       if (oldBrochurePath && oldBrochurePath.trim()) {
