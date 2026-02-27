@@ -100,7 +100,7 @@ function createDestinationCard(dest) {
   const brochureUrl = brochurePath
     ? brochurePath.startsWith('http')
       ? brochurePath
-      : `${UPLOADS_BASE}/download/brochure/${brochureFileName}`
+      : `${UPLOADS_BASE}/${brochurePath}`  // Use direct path for legacy support
     : '';
   const price = `₹${dest.price}/person`;
   const duration = dest.duration || "-";
