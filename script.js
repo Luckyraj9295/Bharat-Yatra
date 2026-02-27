@@ -164,14 +164,25 @@ async function downloadBrochure(url, title) {
       return;
     }
 
-    const lowerUrl = url.toLowerCase();
     let downloadUrl = url;
-    if (lowerUrl.includes('res.cloudinary.com')) {
-      // Cloudinary PDFs are stored as raw; normalize image->raw URLs for PDFs.
-      if (lowerUrl.includes('.pdf') && downloadUrl.includes('/image/upload/')) {
-        downloadUrl = downloadUrl.replace('/image/upload/', '/raw/upload/');
+    
+    // For Cloudinary raw files without .pdf extension, add it
+    if (downloadUrl.includes('res.cloudinary.com/') && downloadUrl.includes('/raw/upload/')) {
+      // Check if URL already has .pdf extension
+      const beforeParams = downloadUrl.split('?')[0];
+      if (!beforeParams.endsWith('.pdf')) {
+        // Insert .pdf before query parameters
+        if (downloadUrl.includes('?')) {
+          const [base, params] = downloadUrl.split('?');
+          downloadUrl = `${base}.pdf?${params}`;
+        } else {
+          downloadUrl = `${downloadUrl}.pdf`;
+        }
       }
-      downloadUrl += downloadUrl.includes('?') ? '&fl_attachment' : '?fl_attachment';
+      // Add attachment flag if not present
+      if (!downloadUrl.includes('fl_attachment')) {
+        downloadUrl += downloadUrl.includes('?') ? '&fl_attachment' : '?fl_attachment';
+      }
     }
 
     console.log('📥 Downloading brochure from:', downloadUrl);
@@ -187,29 +198,14 @@ async function downloadBrochure(url, title) {
       throw new Error(`Failed to fetch brochure: ${response.status}${errorText ? ' - ' + errorText : ''}`);
     }
 
-    const blob = await response.blob();
+    // Force PDF MIME type for brochures
+    const blob = new Blob([await response.blob()], { type: 'application/pdf' });
     const blobUrl = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = blobUrl;
 
-    // For brochures, always use .pdf extension
-    // Cloudinary raw uploads are stored in /brochures/ folder and are all PDFs
-    let ext = 'pdf';
-    
-    // Only attempt to detect other formats if NOT from raw/brochures folder
-    if (!lowerUrl.includes('/raw/') && !lowerUrl.includes('/brochures/')) {
-      const cleanUrl = url.split('?')[0];
-      const lastDot = cleanUrl.lastIndexOf('.');
-      if (lastDot !== -1) {
-        const urlExt = cleanUrl.substring(lastDot + 1);
-        if (urlExt && urlExt.length <= 4 && !urlExt.includes('/')) {
-          ext = urlExt;
-        }
-      }
-    }
-
     const safeTitle = title.replace(/[^a-zA-Z0-9_\-\s]/g, '').replace(/\s+/g, '_');
-    link.download = `${safeTitle}_Brochure.${ext}`;
+    link.download = `${safeTitle}_Brochure.pdf`;
     
     console.log('📥 Download filename:', link.download);
 
