@@ -118,11 +118,12 @@ function createDestinationCard(dest) {
 
   div.innerHTML = `
     <div class="relative">
-      <button onclick="downloadBrochure('${brochureUrl}', '${dest.title}')"
-        class="absolute top-2 left-2 bg-white bg-opacity-80 hover:bg-opacity-100 text-blue-600 px-2 py-1 text-xs rounded flex items-center space-x-1 shadow">
+      ${brochureUrl ? `
+      <button onclick="downloadBrochure('${brochureUrl}', '${dest.title}')" class="absolute top-2 left-2 bg-white bg-opacity-80 hover:bg-opacity-100 text-blue-600 px-2 py-1 text-xs rounded flex items-center space-x-1 shadow">
         <i class="fas fa-download text-sm"></i>
         <span>Brochure</span>
       </button>
+      ` : ''}
       <img src="${imgUrl}" alt="${dest.title}" class="w-full h-64 object-cover">
     </div>
     <div class="p-6">
@@ -158,22 +159,54 @@ function createDestinationCard(dest) {
 
 async function downloadBrochure(url, title) {
   try {
-    const response = await fetch(url);
-    if (!response.ok) throw new Error('Failed to fetch brochure');
+    if (!url || url === '') {
+      showToast('❌ No brochure available for this destination.', 'error');
+      return;
+    }
+    
+    console.log('📥 Downloading brochure from:', url);
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      mode: 'cors',
+      credentials: 'omit'
+    });
+    
+    if (!response.ok) {
+      console.error('Fetch failed with status:', response.status);
+      throw new Error(`Failed to fetch brochure: ${response.status}`);
+    }
 
     const blob = await response.blob();
     const link = document.createElement('a');
     link.href = window.URL.createObjectURL(blob);
 
-    const ext = url.split('.').pop().split('?')[0]; // get file extension
-    link.download = `${title.replace(/\s+/g, '_')}_Brochure.${ext}`;
+    // Extract file extension - handle Cloudinary URLs
+    let ext = 'pdf'; // default to pdf
+    if (url.includes('?')) {
+      // Remove query params first
+      const cleanUrl = url.split('?')[0];
+      const lastDot = cleanUrl.lastIndexOf('.');
+      if (lastDot !== -1) {
+        ext = cleanUrl.substring(lastDot + 1);
+      }
+    } else {
+      const lastDot = url.lastIndexOf('.');
+      if (lastDot !== -1) {
+        ext = url.substring(lastDot + 1);
+      }
+    }
 
+    link.download = `${title.replace(/\s+/g, '_')}_Brochure.${ext}`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    
+    console.log('✅ Brochure downloaded successfully');
+    showToast('✅ Brochure downloaded successfully!');
   } catch (err) {
-    console.error('Download failed:', err);
-    showToast('❌ Failed to download brochure.', 'error');
+    console.error('❌ Download failed:', err.message);
+    showToast('❌ Failed to download brochure. ' + err.message, 'error');
   }
 }
 async function loadAllDynamicReviews() {
