@@ -164,27 +164,25 @@ async function downloadBrochure(url, title) {
       return;
     }
     
-    console.log('📥 Downloading brochure from:', url);
+    console.log('📥 Original URL:', url);
     
-    const response = await fetch(url, {
-      method: 'GET',
-      mode: 'cors',
-      credentials: 'omit'
-    });
-    
-    if (!response.ok) {
-      console.error('Fetch failed with status:', response.status);
-      throw new Error(`Failed to fetch brochure: ${response.status}`);
+    // For Cloudinary URLs, add attachment parameter to force download
+    let downloadUrl = url;
+    if (url.includes('res.cloudinary.com')) {
+      // Add attachment parameter for Cloudinary PDFs
+      downloadUrl = url.includes('?') 
+        ? `${url}&fl_attachment` 
+        : `${url}?fl_attachment`;
+      console.log('📥 Modified URL for download:', downloadUrl);
     }
-
-    const blob = await response.blob();
+    
+    // Try direct download by creating an invisible link
     const link = document.createElement('a');
-    link.href = window.URL.createObjectURL(blob);
-
-    // Extract file extension - handle Cloudinary URLs
+    link.href = downloadUrl;
+    
+    // Extract file extension
     let ext = 'pdf'; // default to pdf
     if (url.includes('?')) {
-      // Remove query params first
       const cleanUrl = url.split('?')[0];
       const lastDot = cleanUrl.lastIndexOf('.');
       if (lastDot !== -1) {
@@ -196,13 +194,14 @@ async function downloadBrochure(url, title) {
         ext = url.substring(lastDot + 1);
       }
     }
-
+    
     link.download = `${title.replace(/\s+/g, '_')}_Brochure.${ext}`;
+    link.target = '_blank';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     
-    console.log('✅ Brochure downloaded successfully');
+    console.log('✅ Brochure download initiated');
     showToast('✅ Brochure downloaded successfully!');
   } catch (err) {
     console.error('❌ Download failed:', err.message);
