@@ -194,7 +194,7 @@ async function downloadBrochure(url, title, originalFileName) {
     
     console.log('🔍 File type detection:', { isPdf, url });
 
-    // For PDFs, try direct download first, then fallback to proxy
+    // For PDFs, try direct download first, then fallback to signed URL
     if (isPdf) {
       console.log('📄 Attempting direct PDF download...');
       try {
@@ -218,15 +218,36 @@ async function downloadBrochure(url, title, originalFileName) {
           showToast('✅ Brochure download initiated!');
           return;
         } else if (directResponse.status === 401) {
-          // Try proxy for 401 errors
-          console.log('⚠️ Got 401, trying proxy...');
-          fetchUrl = `${API_BASE}/destinations/download-brochure?url=${encodeURIComponent(url)}`;
+          // Get signed URL from backend
+          console.log('⚠️ Got 401, getting signed URL...');
+          const signedUrlResponse = await fetch(`${API_BASE}/destinations/download-brochure?url=${encodeURIComponent(url)}`);
+          
+          if (!signedUrlResponse.ok) {
+            throw new Error(`Failed to get signed URL: ${signedUrlResponse.status}`);
+          }
+          
+          const { signedUrl } = await signedUrlResponse.json();
+          console.log('✅ Got signed URL, downloading...');
+          fetchUrl = signedUrl;
         } else {
           throw new Error(`Direct fetch failed: ${directResponse.status}`);
         }
       } catch (directErr) {
-        console.warn('⚠️ Direct download failed, trying proxy:', directErr.message);
-        fetchUrl = `${API_BASE}/destinations/download-brochure?url=${encodeURIComponent(url)}`;
+        console.warn('⚠️ Direct download failed, getting signed URL:', directErr.message);
+        try {
+          const signedUrlResponse = await fetch(`${API_BASE}/destinations/download-brochure?url=${encodeURIComponent(url)}`);
+          
+          if (!signedUrlResponse.ok) {
+            throw new Error(`Failed to get signed URL: ${signedUrlResponse.status}`);
+          }
+          
+          const { signedUrl } = await signedUrlResponse.json();
+          console.log('✅ Got signed URL, downloading...');
+          fetchUrl = signedUrl;
+        } catch (signedErr) {
+          console.error('❌ Failed to get signed URL:', signedErr);
+          throw new Error(`Cannot access file: ${signedErr.message}`);
+        }
       }
     }
 

@@ -48,7 +48,7 @@ router.delete(
 // 🔍 Public - Get destination by ID
 router.get('/:id', destinationController.getDestinationById);
 
-// 📥 Public - Proxy brochure download to avoid CORS/auth issues
+// 📥 Public - Generate signed URL for brochure download
 router.get('/download-brochure', async (req, res) => {
   try {
     const { url } = req.query;
@@ -56,39 +56,48 @@ router.get('/download-brochure', async (req, res) => {
       return res.status(400).json({ message: 'URL parameter required' });
     }
 
-    console.log('📥 Proxy download request for:', url);
+    console.log('📥 Generating signed URL for:', url);
 
-    const https = require('https');
-    const http = require('http');
-    const protocol = url.startsWith('https') ? https : http;
-
-    protocol.get(url, (cloudinaryRes) => {
-      console.log('📡 Cloudinary response status:', cloudinaryRes.statusCode);
-      console.log('📡 Cloudinary response headers:', cloudinaryRes.headers);
-      
-      if (cloudinaryRes.statusCode === 404) {
-        console.error('❌ File not found at Cloudinary URL');
-        return res.status(404).json({ message: 'File not found' });
-      }
-      
-      if (cloudinaryRes.statusCode !== 200) {
-        console.error('❌ Unexpected status from Cloudinary:', cloudinaryRes.statusCode);
-        return res.status(cloudinaryRes.statusCode).json({ message: 'Failed to fetch file' });
-      }
-
-      // Set headers to force download
-      res.setHeader('Content-Type', cloudinaryRes.headers['content-type'] || 'application/octet-stream');
-      res.setHeader('Content-Disposition', 'attachment');
-      
-      // Pipe the Cloudinary response to client
-      cloudinaryRes.pipe(res);
-    }).on('error', (err) => {
-      console.error('❌ Error fetching from Cloudinary:', err);
-      res.status(500).json({ message: 'Failed to download file' });
+    const cloudinary = require('../config/cloudinary');
+    
+    // Extract public_id from URL
+    const urlObj = new URL(url);
+    const pathParts = urlObj.pathname.split('/');
+    const uploadIndex = pathParts.findIndex(part => part === 'upload');
+    
+    if (uploadIndex === -1) {
+      console.error('❌ Invalid Cloudinary URL format');
+      return res.status(400).json({ message: 'Invalid Cloudinary URL' });
+    }
+    
+    // Get everything after 'upload' (skip version if present)
+    let publicIdParts = pathParts.slice(uploadIndex + 1);
+    if (publicIdParts[0] && /^v\d+$/.test(publicIdParts[0])) {
+      publicIdParts.shift(); // Remove version
+    }
+    const publicId = publicIdParts.join('/');
+    
+    console.log('📎 Extracted public_id:', publicId);
+    
+    // Determine resource type (raw for PDFs, image for images)
+    const resourceType = publicId.includes('.pdf') ? 'raw' : 'image';
+    
+    // Generate signed URL with 1 hour expiry
+    const signedUrl = cloudinary.url(publicId, {
+      resource_type: resourceType,
+      type: 'upload',
+      sign_url: true,
+      secure: true,
+      flags: 'attachment', // Force download
+      expires_at: Math.floor(Date.now() / 1000) + 3600 // 1 hour from now
     });
+    
+    console.log('✅ Generated signed URL');
+    res.json({ signedUrl });
+    
   } catch (err) {
-    console.error('❌ Download proxy error:', err);
-    res.status(500).json({ message: 'Failed to download file' });
+    console.error('❌ Error generating signed URL:', err);
+    res.status(500).json({ message: 'Failed to generate download URL', error: err.message });
   }
 });
 
