@@ -165,21 +165,33 @@ async function downloadBrochure(url, title) {
     }
 
     let downloadUrl = url;
+    let fileExtension = 'pdf'; // default extension
     
-    // For Cloudinary raw files, ensure correct URL format
-    if (downloadUrl.includes('res.cloudinary.com/') && downloadUrl.includes('/raw/upload/')) {
-      // Check if URL already has .pdf extension
-      const beforeParams = downloadUrl.split('?')[0];
-      if (!beforeParams.endsWith('.pdf')) {
-        // Insert .pdf before query parameters
+    // Detect file extension from URL
+    const urlWithoutParams = downloadUrl.split('?')[0];
+    const lastDot = urlWithoutParams.lastIndexOf('.');
+    if (lastDot !== -1) {
+      const detectedExt = urlWithoutParams.substring(lastDot + 1).toLowerCase();
+      if (['pdf', 'jpg', 'jpeg', 'png', 'webp', 'doc', 'docx'].includes(detectedExt)) {
+        fileExtension = detectedExt;
+      }
+    }
+    
+    // Only apply PDF-specific handling for actual PDF files or raw uploads
+    const isPdfOrRaw = fileExtension === 'pdf' || downloadUrl.includes('/raw/upload/');
+    
+    if (isPdfOrRaw && downloadUrl.includes('res.cloudinary.com/')) {
+      // For raw files without .pdf extension, add it
+      if (downloadUrl.includes('/raw/upload/') && !urlWithoutParams.endsWith('.pdf')) {
         if (downloadUrl.includes('?')) {
           const [base, params] = downloadUrl.split('?');
           downloadUrl = `${base}.pdf?${params}`;
         } else {
           downloadUrl = `${downloadUrl}.pdf`;
         }
+        fileExtension = 'pdf';
       }
-      // Add attachment flag and force download
+      // Add attachment flag for PDFs
       if (!downloadUrl.includes('fl_attachment')) {
         downloadUrl += downloadUrl.includes('?') ? '&fl_attachment=true' : '?fl_attachment=true';
       }
@@ -194,7 +206,7 @@ async function downloadBrochure(url, title) {
     link.rel = 'noopener noreferrer';
     
     const safeTitle = title.replace(/[^a-zA-Z0-9_\-\s]/g, '').replace(/\s+/g, '_');
-    link.download = `${safeTitle}_Brochure.pdf`;
+    link.download = `${safeTitle}_Brochure.${fileExtension}`;
     
     console.log('📥 Download filename:', link.download);
 
