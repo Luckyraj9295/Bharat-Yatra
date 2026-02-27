@@ -34,9 +34,11 @@ const getCloudinaryUrl = (file) => {
     filename: file.filename,
     originalname: file.originalname,
     format: file.format,
-    resource_type: file.resource_type
+    resource_type: file.resource_type,
+    mimetype: file.mimetype
   });
   console.log('✅ Using URL:', url);
+  console.log('🔍 Full file object keys:', Object.keys(file));
   return url;
 };
 

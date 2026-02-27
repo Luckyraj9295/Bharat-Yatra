@@ -50,18 +50,23 @@ const buildDynamicStorage = () =>
         ...(isBrochure && isPdf && { 
           access_mode: "public"
         }),
-        allowed_formats: ["jpg", "jpeg", "png", "webp", "pdf"],
+        // Only set allowed_formats for images, not for raw files
+        ...(!isPdf && { allowed_formats: ["jpg", "jpeg", "png", "webp"] }),
       };
       
       if (isBrochure) {
-        // For PDFs, create a unique public_id WITHOUT extension (Cloudinary adds it)
+        // For PDFs uploaded as 'raw', use original filename approach
         // For images, let Cloudinary handle it normally
         if (file.mimetype === 'application/pdf') {
           const timestamp = Date.now();
           const randomStr = Math.random().toString(36).substring(7);
-          // Don't include .pdf in public_id - Cloudinary adds it automatically for raw files
-          config.public_id = `brochure_${timestamp}_${randomStr}`;
-          config.format = 'pdf'; // Explicitly set format
+          // Extract extension from original filename
+          const ext = file.originalname.split('.').pop().toLowerCase();
+          // Create filename with timestamp for uniqueness
+          const baseName = file.originalname.replace(/\.[^/.]+$/, '').replace(/[^a-zA-Z0-9]/g, '_');
+          config.public_id = `${baseName}_${timestamp}_${randomStr}.${ext}`;
+          config.use_filename = false;
+          config.unique_filename = false;
         } else {
           config.use_filename = false;
           config.unique_filename = true;
