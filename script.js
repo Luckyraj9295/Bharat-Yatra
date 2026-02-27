@@ -164,16 +164,7 @@ async function downloadBrochure(url, title, originalFileName) {
       return;
     }
 
-    let downloadUrl = url;
-    
-    // Add fl_attachment for Cloudinary files to force download
-    if (downloadUrl.includes('res.cloudinary.com/')) {
-      if (!downloadUrl.includes('fl_attachment')) {
-        downloadUrl += downloadUrl.includes('?') ? '&fl_attachment=true' : '?fl_attachment=true';
-      }
-    }
-
-    console.log('📥 Downloading brochure from:', downloadUrl);
+    console.log('📥 Downloading brochure from:', url);
 
     // Determine filename
     let filename;
@@ -183,7 +174,7 @@ async function downloadBrochure(url, title, originalFileName) {
     } else {
       // Fallback: detect extension from URL
       let fileExtension = 'pdf';
-      const urlWithoutParams = downloadUrl.split('?')[0];
+      const urlWithoutParams = url.split('?')[0];
       const lastDot = urlWithoutParams.lastIndexOf('.');
       if (lastDot !== -1) {
         const detectedExt = urlWithoutParams.substring(lastDot + 1).toLowerCase();
@@ -196,9 +187,9 @@ async function downloadBrochure(url, title, originalFileName) {
       console.log('📥 Generated filename:', filename);
     }
 
-    // Fetch the file and download as blob to force download
-    const response = await fetch(downloadUrl);
-    if (!response.ok) throw new Error('Failed to fetch file');
+    // Fetch the file WITHOUT fl_attachment to avoid 401 error
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`Failed to fetch file: ${response.status}`);
     
     const blob = await response.blob();
     const blobUrl = window.URL.createObjectURL(blob);
@@ -210,8 +201,8 @@ async function downloadBrochure(url, title, originalFileName) {
     link.click();
     document.body.removeChild(link);
     
-    // Clean up blob URL
-    window.URL.revokeObjectURL(blobUrl);
+    // Clean up blob URL after a short delay
+    setTimeout(() => window.URL.revokeObjectURL(blobUrl), 100);
 
     console.log('✅ Brochure download initiated');
     showToast('✅ Brochure download initiated!');
