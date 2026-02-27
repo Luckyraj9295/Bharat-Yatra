@@ -48,4 +48,18 @@ router.delete(
 // 🔍 Public - Get destination by ID
 router.get('/:id', destinationController.getDestinationById);
 
+// ❌ Multer error handler
+router.use((err, req, res, next) => {
+  if (err.code === 'LIMIT_FILE_SIZE') {
+    return res.status(413).json({ message: 'File too large. Max 10MB allowed.' });
+  }
+  if (err.message && err.message.includes('Only JPEG, PNG, WEBP')) {
+    return res.status(400).json({ message: err.message });
+  }
+  if (err.code === 'LIMIT_FILE_COUNT') {
+    return res.status(400).json({ message: 'Too many files.' });
+  }
+  next(err);
+});
+
 module.exports = router;

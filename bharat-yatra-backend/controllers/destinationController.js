@@ -21,18 +21,33 @@ const extractCloudinaryPublicId = (url) => {
 
 const deleteCloudinaryAsset = async (url) => {
   const publicId = extractCloudinaryPublicId(url);
-  if (!publicId) return;
+  if (!publicId) {
+    console.log('⚠️ Could not extract public ID from:', url);
+    return;
+  }
   
   try {
     // Detect resource type based on folder path or extension
     const resourceType = publicId.includes('brochures/') ? 'raw' : 'image';
+    console.log(`🗑️ Deleting ${resourceType} from Cloudinary:`, publicId);
     await cloudinary.uploader.destroy(publicId, { resource_type: resourceType });
+    console.log('✅ Asset deleted successfully');
   } catch (err) {
+    console.warn(`⚠️ First deletion attempt failed (${err.message}), trying fallback...`);
     // If detection fails, try both types
     try {
+      console.log('   Trying as image type...');
       await cloudinary.uploader.destroy(publicId, { resource_type: 'image' });
-    } catch {
-      await cloudinary.uploader.destroy(publicId, { resource_type: 'raw' });
+      console.log('✅ Asset deleted as image type');
+    } catch (err2) {
+      try {
+        console.log('   Trying as raw type...');
+        await cloudinary.uploader.destroy(publicId, { resource_type: 'raw' });
+        console.log('✅ Asset deleted as raw type');
+      } catch (err3) {
+        console.error('❌ Failed to delete asset:', publicId, err3.message);
+        // Don't throw - allow update to continue even if deletion fails
+      }
     }
   }
 };
@@ -104,6 +119,10 @@ exports.getDestinationById = async (req, res) => {
 // ✏️ Admin - Update a destination by ID (only keep this one)
 exports.updateDestination = async (req, res) => {
   try {
+    console.log('🔍 Update request received for ID:', req.params.id);
+    console.log('📋 Request body:', Object.keys(req.body));
+    console.log('📁 Request files:', req.files ? Object.keys(req.files) : 'none');
+    
     const { id } = req.params;
     const destination = await Destination.findById(id);
     if (!destination) return res.status(404).json({ message: 'Destination not found' });
@@ -112,22 +131,26 @@ exports.updateDestination = async (req, res) => {
 
     // 🧹 Replace image if a new one is uploaded
     if (req.files?.image?.[0]) {
+      console.log('🖼️ New image detected:', req.files.image[0].path);
       const oldImagePath = destination.imagePath;
       const newImagePath = req.files.image[0].path;
       updates.imagePath = newImagePath;
 
       if (oldImagePath) {
+        console.log('🗑️ Deleting old image:', oldImagePath);
         await deleteCloudinaryAsset(oldImagePath);
       }
     }
 
     // 🧹 Replace brochure if a new one is uploaded
     if (req.files?.brochure?.[0]) {
+      console.log('📄 New brochure detected:', req.files.brochure[0].path);
       const oldBrochurePath = destination.brochurePath;
       const newBrochurePath = req.files.brochure[0].path;
       updates.brochurePath = newBrochurePath;
 
       if (oldBrochurePath) {
+        console.log('🗑️ Deleting old brochure:', oldBrochurePath);
         await deleteCloudinaryAsset(oldBrochurePath);
       }
     }
@@ -138,11 +161,16 @@ exports.updateDestination = async (req, res) => {
     }
     if (updates.duration === undefined) updates.duration = '';
 
+    console.log('💾 Updating database with:', { title: updates.title, price: updates.price });
     const updated = await Destination.findByIdAndUpdate(id, updates, { new: true });
+    console.log('✅ Update successful');
     res.json(updated);
   } catch (err) {
-    console.error('❌ Error updating destination:', err);
-    res.status(500).json({ message: 'Failed to update destination', error: err.message });
+    console.error('❌ Error updating destination:');
+    console.error('   Message:', err.message);
+    console.error('   Stack:', err.stack);
+    if (err.response) console.error('   Response:', err.response);
+    res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
 
