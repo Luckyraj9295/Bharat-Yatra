@@ -192,24 +192,26 @@ async function downloadBrochure(url, title) {
     const link = document.createElement('a');
     link.href = blobUrl;
 
-    const contentType = (response.headers.get('content-type') || '').toLowerCase();
+    // For brochures, always use .pdf extension
+    // Cloudinary raw uploads are stored in /brochures/ folder and are all PDFs
     let ext = 'pdf';
-    if (contentType.includes('png')) ext = 'png';
-    else if (contentType.includes('jpeg') || contentType.includes('jpg')) ext = 'jpg';
-    else if (contentType.includes('webp')) ext = 'webp';
-    else if (contentType.includes('pdf')) ext = 'pdf';
-    else {
+    
+    // Only attempt to detect other formats if NOT from raw/brochures folder
+    if (!lowerUrl.includes('/raw/') && !lowerUrl.includes('/brochures/')) {
       const cleanUrl = url.split('?')[0];
       const lastDot = cleanUrl.lastIndexOf('.');
-      if (lastDot !== -1) ext = cleanUrl.substring(lastDot + 1);
+      if (lastDot !== -1) {
+        const urlExt = cleanUrl.substring(lastDot + 1);
+        if (urlExt && urlExt.length <= 4 && !urlExt.includes('/')) {
+          ext = urlExt;
+        }
+      }
     }
 
-    // Normalize extension when URL has no extension or looks like a public_id.
-    if (!ext || ext.length > 5 || ext.includes('/') || ext.includes('_upload_')) {
-      ext = 'pdf';
-    }
-
-    link.download = `${title.replace(/\s+/g, '_')}_Brochure.${ext}`;
+    const safeTitle = title.replace(/[^a-zA-Z0-9_\-\s]/g, '').replace(/\s+/g, '_');
+    link.download = `${safeTitle}_Brochure.${ext}`;
+    
+    console.log('📥 Download filename:', link.download);
 
     document.body.appendChild(link);
     link.click();

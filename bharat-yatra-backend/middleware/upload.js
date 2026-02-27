@@ -37,7 +37,8 @@ const buildDynamicStorage = () =>
         access_mode: "public",
         // Keep original filename+extension for brochures.
         use_filename: isBrochure,
-        unique_filename: isBrochure,
+        unique_filename: !isBrochure, // Don't make unique for brochures to keep filename
+        format: isBrochure ? "pdf" : undefined, // Force PDF format for brochures
         allowed_formats: ["jpg", "jpeg", "png", "webp", "pdf"],
       };
     },
