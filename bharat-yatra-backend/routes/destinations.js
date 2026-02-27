@@ -45,10 +45,7 @@ router.delete(
   destinationController.deleteDestination
 );
 
-// 🔍 Public - Get destination by ID
-router.get('/:id', destinationController.getDestinationById);
-
-// 📥 Public - Generate signed URL for brochure download
+// � Public - Generate signed URL for brochure download (MUST be before /:id route)
 router.get('/download-brochure', async (req, res) => {
   try {
     const { url } = req.query;
@@ -100,6 +97,9 @@ router.get('/download-brochure', async (req, res) => {
     res.status(500).json({ message: 'Failed to generate download URL', error: err.message });
   }
 });
+
+// 🔍 Public - Get destination by ID (MUST be after specific routes)
+router.get('/:id', destinationController.getDestinationById);
 
 // ❌ Multer error handler
 router.use((err, req, res, next) => {
