@@ -30,7 +30,10 @@ const buildDynamicStorage = () =>
         file.fieldname === "image"
           ? "bharat-yatra/destinations"
           : "bharat-yatra/brochures",
-      resource_type: "auto", // Auto-detect type (image or raw for PDFs)
+      // Ensure PDFs are stored as raw and publicly accessible
+      resource_type: file.fieldname === "brochure" ? "raw" : "image",
+      type: "upload",
+      access_mode: "public",
       allowed_formats: ["jpg", "jpeg", "png", "webp", "pdf"],
     }),
   });
