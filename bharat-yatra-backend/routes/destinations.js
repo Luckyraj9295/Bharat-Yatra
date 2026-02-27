@@ -56,11 +56,26 @@ router.get('/download-brochure', async (req, res) => {
       return res.status(400).json({ message: 'URL parameter required' });
     }
 
+    console.log('📥 Proxy download request for:', url);
+
     const https = require('https');
     const http = require('http');
     const protocol = url.startsWith('https') ? https : http;
 
     protocol.get(url, (cloudinaryRes) => {
+      console.log('📡 Cloudinary response status:', cloudinaryRes.statusCode);
+      console.log('📡 Cloudinary response headers:', cloudinaryRes.headers);
+      
+      if (cloudinaryRes.statusCode === 404) {
+        console.error('❌ File not found at Cloudinary URL');
+        return res.status(404).json({ message: 'File not found' });
+      }
+      
+      if (cloudinaryRes.statusCode !== 200) {
+        console.error('❌ Unexpected status from Cloudinary:', cloudinaryRes.statusCode);
+        return res.status(cloudinaryRes.statusCode).json({ message: 'Failed to fetch file' });
+      }
+
       // Set headers to force download
       res.setHeader('Content-Type', cloudinaryRes.headers['content-type'] || 'application/octet-stream');
       res.setHeader('Content-Disposition', 'attachment');
@@ -68,11 +83,11 @@ router.get('/download-brochure', async (req, res) => {
       // Pipe the Cloudinary response to client
       cloudinaryRes.pipe(res);
     }).on('error', (err) => {
-      console.error('Error fetching from Cloudinary:', err);
+      console.error('❌ Error fetching from Cloudinary:', err);
       res.status(500).json({ message: 'Failed to download file' });
     });
   } catch (err) {
-    console.error('Download proxy error:', err);
+    console.error('❌ Download proxy error:', err);
     res.status(500).json({ message: 'Failed to download file' });
   }
 });

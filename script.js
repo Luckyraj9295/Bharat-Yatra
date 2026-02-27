@@ -165,6 +165,7 @@ async function downloadBrochure(url, title, originalFileName) {
     }
 
     console.log('📥 Downloading brochure from:', url);
+    console.log('📝 Original filename:', originalFileName);
 
     // Determine filename
     let filename;
@@ -187,16 +188,56 @@ async function downloadBrochure(url, title, originalFileName) {
       console.log('📥 Generated filename:', filename);
     }
 
-    // For PDFs (raw files), use backend proxy to avoid 401 errors
+    // Check if it's a PDF to decide download method
+    const isPdf = url.includes('/raw/upload/') || url.includes('.pdf');
     let fetchUrl = url;
-    if (url.includes('/raw/upload/')) {
-      fetchUrl = `${API_BASE}/api/destinations/download-brochure?url=${encodeURIComponent(url)}`;
-      console.log('📥 Using proxy for PDF:', fetchUrl);
+    
+    console.log('🔍 File type detection:', { isPdf, url });
+
+    // For PDFs, try direct download first, then fallback to proxy
+    if (isPdf) {
+      console.log('📄 Attempting direct PDF download...');
+      try {
+        const directResponse = await fetch(url);
+        console.log('📡 Direct fetch response:', directResponse.status, directResponse.statusText);
+        
+        if (directResponse.ok) {
+          // Direct download worked
+          const blob = await directResponse.blob();
+          const blobUrl = window.URL.createObjectURL(blob);
+          
+          const link = document.createElement('a');
+          link.href = blobUrl;
+          link.download = filename;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          
+          setTimeout(() => window.URL.revokeObjectURL(blobUrl), 100);
+          console.log('✅ Direct download successful');
+          showToast('✅ Brochure download initiated!');
+          return;
+        } else if (directResponse.status === 401) {
+          // Try proxy for 401 errors
+          console.log('⚠️ Got 401, trying proxy...');
+          fetchUrl = `${API_BASE}/api/destinations/download-brochure?url=${encodeURIComponent(url)}`;
+        } else {
+          throw new Error(`Direct fetch failed: ${directResponse.status}`);
+        }
+      } catch (directErr) {
+        console.warn('⚠️ Direct download failed, trying proxy:', directErr.message);
+        fetchUrl = `${API_BASE}/api/destinations/download-brochure?url=${encodeURIComponent(url)}`;
+      }
     }
 
-    // Fetch the file WITHOUT fl_attachment to avoid 401 error
+    // Fetch the file (either image or via proxy for PDFs)
+    console.log('📥 Fetching from:', fetchUrl);
     const response = await fetch(fetchUrl);
-    if (!response.ok) throw new Error(`Failed to fetch file: ${response.status}`);
+    console.log('📡 Fetch response:', response.status, response.statusText);
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch file: ${response.status} ${response.statusText}`);
+    }
     
     const blob = await response.blob();
     const blobUrl = window.URL.createObjectURL(blob);
@@ -208,13 +249,13 @@ async function downloadBrochure(url, title, originalFileName) {
     link.click();
     document.body.removeChild(link);
     
-    // Clean up blob URL after a short delay
     setTimeout(() => window.URL.revokeObjectURL(blobUrl), 100);
 
     console.log('✅ Brochure download initiated');
     showToast('✅ Brochure download initiated!');
   } catch (err) {
     console.error('❌ Download failed:', err.message);
+    console.error('❌ Full error:', err);
     showToast('❌ Failed to download brochure. ' + err.message, 'error');
   }
 }
