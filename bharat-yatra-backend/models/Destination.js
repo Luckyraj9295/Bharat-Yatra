@@ -23,6 +23,10 @@ const destinationSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  brochureName: {
+    type: String,
+    default: ''
+  },
   duration: {
   type: String,
   required: true

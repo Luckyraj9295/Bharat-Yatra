@@ -119,7 +119,7 @@ function createDestinationCard(dest) {
   div.innerHTML = `
     <div class="relative">
       ${brochureUrl ? `
-      <button onclick="downloadBrochure('${brochureUrl}', '${dest.title}')" class="absolute top-2 left-2 bg-white bg-opacity-80 hover:bg-opacity-100 text-blue-600 px-2 py-1 text-xs rounded flex items-center space-x-1 shadow">
+      <button onclick="downloadBrochure('${brochureUrl}', '${dest.title}', '${dest.brochureName || ''}')" class="absolute top-2 left-2 bg-white bg-opacity-80 hover:bg-opacity-100 text-blue-600 px-2 py-1 text-xs rounded flex items-center space-x-1 shadow">
         <i class="fas fa-download text-sm"></i>
         <span>Brochure</span>
       </button>
@@ -157,7 +157,7 @@ function createDestinationCard(dest) {
   return div;
 }
 
-async function downloadBrochure(url, title) {
+async function downloadBrochure(url, title, originalFileName) {
   try {
     if (!url || url === '') {
       showToast('❌ No brochure available for this destination.', 'error');
@@ -165,33 +165,9 @@ async function downloadBrochure(url, title) {
     }
 
     let downloadUrl = url;
-    let fileExtension = 'pdf'; // default extension
     
-    // Detect file extension from URL
-    const urlWithoutParams = downloadUrl.split('?')[0];
-    const lastDot = urlWithoutParams.lastIndexOf('.');
-    if (lastDot !== -1) {
-      const detectedExt = urlWithoutParams.substring(lastDot + 1).toLowerCase();
-      if (['pdf', 'jpg', 'jpeg', 'png', 'webp', 'doc', 'docx'].includes(detectedExt)) {
-        fileExtension = detectedExt;
-      }
-    }
-    
-    // Only apply PDF-specific handling for actual PDF files or raw uploads
-    const isPdfOrRaw = fileExtension === 'pdf' || downloadUrl.includes('/raw/upload/');
-    
-    if (isPdfOrRaw && downloadUrl.includes('res.cloudinary.com/')) {
-      // For raw files without .pdf extension, add it
-      if (downloadUrl.includes('/raw/upload/') && !urlWithoutParams.endsWith('.pdf')) {
-        if (downloadUrl.includes('?')) {
-          const [base, params] = downloadUrl.split('?');
-          downloadUrl = `${base}.pdf?${params}`;
-        } else {
-          downloadUrl = `${downloadUrl}.pdf`;
-        }
-        fileExtension = 'pdf';
-      }
-      // Add attachment flag for PDFs
+    // Add fl_attachment for Cloudinary files to force download
+    if (downloadUrl.includes('res.cloudinary.com/')) {
       if (!downloadUrl.includes('fl_attachment')) {
         downloadUrl += downloadUrl.includes('?') ? '&fl_attachment=true' : '?fl_attachment=true';
       }
@@ -199,16 +175,31 @@ async function downloadBrochure(url, title) {
 
     console.log('📥 Downloading brochure from:', downloadUrl);
 
-    // Try direct link download first (avoids CORS/auth issues)
+    // Use direct link download (avoids CORS/auth issues)
     const link = document.createElement('a');
     link.href = downloadUrl;
     link.target = '_blank';
     link.rel = 'noopener noreferrer';
     
-    const safeTitle = title.replace(/[^a-zA-Z0-9_\-\s]/g, '').replace(/\s+/g, '_');
-    link.download = `${safeTitle}_Brochure.${fileExtension}`;
-    
-    console.log('📥 Download filename:', link.download);
+    // Use original filename if available, otherwise generate from title
+    if (originalFileName && originalFileName.trim() !== '') {
+      link.download = originalFileName;
+      console.log('📥 Using original filename:', originalFileName);
+    } else {
+      // Fallback: detect extension from URL
+      let fileExtension = 'pdf';
+      const urlWithoutParams = downloadUrl.split('?')[0];
+      const lastDot = urlWithoutParams.lastIndexOf('.');
+      if (lastDot !== -1) {
+        const detectedExt = urlWithoutParams.substring(lastDot + 1).toLowerCase();
+        if (['pdf', 'jpg', 'jpeg', 'png', 'webp'].includes(detectedExt)) {
+          fileExtension = detectedExt;
+        }
+      }
+      const safeTitle = title.replace(/[^a-zA-Z0-9_\-\s]/g, '').replace(/\s+/g, '_');
+      link.download = `${safeTitle}_Brochure.${fileExtension}`;
+      console.log('📥 Generated filename:', link.download);
+    }
 
     document.body.appendChild(link);
     link.click();

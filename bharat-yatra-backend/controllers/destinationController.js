@@ -85,6 +85,7 @@ exports.createDestination = async (req, res) => {
 
     const imagePath = getCloudinaryUrl(req.files?.image?.[0]);
     const brochurePath = getCloudinaryUrl(req.files?.brochure?.[0]);
+    const brochureName = req.files?.brochure?.[0]?.originalname || '';
 
     const newDestination = new Destination({
       title,
@@ -93,6 +94,7 @@ exports.createDestination = async (req, res) => {
       duration: duration || '',
       imagePath,
       brochurePath,
+      brochureName,
       moreDestination: moreDestination === 'true' || moreDestination === true
     });
 
@@ -182,7 +184,10 @@ exports.updateDestination = async (req, res) => {
       console.log('📄 New brochure detected:', req.files.brochure[0].path);
       const oldBrochurePath = destination.brochurePath;
       const newBrochurePath = getCloudinaryUrl(req.files.brochure[0]);
+      const newBrochureName = req.files.brochure[0].originalname;
       updates.brochurePath = newBrochurePath;
+      updates.brochureName = newBrochureName;
+      console.log('📝 Original filename:', newBrochureName);
 
       if (oldBrochurePath && oldBrochurePath.trim()) {
         console.log('🗑️ Deleting old brochure:', oldBrochurePath);
