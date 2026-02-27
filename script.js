@@ -213,13 +213,6 @@ async function downloadBrochure(url, title, originalFileName) {
   }
 }
 
-    console.log('✅ Brochure downloaded successfully');
-    showToast('✅ Brochure downloaded successfully!');
-  } catch (err) {
-    console.error('❌ Download failed:', err.message);
-    showToast('❌ Failed to download brochure. ' + err.message, 'error');
-  }
-}
 async function loadAllDynamicReviews() {
   const container = document.getElementById('dynamicReviewContainer');
   if (!container) return;
