@@ -163,51 +163,60 @@ async function downloadBrochure(url, title) {
       showToast('❌ No brochure available for this destination.', 'error');
       return;
     }
-    
-    console.log('📥 Downloading brochure from:', url);
-    
-    // Check if it's a PDF
-    const isPdf = url.includes('.pdf') || url.includes('pdf');
-    if (!isPdf) {
-      console.warn('⚠️ Not a PDF file, opening in new page');
-      window.open(url, '_blank');
-      return;
-    }
-    
-    // For PDFs, modify Cloudinary URL to force download
+
+    const lowerUrl = url.toLowerCase();
     let downloadUrl = url;
-    if (url.includes('res.cloudinary.com')) {
-      // For Cloudinary: add fl_attachment to force download, fl_inline:false to prevent inline display
-      downloadUrl = url.includes('?') 
-        ? `${url}&fl_attachment&fl_inline:false` 
-        : `${url}?fl_attachment&fl_inline:false`;
-      console.log('📥 Modified URL for PDF download:', downloadUrl);
+    if (lowerUrl.includes('res.cloudinary.com')) {
+      // Cloudinary PDFs are stored as raw; normalize image->raw URLs for PDFs.
+      if (lowerUrl.includes('.pdf') && downloadUrl.includes('/image/upload/')) {
+        downloadUrl = downloadUrl.replace('/image/upload/', '/raw/upload/');
+      }
+      downloadUrl += downloadUrl.includes('?') ? '&fl_attachment' : '?fl_attachment';
     }
-    
-    // Fetch with proper headers to force download
-    const response = await fetch(downloadUrl);
+
+    console.log('📥 Downloading brochure from:', downloadUrl);
+
+    const response = await fetch(downloadUrl, {
+      method: 'GET',
+      mode: 'cors',
+      credentials: 'omit'
+    });
+
     if (!response.ok) {
-      throw new Error(`Failed to fetch PDF: ${response.status}`);
+      const errorText = await response.text().catch(() => '');
+      throw new Error(`Failed to fetch brochure: ${response.status}${errorText ? ' - ' + errorText : ''}`);
     }
 
     const blob = await response.blob();
     const blobUrl = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = blobUrl;
-    link.download = `${title.replace(/\s+/g, '_')}_Brochure.pdf`;
-    
+
+    const contentType = (response.headers.get('content-type') || '').toLowerCase();
+    let ext = 'pdf';
+    if (contentType.includes('png')) ext = 'png';
+    else if (contentType.includes('jpeg') || contentType.includes('jpg')) ext = 'jpg';
+    else if (contentType.includes('webp')) ext = 'webp';
+    else if (contentType.includes('pdf')) ext = 'pdf';
+    else {
+      const cleanUrl = url.split('?')[0];
+      const lastDot = cleanUrl.lastIndexOf('.');
+      if (lastDot !== -1) ext = cleanUrl.substring(lastDot + 1);
+    }
+
+    link.download = `${title.replace(/\s+/g, '_')}_Brochure.${ext}`;
+
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    
-    // Clean up the blob URL after a short delay
-    setTimeout(() => window.URL.revokeObjectURL(blobUrl), 100);
-    
-    console.log('✅ PDF downloaded successfully');
+
+    setTimeout(() => window.URL.revokeObjectURL(blobUrl), 1000);
+
+    console.log('✅ Brochure downloaded successfully');
     showToast('✅ Brochure downloaded successfully!');
   } catch (err) {
     console.error('❌ Download failed:', err.message);
-    showToast('❌ Failed to download brochure: ' + err.message, 'error');
+    showToast('❌ Failed to download brochure. ' + err.message, 'error');
   }
 }
 async function loadAllDynamicReviews() {
