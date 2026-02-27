@@ -14,7 +14,11 @@ const app = express();
 
 // ✅ CORS - Allow frontend origin
 app.use(cors({
-  origin: 'http://127.0.0.1:5500', // Update this if needed
+  origin: [
+    "http://127.0.0.1:5500",
+    "http://localhost:5500",
+    "https://bharat-yaatra.netlify.app"
+  ],
   credentials: true
 }));
 
