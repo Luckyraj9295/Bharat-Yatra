@@ -35,15 +35,19 @@ const buildDynamicStorage = () =>
         isBrochure
       });
       
+      // Determine if file is PDF
+      const isPdf = file.mimetype === 'application/pdf';
+      
       // For brochures, ensure .pdf extension is preserved
       let config = {
         folder: isBrochure
           ? "bharat-yatra/brochures"
           : "bharat-yatra/destinations",
-        resource_type: isBrochure ? "raw" : "image",
+        // Use 'raw' for PDFs, 'image' for image brochures
+        resource_type: (isBrochure && isPdf) ? "raw" : "image",
         type: "upload",
         // Make raw files publicly accessible without authentication
-        ...(isBrochure && { 
+        ...(isBrochure && isPdf && { 
           access_mode: "public"
         }),
         allowed_formats: ["jpg", "jpeg", "png", "webp", "pdf"],
@@ -51,9 +55,15 @@ const buildDynamicStorage = () =>
       
       if (isBrochure) {
         // For PDFs, create a public_id with .pdf extension
-        const timestamp = Date.now();
-        const randomStr = Math.random().toString(36).substring(7);
-        config.public_id = `brochure_${timestamp}_${randomStr}.pdf`;
+        // For images, let Cloudinary handle it normally
+        if (file.mimetype === 'application/pdf') {
+          const timestamp = Date.now();
+          const randomStr = Math.random().toString(36).substring(7);
+          config.public_id = `brochure_${timestamp}_${randomStr}.pdf`;
+        } else {
+          config.use_filename = false;
+          config.unique_filename = true;
+        }
       } else {
         config.use_filename = false;
         config.unique_filename = true;

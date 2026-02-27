@@ -48,8 +48,10 @@ const deleteCloudinaryAsset = async (url) => {
   }
   
   try {
-    // Detect resource type based on folder path or extension
-    const resourceType = publicId.includes('brochures/') ? 'raw' : 'image';
+    // Detect resource type: PDFs are 'raw', images are 'image'
+    // Check if it's a PDF by extension or if it's in /raw/upload/ path
+    const isPdf = url.includes('.pdf') || url.includes('/raw/upload/');
+    const resourceType = isPdf ? 'raw' : 'image';
     console.log(`🗑️ Deleting ${resourceType} from Cloudinary:`, publicId);
     await cloudinary.uploader.destroy(publicId, { resource_type: resourceType });
     console.log('✅ Asset deleted successfully');
