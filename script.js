@@ -220,13 +220,13 @@ async function downloadBrochure(url, title, originalFileName) {
         } else if (directResponse.status === 401) {
           // Try proxy for 401 errors
           console.log('⚠️ Got 401, trying proxy...');
-          fetchUrl = `${API_BASE}/api/destinations/download-brochure?url=${encodeURIComponent(url)}`;
+          fetchUrl = `${API_BASE}/destinations/download-brochure?url=${encodeURIComponent(url)}`;
         } else {
           throw new Error(`Direct fetch failed: ${directResponse.status}`);
         }
       } catch (directErr) {
         console.warn('⚠️ Direct download failed, trying proxy:', directErr.message);
-        fetchUrl = `${API_BASE}/api/destinations/download-brochure?url=${encodeURIComponent(url)}`;
+        fetchUrl = `${API_BASE}/destinations/download-brochure?url=${encodeURIComponent(url)}`;
       }
     }
 

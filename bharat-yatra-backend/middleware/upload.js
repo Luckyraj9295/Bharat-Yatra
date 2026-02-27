@@ -46,10 +46,7 @@ const buildDynamicStorage = () =>
         // Use 'raw' for PDFs, 'image' for image brochures
         resource_type: (isBrochure && isPdf) ? "raw" : "image",
         type: "upload",
-        // Make raw files publicly accessible without authentication
-        ...(isBrochure && isPdf && { 
-          access_mode: "public"
-        }),
+        access_mode: "public",
         // Only set allowed_formats for images, not for raw files
         ...(!isPdf && { allowed_formats: ["jpg", "jpeg", "png", "webp"] }),
       };
