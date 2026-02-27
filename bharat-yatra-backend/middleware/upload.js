@@ -54,12 +54,14 @@ const buildDynamicStorage = () =>
       };
       
       if (isBrochure) {
-        // For PDFs, create a public_id with .pdf extension
+        // For PDFs, create a unique public_id WITHOUT extension (Cloudinary adds it)
         // For images, let Cloudinary handle it normally
         if (file.mimetype === 'application/pdf') {
           const timestamp = Date.now();
           const randomStr = Math.random().toString(36).substring(7);
-          config.public_id = `brochure_${timestamp}_${randomStr}.pdf`;
+          // Don't include .pdf in public_id - Cloudinary adds it automatically for raw files
+          config.public_id = `brochure_${timestamp}_${randomStr}`;
+          config.format = 'pdf'; // Explicitly set format
         } else {
           config.use_filename = false;
           config.unique_filename = true;
