@@ -35,20 +35,28 @@ const buildDynamicStorage = () =>
         isBrochure
       });
       
-      return {
+      // For brochures, ensure .pdf extension is preserved
+      let config = {
         folder: isBrochure
           ? "bharat-yatra/brochures"
           : "bharat-yatra/destinations",
-        // Store brochures as raw and public so PDFs are downloadable.
         resource_type: isBrochure ? "raw" : "image",
         type: "upload",
         access_mode: "public",
-        // Preserve original filename and extension for brochures
-        use_filename: true,
-        unique_filename: true,
-        // Don't apply format transformation to raw files
         allowed_formats: ["jpg", "jpeg", "png", "webp", "pdf"],
       };
+      
+      if (isBrochure) {
+        // For PDFs, create a public_id with .pdf extension
+        const timestamp = Date.now();
+        const randomStr = Math.random().toString(36).substring(7);
+        config.public_id = `brochure_${timestamp}_${randomStr}.pdf`;
+      } else {
+        config.use_filename = false;
+        config.unique_filename = true;
+      }
+      
+      return config;
     },
   });
 
