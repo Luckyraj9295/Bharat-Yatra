@@ -178,7 +178,7 @@ async function downloadBrochure(url, title, originalFileName) {
     // Use direct link download (avoids CORS/auth issues)
     const link = document.createElement('a');
     link.href = downloadUrl;
-    link.target = '_blank';
+    // Don't use target='_blank' when downloading - it opens in new tab instead
     link.rel = 'noopener noreferrer';
     
     // Use original filename if available, otherwise generate from title
