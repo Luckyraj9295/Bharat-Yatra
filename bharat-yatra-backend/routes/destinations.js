@@ -76,20 +76,28 @@ router.get('/download-brochure', async (req, res) => {
     
     console.log('📎 Extracted public_id:', publicId);
     
-    // Determine resource type (raw for PDFs, image for images)
-    const resourceType = publicId.includes('.pdf') ? 'raw' : 'image';
+    const isPdf = publicId.toLowerCase().endsWith('.pdf');
+    const resourceType = isPdf ? 'raw' : 'image';
+
+    let signedUrl;
+    if (isPdf) {
+      const publicIdWithoutExt = publicId.replace(/\.pdf$/i, '');
+      signedUrl = cloudinary.utils.private_download_url(publicIdWithoutExt, 'pdf', {
+        resource_type: resourceType,
+        type: 'upload',
+        expires_at: Math.floor(Date.now() / 1000) + 3600
+      });
+    } else {
+      signedUrl = cloudinary.url(publicId, {
+        resource_type: resourceType,
+        type: 'upload',
+        sign_url: true,
+        secure: true,
+        flags: 'attachment'
+      });
+    }
     
-    // Generate signed URL with 1 hour expiry
-    const signedUrl = cloudinary.url(publicId, {
-      resource_type: resourceType,
-      type: 'upload',
-      sign_url: true,
-      secure: true,
-      flags: 'attachment', // Force download
-      expires_at: Math.floor(Date.now() / 1000) + 3600 // 1 hour from now
-    });
-    
-    console.log('✅ Generated signed URL');
+    console.log('✅ Generated signed URL for resource type:', resourceType);
     res.json({ signedUrl });
     
   } catch (err) {

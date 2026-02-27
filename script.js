@@ -260,7 +260,15 @@ async function downloadBrochure(url, title, originalFileName) {
       throw new Error(`Failed to fetch file: ${response.status} ${response.statusText}`);
     }
     
+    const contentType = (response.headers.get('content-type') || '').toLowerCase();
     const blob = await response.blob();
+
+    if (isPdf && (contentType.includes('text/html') || contentType.includes('application/json') || blob.size < 1024)) {
+      const maybeText = await blob.text();
+      console.error('❌ Invalid PDF payload received:', { contentType, size: blob.size, preview: maybeText.slice(0, 200) });
+      throw new Error('Invalid PDF payload received from server');
+    }
+
     const blobUrl = window.URL.createObjectURL(blob);
     
     const link = document.createElement('a');
