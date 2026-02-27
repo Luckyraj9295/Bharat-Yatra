@@ -204,6 +204,11 @@ async function downloadBrochure(url, title) {
       if (lastDot !== -1) ext = cleanUrl.substring(lastDot + 1);
     }
 
+    // Normalize extension when URL has no extension or looks like a public_id.
+    if (!ext || ext.length > 5 || ext.includes('/') || ext.includes('_upload_')) {
+      ext = 'pdf';
+    }
+
     link.download = `${title.replace(/\s+/g, '_')}_Brochure.${ext}`;
 
     document.body.appendChild(link);

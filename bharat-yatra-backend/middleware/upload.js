@@ -25,17 +25,22 @@ const buildStorage = (folder) =>
 const buildDynamicStorage = () =>
   new CloudinaryStorage({
     cloudinary,
-    params: (req, file) => ({
-      folder:
-        file.fieldname === "image"
-          ? "bharat-yatra/destinations"
-          : "bharat-yatra/brochures",
-      // Ensure PDFs are stored as raw and publicly accessible
-      resource_type: file.fieldname === "brochure" ? "raw" : "image",
-      type: "upload",
-      access_mode: "public",
-      allowed_formats: ["jpg", "jpeg", "png", "webp", "pdf"],
-    }),
+    params: (req, file) => {
+      const isBrochure = file.fieldname === "brochure";
+      return {
+        folder: isBrochure
+          ? "bharat-yatra/brochures"
+          : "bharat-yatra/destinations",
+        // Store brochures as raw and public so PDFs are downloadable.
+        resource_type: isBrochure ? "raw" : "image",
+        type: "upload",
+        access_mode: "public",
+        // Keep original filename+extension for brochures.
+        use_filename: isBrochure,
+        unique_filename: isBrochure,
+        allowed_formats: ["jpg", "jpeg", "png", "webp", "pdf"],
+      };
+    },
   });
 
 const baseOptions = {
