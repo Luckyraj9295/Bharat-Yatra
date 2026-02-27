@@ -1,6 +1,29 @@
-const fs = require('fs');
-const path = require('path');
+const cloudinary = require('../config/cloudinary');
 const Destination = require('../models/Destination');
+
+const extractCloudinaryPublicId = (url) => {
+  if (!url) return null;
+  try {
+    const parsed = new URL(url);
+    const parts = parsed.pathname.split('/');
+    const uploadIndex = parts.findIndex((part) => part === 'upload');
+    if (uploadIndex === -1) return null;
+    const publicIdParts = parts.slice(uploadIndex + 1);
+    if (publicIdParts[0] && /^v\d+$/.test(publicIdParts[0])) {
+      publicIdParts.shift();
+    }
+    const filename = publicIdParts.join('/');
+    return filename.replace(/\.[^/.]+$/, '');
+  } catch {
+    return null;
+  }
+};
+
+const deleteCloudinaryAsset = async (url) => {
+  const publicId = extractCloudinaryPublicId(url);
+  if (!publicId) return;
+  await cloudinary.uploader.destroy(publicId, { resource_type: 'image' });
+};
 
 // ➕ Create a new destination
 exports.createDestination = async (req, res) => {
@@ -81,9 +104,8 @@ exports.updateDestination = async (req, res) => {
       const newImagePath = req.files.image[0].path;
       updates.imagePath = newImagePath;
 
-      if (oldImagePath && fs.existsSync(oldImagePath)) {
-        fs.unlinkSync(oldImagePath);
-        console.log('🗑️ Replaced image:', oldImagePath);
+      if (oldImagePath) {
+        await deleteCloudinaryAsset(oldImagePath);
       }
     }
 
@@ -93,9 +115,8 @@ exports.updateDestination = async (req, res) => {
       const newBrochurePath = req.files.brochure[0].path;
       updates.brochurePath = newBrochurePath;
 
-      if (oldBrochurePath && fs.existsSync(oldBrochurePath)) {
-        fs.unlinkSync(oldBrochurePath);
-        console.log('🗑️ Replaced brochure:', oldBrochurePath);
+      if (oldBrochurePath) {
+        await deleteCloudinaryAsset(oldBrochurePath);
       }
     }
 
@@ -122,22 +143,14 @@ exports.deleteDestination = async (req, res) => {
       return res.status(404).json({ message: 'Destination not found' });
     }
 
-    // 🧹 Delete image file if exists
+    // 🧹 Delete image if exists
     if (destination.imagePath) {
-      const imageFullPath = path.join(__dirname, '..', destination.imagePath.startsWith('/') ? destination.imagePath.slice(1) : destination.imagePath);
-      if (fs.existsSync(imageFullPath)) {
-        fs.unlinkSync(imageFullPath);
-        console.log('🗑️ Deleted image:', imageFullPath);
-      }
+      await deleteCloudinaryAsset(destination.imagePath);
     }
 
-    // 🧹 Delete brochure file if exists
+    // 🧹 Delete brochure if exists
     if (destination.brochurePath) {
-      const brochureFullPath = path.join(__dirname, '..', destination.brochurePath.startsWith('/') ? destination.brochurePath.slice(1) : destination.brochurePath);
-      if (fs.existsSync(brochureFullPath)) {
-        fs.unlinkSync(brochureFullPath);
-        console.log('🗑️ Deleted brochure:', brochureFullPath);
-      }
+      await deleteCloudinaryAsset(destination.brochurePath);
     }
 
     await Destination.findByIdAndDelete(id);

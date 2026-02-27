@@ -5,7 +5,8 @@ const bcrypt = require('bcryptjs');
 const authController = require('../controllers/authController');
 const auth = require('../middleware/auth');
 const isAdmin = require('../middleware/isAdmin');
-const upload = require('../middleware/upload'); // ✅ Use centralized multer config
+const { uploadProfile } = require('../middleware/upload'); // ✅ Use centralized multer config
+const cloudinary = require('../config/cloudinary');
 
 // 🌐 Register
 router.post('/register', authController.register);
@@ -41,8 +42,26 @@ router.post('/reset-password', async (req, res) => {
 // 🔐 Change Password (authenticated)
 router.put('/change-password', auth, authController.changePassword);
 
+const extractCloudinaryPublicId = (url) => {
+  if (!url) return null;
+  try {
+    const parsed = new URL(url);
+    const parts = parsed.pathname.split('/');
+    const uploadIndex = parts.findIndex((part) => part === 'upload');
+    if (uploadIndex === -1) return null;
+    const publicIdParts = parts.slice(uploadIndex + 1);
+    if (publicIdParts[0] && /^v\d+$/.test(publicIdParts[0])) {
+      publicIdParts.shift();
+    }
+    const filename = publicIdParts.join('/');
+    return filename.replace(/\.[^/.]+$/, '');
+  } catch {
+    return null;
+  }
+};
+
 // 📸 Upload/Update Profile Image using upload.js
-router.put('/profile-image', auth, upload.single('image'), async (req, res) => {
+router.put('/profile-image', auth, uploadProfile.single('image'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ message: 'No image uploaded' });
 
@@ -51,15 +70,14 @@ router.put('/profile-image', auth, upload.single('image'), async (req, res) => {
 
     // ❌ Delete old image if it exists and is not the default
     if (user.profileImage) {
-      const oldPath = path.join(__dirname, '..', user.profileImage.startsWith('/') ? user.profileImage.slice(1) : user.profileImage);
-
-      if (fs.existsSync(oldPath)) {
-        fs.unlinkSync(oldPath);
+      const publicId = extractCloudinaryPublicId(user.profileImage);
+      if (publicId) {
+        await cloudinary.uploader.destroy(publicId, { resource_type: 'image' });
       }
     }
 
     // ✅ Update to new image
-    user.profileImage = `/uploads/profile/${req.file.filename}`;
+    user.profileImage = req.file.path;
     await user.save();
 
     res.json({ message: 'Profile image updated', profileImage: user.profileImage });

@@ -30,6 +30,11 @@ function getAvatarUrl(user) {
 
   if (!user?.profileImage) return fallback;
 
+  if (user.profileImage.startsWith('http')) {
+    const timestamp = user._avatarUpdated || Date.now();
+    return `${user.profileImage}?t=${timestamp}`;
+  }
+
   const cleanedPath = user.profileImage.startsWith("/uploads/")
     ? user.profileImage.replace(/^\/uploads\//, "")
     : user.profileImage;
@@ -85,9 +90,17 @@ function createDestinationCard(dest) {
   // Convert Windows paths to URLs
   const imgPath = dest.imagePath?.replace(/\\/g, "/");
   const brochurePath = dest.brochurePath?.replace(/\\/g, "/");
-  const imgUrl = encodeURI(`${UPLOADS_BASE}/${imgPath}`);
-  const brochureFileName = brochurePath.split('/').pop();
-  const brochureUrl = `${UPLOADS_BASE}/download/brochure/${brochureFileName}`;
+  const imgUrl = imgPath
+    ? imgPath.startsWith('http')
+      ? imgPath
+      : encodeURI(`${UPLOADS_BASE}/${imgPath}`)
+    : '';
+  const brochureFileName = brochurePath?.split('/')?.pop();
+  const brochureUrl = brochurePath
+    ? brochurePath.startsWith('http')
+      ? brochurePath
+      : `${UPLOADS_BASE}/download/brochure/${brochureFileName}`
+    : '';
   const price = `₹${dest.price}/person`;
   const duration = dest.duration || "-";
 
@@ -1086,7 +1099,9 @@ function escapeHtml(text) {
     dropdownEmail.textContent = user.email;
 
     const avatarUrl = user.profileImage
-  ? `${UPLOADS_BASE}${user.profileImage.replace(/\\/g, '/')}?t=${Date.now()}`
+  ? (user.profileImage.startsWith('http')
+      ? `${user.profileImage}?t=${Date.now()}`
+      : `${UPLOADS_BASE}${user.profileImage.replace(/\\/g, '/')}?t=${Date.now()}`)
   : `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}&background=F59E42&color=fff&rounded=true`;
 
 userAvatar.src = avatarUrl;

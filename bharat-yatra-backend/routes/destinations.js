@@ -3,23 +3,7 @@ const router = express.Router();
 const destinationController = require('../controllers/destinationController');
 const auth = require('../middleware/auth');
 const isAdmin = require('../middleware/isAdmin');
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
-
-// 🗂️ Multer storage configuration
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const dir = file.fieldname === 'image' ? 'uploads/images' : 'uploads/brochures';
-    fs.mkdirSync(dir, { recursive: true }); // Ensure folder exists
-    cb(null, dir);
-  },
-  filename: (_, file, cb) => {
-    cb(null, `file-${Date.now()}${path.extname(file.originalname)}`);
-  }
-});
-
-const upload = multer({ storage });
+const { uploadDestination } = require('../middleware/upload');
 
 /* ======================== ROUTES ======================== */
 
@@ -34,7 +18,7 @@ router.post(
   '/',
   auth,
   isAdmin,
-  upload.fields([
+  uploadDestination.fields([
     { name: 'image', maxCount: 1 },
     { name: 'brochure', maxCount: 1 }
   ]),
@@ -46,7 +30,7 @@ router.put(
   '/:id',
   auth,
   isAdmin,
-  upload.fields([
+  uploadDestination.fields([
     { name: 'image', maxCount: 1 },
     { name: 'brochure', maxCount: 1 }
   ]),

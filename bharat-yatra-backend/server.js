@@ -3,7 +3,6 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
-const fs = require('fs');
 
 const authRoutes = require('./routes/auth');
 const destinationRoutes = require('./routes/destinations');
@@ -12,52 +11,51 @@ const reviewRoutes = require('./routes/reviews');
 
 const app = express();
 
-// ✅ CORS - Allow frontend origin
+// CORS
 app.use(cors({
   origin: [
     "http://127.0.0.1:5500",
     "http://localhost:5500",
-    "https://bharat-yaatra.netlify.app"
+    "https://bharat-yaatra.netlify.app",
+    "https://www.bharat-yaatra.netlify.app"
   ],
   credentials: true
 }));
 
-// ✅ JSON Parser
+// Parsers
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// ✅ Static folder to serve uploaded files (profile images, brochures, etc.)
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
-// ✅ Serve admin panel static files
+// Admin panel static
 app.use('/admin', express.static(path.join(__dirname, 'admin')));
 
-// 📥 Brochure download route
-app.get('/download/brochure/:filename', (req, res) => {
-  const filePath = path.join(__dirname, 'uploads', 'brochures', req.params.filename);
-  if (fs.existsSync(filePath)) {
-    res.download(filePath);
-  } else {
-    res.status(404).send('Brochure file not found');
-  }
-});
-
-// ✅ API routes
+// Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/destinations', destinationRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/reviews', reviewRoutes);
 
-// 🔍 Health check
-app.get('/', (req, res) => res.json({ status: '✅ Bharat Yatra API is running' }));
+// Health check
+app.get('/', (req, res) =>
+  res.json({ status: 'Bharat Yatra API running successfully' })
+);
 
-// 🌐 Connect MongoDB and start server
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ message: "Server error" });
+});
+
+// MongoDB connection
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
-    console.log('✅ MongoDB connected');
+    console.log('MongoDB connected');
     const PORT = process.env.PORT || 5000;
-    app.listen(PORT, () => console.log(`🚀 Server listening on port ${PORT}`));
+    app.listen(PORT, () =>
+      console.log(`Server listening on port ${PORT}`)
+    );
   })
   .catch(err => {
-    console.error('❌ Mongo connection error:', err.message);
+    console.error('Mongo connection error:', err.message);
     process.exit(1);
   });

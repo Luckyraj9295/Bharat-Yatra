@@ -1,8 +1,31 @@
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const fs = require('fs');
-const path = require('path');
+const cloudinary = require('../config/cloudinary');
+
+const extractCloudinaryPublicId = (url) => {
+  if (!url) return null;
+  try {
+    const parsed = new URL(url);
+    const parts = parsed.pathname.split('/');
+    const uploadIndex = parts.findIndex((part) => part === 'upload');
+    if (uploadIndex === -1) return null;
+    const publicIdParts = parts.slice(uploadIndex + 1);
+    if (publicIdParts[0] && /^v\d+$/.test(publicIdParts[0])) {
+      publicIdParts.shift();
+    }
+    const filename = publicIdParts.join('/');
+    return filename.replace(/\.[^/.]+$/, '');
+  } catch {
+    return null;
+  }
+};
+
+const deleteCloudinaryAsset = async (url) => {
+  const publicId = extractCloudinaryPublicId(url);
+  if (!publicId) return;
+  await cloudinary.uploader.destroy(publicId, { resource_type: 'image' });
+};
 
 
 // ✅ REGISTER
@@ -117,22 +140,13 @@ exports.updateProfile = async (req, res) => {
 
     // ✅ Support clearing profileImage when it's an empty string
     if (profileImage !== undefined) {
-  if (profileImage.trim() === '' && user.profileImage) {
-    const oldPath = path.join(__dirname, '..', user.profileImage.startsWith('/') ? user.profileImage.slice(1) : user.profileImage);
-    if (fs.existsSync(oldPath)) {
-      fs.unlink(oldPath, (err) => {
-        if (err) {
-          console.error('❌ Failed to delete old image:', err);
-        } else {
-          console.log('🗑️ Deleted old image:', oldPath);
-        }
-      });
+      if (profileImage.trim() === '' && user.profileImage) {
+        await deleteCloudinaryAsset(user.profileImage);
+        user.profileImage = '';
+      } else {
+        user.profileImage = profileImage.trim();
+      }
     }
-    user.profileImage = '';
-  } else {
-    user.profileImage = profileImage.trim();
-  }
-}
 
 
 

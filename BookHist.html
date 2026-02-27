@@ -204,8 +204,11 @@ async function loadBookings() {
     }
 
     const dest = booking.destination;
-    const imgSrc = dest?.imagePath
-      ? `${UPLOADS_BASE}/${dest.imagePath.replace(/\\/g, "/")}`
+    const imagePath = dest?.imagePath?.replace(/\\/g, "/");
+    const imgSrc = imagePath
+      ? (imagePath.startsWith("http")
+          ? imagePath
+          : `${UPLOADS_BASE}/${imagePath}`)
       : "https://via.placeholder.com/400x200";
 
     const durationStr = dest?.duration || "";

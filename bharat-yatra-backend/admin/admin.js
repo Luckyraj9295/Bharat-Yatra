@@ -55,8 +55,16 @@ document.addEventListener('DOMContentLoaded', () => {
     tbody.innerHTML = '';
 
     data.forEach(d => {
-      const imageURL = '/' + d.imagePath.replace(/\\/g, '/');
-      const brochureURL = '/' + d.brochurePath.replace(/\\/g, '/');
+      const imageURL = d.imagePath
+        ? (d.imagePath.startsWith('http')
+          ? d.imagePath
+          : '/' + d.imagePath.replace(/\\/g, '/'))
+        : '';
+      const brochureURL = d.brochurePath
+        ? (d.brochurePath.startsWith('http')
+          ? d.brochurePath
+          : '/' + d.brochurePath.replace(/\\/g, '/'))
+        : '';
 
       const tr = document.createElement('tr');
       tr.innerHTML = `

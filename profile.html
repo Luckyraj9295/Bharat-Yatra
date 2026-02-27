@@ -119,7 +119,9 @@ window.addEventListener('DOMContentLoaded', async () => {
       : user.profileImage;
     const timestamp = user._avatarUpdated || Date.now();
     const avatarUrl = user.profileImage
-      ? `${window.UPLOADS_BASE}/uploads/${cleanedPath.replace(/\\/g, '/')}?t=${timestamp}`
+      ? (user.profileImage.startsWith('http')
+          ? `${user.profileImage}?t=${timestamp}`
+          : `${window.UPLOADS_BASE}/uploads/${cleanedPath.replace(/\\/g, '/')}?t=${timestamp}`)
       : `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}&background=F59E42&color=fff&rounded=true`;
 
     document.getElementById('profilePreview').src = avatarUrl;
@@ -242,7 +244,11 @@ profilePhotoInput?.addEventListener('change', async function () {
     const cleanedNewPath = imagePath?.startsWith("/uploads/")
       ? imagePath.replace(/^\/uploads\//, "")
       : imagePath;
-    const newAvatar = imagePath ? `${window.UPLOADS_BASE}/uploads/${cleanedNewPath.replace(/\\/g, '/')}?t=${Date.now()}` : '';
+    const newAvatar = imagePath
+      ? (imagePath.startsWith('http')
+          ? `${imagePath}?t=${Date.now()}`
+          : `${window.UPLOADS_BASE}/uploads/${cleanedNewPath.replace(/\\/g, '/')}?t=${Date.now()}`)
+      : '';
 
     if (newAvatar) {
       document.getElementById('profilePreview').src = newAvatar;
@@ -270,9 +276,11 @@ form?.addEventListener('submit', async function (e) {
   e.preventDefault();
 
   const profileImageSrc = document.getElementById('profilePreview').src;
-  const profileImagePath = profileImageSrc.startsWith(window.UPLOADS_BASE)
-    ? profileImageSrc.replace(window.UPLOADS_BASE, '')
-    : '';
+  const profileImagePath = profileImageSrc.startsWith('http')
+    ? profileImageSrc
+    : (profileImageSrc.startsWith(window.UPLOADS_BASE)
+        ? profileImageSrc.replace(window.UPLOADS_BASE, '')
+        : '');
 
   const body = {
     name: document.getElementById('editName').value.trim(),
