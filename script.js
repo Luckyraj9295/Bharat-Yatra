@@ -175,15 +175,10 @@ async function downloadBrochure(url, title, originalFileName) {
 
     console.log('📥 Downloading brochure from:', downloadUrl);
 
-    // Use direct link download (avoids CORS/auth issues)
-    const link = document.createElement('a');
-    link.href = downloadUrl;
-    // Don't use target='_blank' when downloading - it opens in new tab instead
-    link.rel = 'noopener noreferrer';
-    
-    // Use original filename if available, otherwise generate from title
+    // Determine filename
+    let filename;
     if (originalFileName && originalFileName.trim() !== '') {
-      link.download = originalFileName;
+      filename = originalFileName;
       console.log('📥 Using original filename:', originalFileName);
     } else {
       // Fallback: detect extension from URL
@@ -197,13 +192,26 @@ async function downloadBrochure(url, title, originalFileName) {
         }
       }
       const safeTitle = title.replace(/[^a-zA-Z0-9_\-\s]/g, '').replace(/\s+/g, '_');
-      link.download = `${safeTitle}_Brochure.${fileExtension}`;
-      console.log('📥 Generated filename:', link.download);
+      filename = `${safeTitle}_Brochure.${fileExtension}`;
+      console.log('📥 Generated filename:', filename);
     }
 
+    // Fetch the file and download as blob to force download
+    const response = await fetch(downloadUrl);
+    if (!response.ok) throw new Error('Failed to fetch file');
+    
+    const blob = await response.blob();
+    const blobUrl = window.URL.createObjectURL(blob);
+    
+    const link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = filename;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    
+    // Clean up blob URL
+    window.URL.revokeObjectURL(blobUrl);
 
     console.log('✅ Brochure download initiated');
     showToast('✅ Brochure download initiated!');
