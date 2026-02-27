@@ -166,7 +166,7 @@ async function downloadBrochure(url, title) {
 
     let downloadUrl = url;
     
-    // For Cloudinary raw files without .pdf extension, add it
+    // For Cloudinary raw files, ensure correct URL format
     if (downloadUrl.includes('res.cloudinary.com/') && downloadUrl.includes('/raw/upload/')) {
       // Check if URL already has .pdf extension
       const beforeParams = downloadUrl.split('?')[0];
@@ -179,31 +179,20 @@ async function downloadBrochure(url, title) {
           downloadUrl = `${downloadUrl}.pdf`;
         }
       }
-      // Add attachment flag if not present
+      // Add attachment flag and force download
       if (!downloadUrl.includes('fl_attachment')) {
-        downloadUrl += downloadUrl.includes('?') ? '&fl_attachment' : '?fl_attachment';
+        downloadUrl += downloadUrl.includes('?') ? '&fl_attachment=true' : '?fl_attachment=true';
       }
     }
 
     console.log('📥 Downloading brochure from:', downloadUrl);
 
-    const response = await fetch(downloadUrl, {
-      method: 'GET',
-      mode: 'cors',
-      credentials: 'omit'
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text().catch(() => '');
-      throw new Error(`Failed to fetch brochure: ${response.status}${errorText ? ' - ' + errorText : ''}`);
-    }
-
-    // Force PDF MIME type for brochures
-    const blob = new Blob([await response.blob()], { type: 'application/pdf' });
-    const blobUrl = window.URL.createObjectURL(blob);
+    // Try direct link download first (avoids CORS/auth issues)
     const link = document.createElement('a');
-    link.href = blobUrl;
-
+    link.href = downloadUrl;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    
     const safeTitle = title.replace(/[^a-zA-Z0-9_\-\s]/g, '').replace(/\s+/g, '_');
     link.download = `${safeTitle}_Brochure.pdf`;
     
@@ -213,7 +202,13 @@ async function downloadBrochure(url, title) {
     link.click();
     document.body.removeChild(link);
 
-    setTimeout(() => window.URL.revokeObjectURL(blobUrl), 1000);
+    console.log('✅ Brochure download initiated');
+    showToast('✅ Brochure download initiated!');
+  } catch (err) {
+    console.error('❌ Download failed:', err.message);
+    showToast('❌ Failed to download brochure. ' + err.message, 'error');
+  }
+}
 
     console.log('✅ Brochure downloaded successfully');
     showToast('✅ Brochure downloaded successfully!');

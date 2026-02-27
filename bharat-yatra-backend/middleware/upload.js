@@ -43,6 +43,10 @@ const buildDynamicStorage = () =>
         resource_type: isBrochure ? "raw" : "image",
         type: "upload",
         access_mode: "public",
+        // Disable authentication for public downloads
+        ...(isBrochure && { 
+          access_control: [{ access_type: "anonymous" }]
+        }),
         allowed_formats: ["jpg", "jpeg", "png", "webp", "pdf"],
       };
       
