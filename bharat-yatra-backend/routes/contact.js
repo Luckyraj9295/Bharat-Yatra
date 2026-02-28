@@ -27,8 +27,8 @@ const sendContactEmails = async (name, email, message, contactId) => {
   try {
     // 📩 Mail to Admin
     const adminRes = await resend.emails.send({
-      from: "noreply@bharatyatra.com",
-      to: process.env.ADMIN_EMAIL || "admin@bharatyatra.com",
+      from: "onboarding@resend.dev",
+      to: process.env.ADMIN_EMAIL || "luckykumar9295@gmail.com",
       replyTo: email,
       subject: `📬 New Enquiry from ${name}`,
       html: `
@@ -51,7 +51,7 @@ const sendContactEmails = async (name, email, message, contactId) => {
     // 📩 Auto-reply to User (best-effort)
     try {
       const userRes = await resend.emails.send({
-        from: "noreply@bharatyatra.com",
+        from: "Bharat Yatra <onboarding@resend.dev>",
         to: email,
         subject: "We received your enquiry - Bharat Yatra",
         html: `
