@@ -658,6 +658,14 @@ async function processPayment() {
   const taxes = totalPrice * 0.05;
   const grandTotal = totalPrice + taxes;
 
+  console.log('💰 Payment Calculation:', {
+    basePrice,
+    travelersCount,
+    totalPrice,
+    taxes,
+    grandTotal
+  });
+
   // Collect personal info
   const fullName = document.getElementById('fullName').value.trim();
   const email = document.getElementById('email').value.trim();
@@ -1726,6 +1734,20 @@ const originalNextStep = window.nextStep || function() {};
 window.nextStep = function(currentStep) {
     const summary = document.getElementById('travelerSummary');
     if (summary) summary.innerHTML = '';
+
+    // 👥 When moving FROM step 1 TO step 2, show Add Traveler button if needed
+    if (currentStep === 1) {
+        const travelersCount = parseInt(document.getElementById('travelersCount')?.value || '1');
+        const addTravelerBtn = document.getElementById('addTravelerBtn');
+        if (addTravelerBtn) {
+            if (travelersCount > 1) {
+                addTravelerBtn.classList.remove('hidden');
+                addTravelerBtn.textContent = `+ Add Traveler 2`;
+            } else {
+                addTravelerBtn.classList.add('hidden');
+            }
+        }
+    }
 
     if (currentStep === 2) {
         const total = parseInt(document.getElementById('travelersCount')?.value || '1');
