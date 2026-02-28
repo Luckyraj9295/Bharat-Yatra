@@ -33,14 +33,15 @@ router.post("/", async (req, res) => {
   try {
     // Create transporter
     const transporter = nodemailer.createTransport({
-      service: "gmail",
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false,
+      requireTLS: true,
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
       },
     });
-
-    await transporter.verify();
 
     // 📩 Mail to YOU (Admin)
     await transporter.sendMail({
@@ -60,24 +61,32 @@ router.post("/", async (req, res) => {
       `,
     });
 
-    // 📩 Auto-reply to USER
-    await transporter.sendMail({
-      from: `"Bharat Yatra Support" <${process.env.EMAIL_USER}>`,
-      to: email,
-      subject: "We received your enquiry - Bharat Yatra",
-      text: `Hello ${name},\n\nThank you for contacting Bharat Yatra.\nOur team has received your message and will get back to you shortly.\n\nYour Message:\n${message}\n\nRegards,\nBharat Yatra Team`,
-      html: `
-        <h3>Hello ${name},</h3>
-        <p>Thank you for contacting Bharat Yatra.</p>
-        <p>Our team has received your message and will get back to you shortly.</p>
-        <br/>
-        <p><strong>Your Message:</strong></p>
-        <p>${message}</p>
-        <br/>
-        <p>Regards,</p>
-        <p><strong>Bharat Yatra Team</strong></p>
-      `,
-    });
+    // 📩 Auto-reply to USER (best-effort; don't fail the main request)
+    try {
+      await transporter.sendMail({
+        from: `"Bharat Yatra Support" <${process.env.EMAIL_USER}>`,
+        to: email,
+        subject: "We received your enquiry - Bharat Yatra",
+        text: `Hello ${name},\n\nThank you for contacting Bharat Yatra.\nOur team has received your message and will get back to you shortly.\n\nYour Message:\n${message}\n\nRegards,\nBharat Yatra Team`,
+        html: `
+          <h3>Hello ${name},</h3>
+          <p>Thank you for contacting Bharat Yatra.</p>
+          <p>Our team has received your message and will get back to you shortly.</p>
+          <br/>
+          <p><strong>Your Message:</strong></p>
+          <p>${message}</p>
+          <br/>
+          <p>Regards,</p>
+          <p><strong>Bharat Yatra Team</strong></p>
+        `,
+      });
+    } catch (autoReplyErr) {
+      console.warn("Auto-reply failed (admin mail sent):", {
+        message: autoReplyErr.message,
+        code: autoReplyErr.code,
+        responseCode: autoReplyErr.responseCode
+      });
+    }
 
     res.json({ message: "Message sent successfully!" });
 
