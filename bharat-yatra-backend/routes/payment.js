@@ -29,7 +29,7 @@ router.post('/create-order', auth, async (req, res) => {
     // Verify booking exists and belongs to user
     const booking = await Booking.findOne({
       _id: bookingId,
-      user: req.user.id
+      user: req.user.userId
     });
 
     if (!booking) {
@@ -46,7 +46,7 @@ router.post('/create-order', auth, async (req, res) => {
       receipt: `booking_${bookingId}_${Date.now()}`,
       notes: {
         bookingId: bookingId.toString(),
-        userId: req.user.id
+        userId: req.user.userId
       }
     };
 
@@ -55,7 +55,7 @@ router.post('/create-order', auth, async (req, res) => {
     // Save payment record to DB
     const payment = new Payment({
       booking: bookingId,
-      user: req.user.id,
+      user: req.user.userId,
       razorpayOrderId: razorpayOrder.id,
       amount: amount,
       status: 'pending'
@@ -172,7 +172,7 @@ router.get('/details/:orderId', auth, async (req, res) => {
   try {
     const payment = await Payment.findOne({
       razorpayOrderId: req.params.orderId,
-      user: req.user.id
+      user: req.user.userId
     }).populate('booking');
 
     if (!payment) {
