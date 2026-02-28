@@ -480,9 +480,6 @@ if (!userInfo || !token) {
                     alert('Please enter a valid 10-digit Indian mobile number');
                     return;
                 }
-
-                // Show payment method based on selection
-                setupPaymentMethodToggle();
             }
             
             // Hide current step
@@ -585,26 +582,6 @@ if (!userInfo || !token) {
             return new Date(dateString).toLocaleDateString('en-IN', options);
         }
         
-        // Setup payment method toggle
-        function setupPaymentMethodToggle() {
-            const paymentMethods = document.querySelectorAll('input[name="paymentMethod"]');
-            
-            paymentMethods.forEach(method => {
-                method.addEventListener('change', function() {
-                    document.getElementById('creditCardForm').classList.add('hidden');
-                    document.getElementById('upiForm').classList.add('hidden');
-                    document.getElementById('netBankingForm').classList.add('hidden');
-                    
-                    if (this.value === 'creditCard') {
-                        document.getElementById('creditCardForm').classList.remove('hidden');
-                    } else if (this.value === 'upi') {
-                        document.getElementById('upiForm').classList.remove('hidden');
-                    } else if (this.value === 'netBanking') {
-                        document.getElementById('netBankingForm').classList.remove('hidden');
-                    }
-                });
-            });
-        }
         // Update localStorage with confirmed booking (called on successful payment)
 function storeBookingInLocalStorage(ref, totalPrice) {
   const destination = document.getElementById('destinationSelect').value;
@@ -628,8 +605,8 @@ function storeBookingInLocalStorage(ref, totalPrice) {
   localStorage.setItem('bookings', JSON.stringify(existing));
 }
 
-        // Process payment
-        async function processPayment() {
+// ===================== Razorpay Payment Integration =====================
+async function processPayment() {
   const termsChecked = document.getElementById('termsCheck').checked;
   if (!termsChecked) {
     showToast('Please accept the Terms & Conditions to proceed.', 'error');
@@ -681,11 +658,6 @@ function storeBookingInLocalStorage(ref, totalPrice) {
   const taxes = totalPrice * 0.05;
   const grandTotal = totalPrice + taxes;
 
-  // Update price UI
-  document.getElementById('basePrice').textContent = '₹' + totalPrice.toLocaleString('en-IN');
-  document.getElementById('taxes').textContent = '₹' + taxes.toLocaleString('en-IN');
-  document.getElementById('totalAmount').textContent = '₹' + grandTotal.toLocaleString('en-IN');
-
   // Collect personal info
   const fullName = document.getElementById('fullName').value.trim();
   const email = document.getElementById('email').value.trim();
@@ -695,9 +667,7 @@ function storeBookingInLocalStorage(ref, totalPrice) {
   const pincode = document.getElementById('pincode').value.trim();
   const age = document.getElementById('age').value.trim();
   const gender = document.getElementById('gender').value;
-  const specialRequests = document.getElementById('specialRequests').value.trim(); // ✅ NEW
-
-  const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value || '';
+  const specialRequests = document.getElementById('specialRequests').value.trim();
 
   // Travelers array
   const travelersArr = [{
@@ -716,22 +686,18 @@ function storeBookingInLocalStorage(ref, totalPrice) {
   const personalInfo = { fullName, email, phone, state, city, pin: pincode };
 
   // Final booking payload
-const requestBody = {
-  destinationId,
-  packageType,
-  travelers: travelersArr,
-  personalInfo,
-  travelDate,       // ✅ Now included
-  specialRequests
-};
-
-
-  if (paymentMethod === 'upi') {
-    requestBody.upiId = document.getElementById('upiId')?.value?.trim() || '';
-  }
+  const requestBody = {
+    destinationId,
+    packageType,
+    travelers: travelersArr,
+    personalInfo,
+    travelDate,
+    specialRequests
+  };
 
   try {
-    const res = await fetch(`${API_BASE}/bookings`, {
+    // Step 1: Create booking
+    const bookingRes = await fetch(`${API_BASE}/bookings`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -740,21 +706,124 @@ const requestBody = {
       body: JSON.stringify(requestBody)
     });
 
-    if (!res.ok) {
-      const errorData = await res.json();
-      throw new Error(errorData.message || 'Failed to book');
+    if (!bookingRes.ok) {
+      const errorData = await bookingRes.json();
+      throw new Error(errorData.message || 'Failed to create booking');
     }
 
-    const booking = await res.json();
-    showToast('✅ Booking successful!', 'success');
-    document.getElementById('bookingRef').textContent = booking.bookingRef;
-    document.getElementById('paymentModal').classList.remove('hidden');
+    const booking = await bookingRes.json();
+    const bookingId = booking._id;
+    
+    showToast('✅ Booking created! Redirecting to payment...', 'success');
+    
+    // Step 2: Create Razorpay order
+    const orderRes = await fetch(`${API_BASE}/payments/create-order`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + token
+      },
+      body: JSON.stringify({
+        bookingId: bookingId,
+        amount: grandTotal
+      })
+    });
 
-    // Store in localStorage if needed
-    storeBookingInLocalStorage(booking.bookingRef, grandTotal);
+    if (!orderRes.ok) {
+      const errorData = await orderRes.json();
+      throw new Error(errorData.message || 'Failed to create payment order');
+    }
+
+    const orderData = await orderRes.json();
+    
+    // Step 3: Open Razorpay checkout
+    const options = {
+      key: orderData.data.keyId,
+      amount: orderData.data.amount * 100, // Convert to paise
+      currency: 'INR',
+      name: 'Bharat Yatra',
+      description: `Booking for ${destinationTitle}`,
+      order_id: orderData.data.orderId,
+      handler: async (response) => {
+        // Step 4: Verify payment
+        await verifyRazorpayPayment(response, bookingId, token, grandTotal);
+      },
+      prefill: {
+        name: fullName,
+        email: email,
+        contact: phone
+      },
+      notes: {
+        bookingId: bookingId,
+        destination: destinationTitle
+      },
+      theme: {
+        color: '#FF9500'
+      },
+      modal: {
+        ondismiss: () => {
+          showToast('Payment cancelled. You can try again.', 'error');
+        }
+      }
+    };
+
+    const razorpay = new Razorpay(options);
+    razorpay.open();
+
   } catch (err) {
-    console.error('Booking failed:', err);
-    showToast('❌ Booking failed: ' + err.message, 'error');
+    console.error('Payment process error:', err);
+    showToast('❌ Error: ' + err.message, 'error');
+  }
+}
+
+// Verify Razorpay payment
+async function verifyRazorpayPayment(response, bookingId, token, grandTotal) {
+  try {
+    const verifyRes = await fetch(`${API_BASE}/payments/verify-payment`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + token
+      },
+      body: JSON.stringify({
+        razorpayOrderId: response.razorpay_order_id,
+        razorpayPaymentId: response.razorpay_payment_id,
+        razorpaySignature: response.razorpay_signature,
+        bookingId: bookingId
+      })
+    });
+
+    const data = await verifyRes.json();
+
+    if (data.success) {
+      showToast('✅ Payment Successful! Thank you for booking with us.', 'success');
+      
+      // Get booking reference for display
+      const bookingRefRes = await fetch(`${API_BASE}/bookings/${bookingId}`, {
+        headers: {
+          'Authorization': 'Bearer ' + token
+        }
+      });
+      
+      if (bookingRefRes.ok) {
+        const bookingData = await bookingRefRes.json();
+        document.getElementById('bookingRef').textContent = bookingData.bookingRef;
+      }
+
+      document.getElementById('paymentModal').classList.remove('hidden');
+
+      // Reset form after 3 seconds
+      setTimeout(() => {
+        closeModal();
+      }, 3000);
+
+    } else {
+      showToast('❌ Payment verification failed: ' + data.message, 'error');
+    }
+
+  } catch (error) {
+    console.error('Verification error:', error);
+    showToast('❌ Payment verification failed', 'error');
   }
 }
 
