@@ -28,7 +28,7 @@ const sendContactEmails = async (name, email, message, contactId) => {
     // 📩 Mail to Admin
     const adminRes = await resend.emails.send({
       from: "onboarding@resend.dev",
-      to: process.env.ADMIN_EMAIL || "luckykumar9295@gmail.com",
+      to: process.env.ADMIN_EMAIL || "bharatyatra001@gmail.com",
       replyTo: email,
       subject: `📬 New Enquiry from ${name}`,
       html: `
