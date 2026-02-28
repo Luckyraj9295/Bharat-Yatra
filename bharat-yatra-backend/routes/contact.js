@@ -1,7 +1,9 @@
 const express = require("express");
 const router = express.Router();
-const nodemailer = require("nodemailer");
+const { Resend } = require("resend");
 const Contact = require("../models/Contact");
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 router.get('/', (req, res) => {
   res.json({ status: 'Contact route is active' });
@@ -11,36 +13,24 @@ const isValidEmail = (email) => {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 };
 
-// Helper: Send emails asynchronously without blocking response
+// Helper: Send emails asynchronously using Resend
 const sendContactEmails = async (name, email, message, contactId) => {
-  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-    console.error('Email config missing: EMAIL_USER or EMAIL_PASS');
+  if (!process.env.RESEND_API_KEY) {
+    console.error('Resend API key not configured: RESEND_API_KEY');
     await Contact.findByIdAndUpdate(contactId, {
       mailSent: false,
-      mailError: 'Email service not configured'
-    });
+      mailError: 'Resend API key not configured'
+    }).catch(err => console.error("DB update error:", err));
     return;
   }
 
   try {
-    const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 587,
-      secure: false,
-      requireTLS: true,
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
-
     // 📩 Mail to Admin
-    await transporter.sendMail({
-      from: `"Bharat Yatra Website" <${process.env.EMAIL_USER}>`,
-      to: process.env.EMAIL_USER,
+    const adminRes = await resend.emails.send({
+      from: "noreply@bharatyatra.com",
+      to: process.env.ADMIN_EMAIL || "admin@bharatyatra.com",
       replyTo: email,
       subject: `📬 New Enquiry from ${name}`,
-      text: `New Contact Enquiry\n\nName: ${name}\nEmail: ${email}\n\nMessage:\n${message}`,
       html: `
         <h2>New Contact Enquiry</h2>
         <p><strong>Name:</strong> ${name}</p>
@@ -52,13 +42,18 @@ const sendContactEmails = async (name, email, message, contactId) => {
       `,
     });
 
+    if (!adminRes.data?.id) {
+      throw new Error(`Admin email failed: ${adminRes.error?.message}`);
+    }
+
+    console.log('✅ Admin email sent:', adminRes.data.id);
+
     // 📩 Auto-reply to User (best-effort)
     try {
-      await transporter.sendMail({
-        from: `"Bharat Yatra Support" <${process.env.EMAIL_USER}>`,
+      const userRes = await resend.emails.send({
+        from: "noreply@bharatyatra.com",
         to: email,
         subject: "We received your enquiry - Bharat Yatra",
-        text: `Hello ${name},\n\nThank you for contacting Bharat Yatra.\nOur team has received your message and will get back to you shortly.\n\nYour Message:\n${message}\n\nRegards,\nBharat Yatra Team`,
         html: `
           <h3>Hello ${name},</h3>
           <p>Thank you for contacting Bharat Yatra.</p>
@@ -71,8 +66,9 @@ const sendContactEmails = async (name, email, message, contactId) => {
           <p><strong>Bharat Yatra Team</strong></p>
         `,
       });
-    } catch (autoReplyErr) {
-      console.warn("Auto-reply failed but admin mail sent:", autoReplyErr.message);
+      console.log('✅ User auto-reply sent:', userRes.data?.id);
+    } catch (userErr) {
+      console.warn("User auto-reply failed:", userErr.message);
     }
 
     // Mark as sent
@@ -80,11 +76,9 @@ const sendContactEmails = async (name, email, message, contactId) => {
     console.log('📧 Contact emails sent for ID:', contactId);
 
   } catch (error) {
-    console.error("Contact mail error:", {
+    console.error("Resend mail error:", {
       message: error.message,
-      code: error.code,
-      command: error.command,
-      responseCode: error.responseCode
+      code: error.code
     });
     // Log error but don't crash
     await Contact.findByIdAndUpdate(contactId, {
