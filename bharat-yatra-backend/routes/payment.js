@@ -52,7 +52,7 @@ router.post('/create-order', auth, async (req, res) => {
     const options = {
       amount: Math.round(amount * 100), // Amount in smallest unit (paise)
       currency: 'INR',
-      receipt: `booking_${bookingId}_${Date.now()}`,
+      receipt: `bk${Date.now()}_${bookingId.toString().slice(-8)}`, // Max 40 chars
       notes: {
         bookingId: bookingId.toString(),
         userId: req.user.userId
