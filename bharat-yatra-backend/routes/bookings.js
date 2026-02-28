@@ -11,7 +11,10 @@ router.post('/', auth, bookingController.createBooking);
 // 👤 Authenticated users can view their own bookings
 router.get('/me', auth, bookingController.getMyBookings);
 
-// 🛡️ Admins can view all bookings
+// � Authenticated users can view a single booking by ID
+router.get('/:id', auth, bookingController.getBookingById);
+
+// �🛡️ Admins can view all bookings
 router.get('/', auth, isAdmin, bookingController.getAllBookings);
 
 // ❌ Authenticated users can cancel (delete) their own booking

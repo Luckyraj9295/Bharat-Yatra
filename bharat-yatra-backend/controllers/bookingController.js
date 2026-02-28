@@ -56,6 +56,24 @@ exports.getMyBookings = async (req, res) => {
   }
 };
 
+// 📄 Get single booking by ID (only if it belongs to user)
+exports.getBookingById = async (req, res) => {
+  try {
+    const booking = await Booking.findOne({
+      _id: req.params.id,
+      user: req.user.userId
+    }).populate('destination');
+
+    if (!booking) {
+      return res.status(404).json({ message: 'Booking not found or unauthorized.' });
+    }
+
+    res.json(booking);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 // 🛡️ Admin: Get all bookings
 exports.getAllBookings = async (_, res) => {
   try {
