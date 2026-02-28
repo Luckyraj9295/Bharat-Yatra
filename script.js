@@ -779,9 +779,16 @@ async function processPayment() {
       theme: {
         color: '#FF9500'
       },
+      config: {
+        display: {
+          hide: [{ method: 'paylater' }],
+          preferences: {
+            show_default_blocks: true
+          }
+        }
+      },
       modal: {
         ondismiss: () => {
-          document.body.classList.remove('razorpay-checkout-open');
           showToast('Payment cancelled. You can try again.', 'error');
         }
       }
@@ -795,16 +802,6 @@ async function processPayment() {
 
     console.log('🚀 Opening Razorpay modal...');
     const razorpay = new Razorpay(options);
-    
-    // Add body class to prevent scroll and ensure modal visibility
-    document.body.classList.add('razorpay-checkout-open');
-    
-    // Remove class when modal closes
-    const originalOnDismiss = options.modal.ondismiss;
-    razorpay.on('payment.failed', function(response) {
-      document.body.classList.remove('razorpay-checkout-open');
-    });
-    
     razorpay.open();
     console.log('✅ Razorpay modal opened');
 
@@ -817,9 +814,6 @@ async function processPayment() {
 // Verify Razorpay payment
 async function verifyRazorpayPayment(response, bookingId, token, grandTotal) {
   try {
-    // Remove checkout open class when verification starts
-    document.body.classList.remove('razorpay-checkout-open');
-    
     const verifyRes = await fetch(`${API_BASE}/payments/verify-payment`, {
       method: 'POST',
       headers: {
