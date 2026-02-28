@@ -9,6 +9,7 @@ const destinationRoutes = require('./routes/destinations');
 const bookingRoutes = require('./routes/bookings');
 const reviewRoutes = require('./routes/reviews');
 const contactRoutes = require("./routes/contact");
+const paymentRoutes = require('./routes/payment');
 
 const app = express();
 
@@ -52,6 +53,7 @@ app.use('/api/destinations', destinationRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use("/api/contact", contactRoutes);
+app.use('/api/payments', paymentRoutes);
 
 // Health check
 app.get('/', (req, res) =>
