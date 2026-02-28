@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const nodemailer = require("nodemailer");
+const Contact = require("../models/Contact");
 
 router.get('/', (req, res) => {
   res.json({ status: 'Contact route is active' });
@@ -10,28 +11,18 @@ const isValidEmail = (email) => {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 };
 
-// POST /api/contact
-router.post("/", async (req, res) => {
-  const name = String(req.body?.name || '').trim();
-  const email = String(req.body?.email || '').trim();
-  const message = String(req.body?.message || '').trim();
-
-  // Basic validation
-  if (!name || !email || !message) {
-    return res.status(400).json({ message: "All fields are required." });
-  }
-
-  if (!isValidEmail(email)) {
-    return res.status(400).json({ message: "Please enter a valid email address." });
-  }
-
+// Helper: Send emails asynchronously without blocking response
+const sendContactEmails = async (name, email, message, contactId) => {
   if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-    console.error('Contact mail config missing: EMAIL_USER or EMAIL_PASS');
-    return res.status(500).json({ message: "Contact service is not configured on server." });
+    console.error('Email config missing: EMAIL_USER or EMAIL_PASS');
+    await Contact.findByIdAndUpdate(contactId, {
+      mailSent: false,
+      mailError: 'Email service not configured'
+    });
+    return;
   }
 
   try {
-    // Create transporter
     const transporter = nodemailer.createTransport({
       host: "smtp.gmail.com",
       port: 587,
@@ -43,7 +34,7 @@ router.post("/", async (req, res) => {
       },
     });
 
-    // 📩 Mail to YOU (Admin)
+    // 📩 Mail to Admin
     await transporter.sendMail({
       from: `"Bharat Yatra Website" <${process.env.EMAIL_USER}>`,
       to: process.env.EMAIL_USER,
@@ -61,7 +52,7 @@ router.post("/", async (req, res) => {
       `,
     });
 
-    // 📩 Auto-reply to USER (best-effort; don't fail the main request)
+    // 📩 Auto-reply to User (best-effort)
     try {
       await transporter.sendMail({
         from: `"Bharat Yatra Support" <${process.env.EMAIL_USER}>`,
@@ -81,14 +72,12 @@ router.post("/", async (req, res) => {
         `,
       });
     } catch (autoReplyErr) {
-      console.warn("Auto-reply failed (admin mail sent):", {
-        message: autoReplyErr.message,
-        code: autoReplyErr.code,
-        responseCode: autoReplyErr.responseCode
-      });
+      console.warn("Auto-reply failed but admin mail sent:", autoReplyErr.message);
     }
 
-    res.json({ message: "Message sent successfully!" });
+    // Mark as sent
+    await Contact.findByIdAndUpdate(contactId, { mailSent: true });
+    console.log('📧 Contact emails sent for ID:', contactId);
 
   } catch (error) {
     console.error("Contact mail error:", {
@@ -97,7 +86,48 @@ router.post("/", async (req, res) => {
       command: error.command,
       responseCode: error.responseCode
     });
-    res.status(500).json({ message: "Failed to send message. Please try again later." });
+    // Log error but don't crash
+    await Contact.findByIdAndUpdate(contactId, {
+      mailSent: false,
+      mailError: error.message
+    }).catch(dbErr => console.error("Failed to update contact error:", dbErr));
+  }
+};
+
+// POST /api/contact
+router.post("/", async (req, res) => {
+  const name = String(req.body?.name || '').trim();
+  const email = String(req.body?.email || '').trim();
+  const message = String(req.body?.message || '').trim();
+
+  // Validation
+  if (!name || !email || !message) {
+    return res.status(400).json({ message: "All fields are required." });
+  }
+
+  if (!isValidEmail(email)) {
+    return res.status(400).json({ message: "Please enter a valid email address." });
+  }
+
+  try {
+    // Save to database first
+    const contact = await Contact.create({ name, email, message });
+    console.log('💾 Contact saved to DB:', contact._id);
+
+    // Send emails asynchronously (don't await - fire and forget)
+    sendContactEmails(name, email, message, contact._id).catch(err => {
+      console.error("Async mail function error:", err);
+    });
+
+    // Return success immediately
+    res.status(201).json({
+      message: "Thank you! We've received your message and will get back to you soon.",
+      contactId: contact._id
+    });
+
+  } catch (dbError) {
+    console.error("Database error saving contact:", dbError);
+    res.status(500).json({ message: "Failed to save your message. Please try again." });
   }
 });
 
