@@ -40,7 +40,7 @@ const bookingSchema = new mongoose.Schema({
     email: { type: String, required: true },
     pin: { type: String, required: true }
   },
-  upiId: { type: String, required: true },
+  upiId: { type: String, default: null },
 
   specialRequests: {  // ✅ New field
     type: String,
