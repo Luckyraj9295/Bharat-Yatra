@@ -722,6 +722,7 @@ async function processPayment() {
     const booking = await bookingRes.json();
     const bookingId = booking._id;
     
+    console.log('✅ Booking created:', bookingId);
     showToast('✅ Booking created! Redirecting to payment...', 'success');
     
     // Step 2: Create Razorpay order
@@ -737,12 +738,22 @@ async function processPayment() {
       })
     });
 
+    console.log('📦 Order response status:', orderRes.status);
+
     if (!orderRes.ok) {
       const errorData = await orderRes.json();
+      console.error('❌ Order creation failed:', errorData);
       throw new Error(errorData.message || 'Failed to create payment order');
     }
 
     const orderData = await orderRes.json();
+    console.log('✅ Order data received:', orderData);
+    
+    // Check if Razorpay is loaded
+    if (typeof Razorpay === 'undefined') {
+      console.error('❌ Razorpay script not loaded!');
+      throw new Error('Razorpay payment gateway not available. Please refresh the page.');
+    }
     
     // Step 3: Open Razorpay checkout
     const options = {
@@ -775,8 +786,16 @@ async function processPayment() {
       }
     };
 
+    console.log('🔧 Razorpay options:', {
+      key: options.key,
+      amount: options.amount,
+      order_id: options.order_id
+    });
+
+    console.log('🚀 Opening Razorpay modal...');
     const razorpay = new Razorpay(options);
     razorpay.open();
+    console.log('✅ Razorpay modal opened');
 
   } catch (err) {
     console.error('Payment process error:', err);
