@@ -7,6 +7,15 @@ const auth = require('../middleware/auth');
 
 const router = express.Router();
 
+// Validate Razorpay credentials on startup
+if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+  console.error('⚠️ WARNING: Razorpay credentials not configured!');
+  console.error('Missing:', {
+    RAZORPAY_KEY_ID: process.env.RAZORPAY_KEY_ID ? '✅ Set' : '❌ Missing',
+    RAZORPAY_KEY_SECRET: process.env.RAZORPAY_KEY_SECRET ? '✅ Set' : '❌ Missing'
+  });
+}
+
 // Initialize Razorpay
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
@@ -50,6 +59,12 @@ router.post('/create-order', auth, async (req, res) => {
       }
     };
 
+    console.log('📝 Creating Razorpay order with options:', {
+      amount: options.amount,
+      currency: options.currency,
+      receipt: options.receipt
+    });
+
     const razorpayOrder = await razorpay.orders.create(options);
 
     // Save payment record to DB
@@ -76,6 +91,11 @@ router.post('/create-order', auth, async (req, res) => {
 
   } catch (error) {
     console.error('❌ Order creation error:', error.message);
+    console.error('Error details:', {
+      message: error.message,
+      statusCode: error.statusCode,
+      error: error.error
+    });
     res.status(500).json({
       success: false,
       message: 'Failed to create order',
