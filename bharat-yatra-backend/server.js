@@ -12,16 +12,35 @@ const contactRoutes = require("./routes/contact");
 
 const app = express();
 
+const allowedOrigins = [
+  "http://127.0.0.1:5500",
+  "http://localhost:5500",
+  "https://bharat-yatra.netlify.app",
+  "https://www.bharat-yatra.netlify.app",
+  "https://bharat-yaatra.netlify.app",
+  "https://www.bharat-yaatra.netlify.app"
+];
+
 // CORS
-app.use(cors({
-  origin: [
-    "http://127.0.0.1:5500",
-    "http://localhost:5500",
-    "https://bharat-yaatra.netlify.app",
-    "https://www.bharat-yaatra.netlify.app"
-  ],
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+
+      const isAllowed =
+        allowedOrigins.includes(origin) ||
+        /^https:\/\/[a-z0-9-]+--bharat-yatra\.netlify\.app$/i.test(origin) ||
+        /^https:\/\/[a-z0-9-]+--bharat-yaatra\.netlify\.app$/i.test(origin);
+
+      if (isAllowed) return callback(null, true);
+      return callback(new Error('Not allowed by CORS'));
+    },
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true
+  })
+);
+app.options('*', cors());
 
 // Parsers
 app.use(express.json());
