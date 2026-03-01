@@ -70,7 +70,18 @@ router.post('/create-order', auth, async (req, res) => {
       receipt: options.receipt
     });
 
+    console.log('🔐 Razorpay credentials check:', {
+      hasKeyId: !!process.env.RAZORPAY_KEY_ID,
+      hasKeySecret: !!process.env.RAZORPAY_KEY_SECRET,
+      keyIdPrefix: process.env.RAZORPAY_KEY_ID?.substring(0, 8) + '...'
+    });
+
     const razorpayOrder = await razorpay.orders.create(options);
+    
+    console.log('✅ Razorpay order created successfully:', {
+      orderId: razorpayOrder.id,
+      status: razorpayOrder.status
+    });
 
     // Save payment record to DB
     const payment = new Payment({
@@ -82,29 +93,56 @@ router.post('/create-order', auth, async (req, res) => {
     });
 
     await payment.save();
+    console.log('💾 Payment record saved to DB:', payment._id);
+
+    const responseData = {
+      orderId: razorpayOrder.id,
+      amount: amount,
+      currency: 'INR',
+      keyId: process.env.RAZORPAY_KEY_ID
+    };
+
+    console.log('📤 Sending response to frontend:', {
+      success: true,
+      data: {
+        orderId: responseData.orderId,
+        amount: responseData.amount,
+        keyIdPresent: !!responseData.keyId,
+        keyIdPrefix: responseData.keyId?.substring(0, 8) + '...'
+      }
+    });
 
     res.status(201).json({
       success: true,
       message: 'Order created successfully',
-      data: {
-        orderId: razorpayOrder.id,
-        amount: amount,
-        currency: 'INR',
-        keyId: process.env.RAZORPAY_KEY_ID
-      }
+      data: responseData
     });
 
   } catch (error) {
-    console.error('❌ Order creation error:', error.message);
-    console.error('Error details:', {
+    console.error('❌ Order creation FAILED:', error.message);
+    console.error('Full error details:', {
       message: error.message,
       statusCode: error.statusCode,
-      error: error.error
+      code: error.code,
+      stack: error.stack?.split('\n')[0],
+      razorpayError: error.error
     });
+    
+    // Check if it's a Razorpay auth error
+    if (error.statusCode === 401 || error.code === 'UNAUTHORIZED') {
+      console.error('🔴 CRITICAL: Razorpay authentication failed! Check RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET');
+      return res.status(401).json({
+        success: false,
+        message: 'Razorpay authentication failed. Invalid API credentials.',
+        error: 'Invalid Razorpay credentials'
+      });
+    }
+
     res.status(500).json({
       success: false,
-      message: 'Failed to create order',
-      error: error.message
+      message: 'Failed to create payment order',
+      error: error.message,
+      debug: process.env.NODE_ENV === 'development' ? error.statusCode : undefined
     });
   }
 });
