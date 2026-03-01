@@ -161,10 +161,17 @@ router.post('/verify-payment', auth, async (req, res) => {
       });
     }
 
-    // Update booking status (optional - you can add payment status to Booking model)
-    await Booking.findByIdAndUpdate(
+    // Update booking with Razorpay payment details
+    const updatedBooking = await Booking.findByIdAndUpdate(
       payment.booking,
-      { paymentStatus: 'completed' }
+      { 
+        paymentStatus: 'completed',
+        razorpayPaymentId: razorpayPaymentId,
+        razorpayOrderId: razorpayOrderId,
+        paymentMethod: payment.paymentMethod || 'unknown',
+        paymentCompletedAt: new Date()
+      },
+      { new: true }
     );
 
     res.status(200).json({
@@ -173,7 +180,9 @@ router.post('/verify-payment', auth, async (req, res) => {
       data: {
         paymentId: payment._id,
         status: payment.status,
-        amount: payment.amount
+        amount: payment.amount,
+        razorpayPaymentId: razorpayPaymentId,
+        paymentMethod: payment.paymentMethod || 'unknown'
       }
     });
 

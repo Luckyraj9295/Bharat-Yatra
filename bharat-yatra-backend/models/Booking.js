@@ -54,6 +54,23 @@ const bookingSchema = new mongoose.Schema({
     enum: ['pending', 'completed', 'failed'],
     default: 'pending'
   },
+  razorpayPaymentId: {
+    type: String,
+    default: null
+  },
+  razorpayOrderId: {
+    type: String,
+    default: null
+  },
+  paymentMethod: {
+    type: String,
+    enum: ['card', 'netbanking', 'wallet', 'upi', 'unknown'],
+    default: 'unknown'
+  },
+  paymentCompletedAt: {
+    type: Date,
+    default: null
+  },
   timestamp: { type: Date, default: Date.now }
 }, {
   timestamps: true

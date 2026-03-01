@@ -763,7 +763,10 @@ document.addEventListener("click", async function (e) {
       bookingRef,
       totalPrice,
       paymentMethod,
-      specialRequests
+      specialRequests,
+      razorpayPaymentId,
+      paymentStatus,
+      paymentCompletedAt
     } = booking;
 
     const logo = new Image();
@@ -825,6 +828,9 @@ const grandTotal = +(basePrice + taxes).toFixed(2);
   { label: "Duration", value: `${days} Days / ${nights} Nights` },
   { label: "Reference Number", value: bookingRef },
   { label: "Total Amount", value: `${rupee}${grandTotal.toLocaleString("en-IN")}` },
+  { label: "Payment Status", value: (paymentStatus || 'pending').toUpperCase() },
+  { label: "Payment Method", value: paymentMethod || 'N/A' },
+  { label: "Transaction ID", value: razorpayPaymentId ? `RAZ${razorpayPaymentId.slice(-12).toUpperCase()}` : 'N/A' },
   { label: "Special Request", value: (specialRequests?.trim() || "N/A") }
 ];
 
