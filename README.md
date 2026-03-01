@@ -8,210 +8,183 @@
 ![JWT](https://img.shields.io/badge/Auth-JWT-yellow)
 ![Render](https://img.shields.io/badge/Backend-Render-blue)
 ![Netlify](https://img.shields.io/badge/Frontend-Netlify-purple)
-![Repo Size](https://img.shields.io/github/repo-size/Luckyraj9295/Bharat-Yatra)
-![GitHub stars](https://img.shields.io/github/stars/Luckyraj9295/Bharat-Yatra?style=social)
 
-### Smart Full-Stack Travel Booking Platform
+### Full-Stack Travel Booking Platform with Payment & Refund Governance
 
-Bharat Yatra is a production-ready full-stack travel booking web application where users can explore destinations, book trips, make secure payments, upload profile images, download brochures, leave reviews, and contact support.  
+Bharat Yatra is a production-grade full-stack travel booking platform demonstrating complete financial transaction management—from payment processing to admin-controlled refund governance with real-time analytics.
 
-The system includes secure authentication, a complete admin dashboard, AI chatbot integration, cloud storage, email notifications, and online payment processing.
+---
+
+# 🏗 System Design Summary
+
+The system follows a **3-layer architecture**:
+
+### 1️⃣ Transaction Layer  
+Handles bookings, payments, and refunds with secure Razorpay integration and verification.
+
+### 2️⃣ Governance Layer  
+Implements admin-controlled refund approvals, role-based authorization, audit tracking, and double-refund prevention.
+
+### 3️⃣ Intelligence Layer  
+Provides cancellation analytics, refund metrics, and business insights via interactive dashboards.
+
+### Architecture Flow
+
+User (Browser - Netlify)  
+↓  
+Frontend (HTML, JS, Tailwind)  
+↓ REST API  
+Backend (Node.js + Express - Render)  
+↓  
+MongoDB Atlas (Database)  
+↓  
+External Services (Razorpay, Cloudinary, Resend Email)
 
 ---
 
 # 🌐 Live Application
 
-Frontend (Netlify):  
+Frontend:  
 https://bharat-yaatra.netlify.app  
 
-Backend API (Render):  
+Backend API:  
 https://bharat-yatra.onrender.com  
 
 ---
 
-# 🚀 Complete Feature Set
+# 🚀 Core Features
 
-• User Registration & Login (JWT Authentication)  
-• Role-Based Access (User / Admin)  
-• Profile Image Upload (Cloudinary)  
-• Browse Dynamic Travel Destinations  
-• Multi-Step Booking System  
-• Special Travel Request Option  
-• Razorpay Payment Integration (UPI / Cards / Net Banking)  
-• Secure Payment Order Creation & Verification  
-• Booking History Page  
-• Invoice PDF Download  
-• Review & Star Rating System  
-• Dynamic Testimonial Slider  
-• AI Chatbot (BharatBuddy using Dialogflow)  
-• Contact Form with Email Confirmation  
-• Admin Email Notifications (Resend API)  
-• Destination Image Upload (Cloudinary)  
-• Brochure PDF Upload (Cloudinary)  
-• Hide / Show Destinations  
-• User & Booking Management Panel  
+## 👤 User Features
+- JWT Authentication (User / Admin roles)
+- Browse travel destinations
+- Multi-step booking system
+- Razorpay secure payments (UPI, Card, Net Banking, Wallet)
+- Booking history with refund tracking
+- Invoice PDF download
+- Profile image upload (Cloudinary)
+- Contact form with email confirmation
+- AI Chatbot (Dialogflow integration)
 
 ---
 
-# 💳 Payment Integration
+## 💳 Payment & Refund Engine
 
-The platform integrates Razorpay for secure online payments.
+- Backend-based Razorpay order creation  
+- Secure HMAC SHA-256 signature verification  
+- Payment ID & method tracking  
+- Time-based refund calculation  
 
-• Backend-based order creation  
-• Razorpay checkout popup  
-• Test mode supported  
-• Secure transaction verification  
-• Supports UPI, credit/debit cards, and net banking  
+### Refund Policy
 
----
+| Days Before Travel | Refund |
+|-------------------|--------|
+| ≥ 14 days         | 100%   |
+| 7–14 days         | 50%    |
+| < 7 days          | 0%     |
 
-# 📩 Email & Enquiry System
+### Refund Workflow
 
-• Contact form connected to backend API  
-• Enquiry stored in MongoDB  
-• Admin receives notification email  
-• Automatic confirmation email sent to user  
-• Powered by Resend email API  
+1. User requests cancellation  
+2. Refund marked **Pending Approval**  
+3. Admin reviews request  
+4. Razorpay refund executed (if approved)  
+5. Email notification sent  
 
----
+### Security Controls
 
-# 🧠 Technology Stack
-
-Frontend  
-HTML5  
-Tailwind CSS  
-JavaScript  
-Razorpay Checkout  
-Dialogflow AI Chatbot  
-
-Backend  
-Node.js  
-Express.js  
-MongoDB Atlas  
-JWT Authentication  
-Cloudinary (Images & PDFs)  
-Razorpay API  
-Resend Email API  
-
-Deployment  
-Frontend hosted on Netlify  
-Backend hosted on Render  
-Database on MongoDB Atlas  
-Media storage on Cloudinary  
+- Admin-only refund approval endpoint  
+- Double refund prevention  
+- Payment status validation before refund  
+- Audit trail (who approved, when, and why)  
 
 ---
 
-# 🏗 System Architecture
+## 🛠 Admin Dashboard
 
-User → Netlify (Frontend)  
-↓  
-Render (Backend API)  
-↓  
-MongoDB Atlas (Database)  
-↓  
-Cloudinary (Media Storage)  
-↓  
-Razorpay (Payments)  
-↓  
-Resend (Email Service)  
+- Destination management  
+- User & booking management  
+- Refund approval interface  
+- Audit tracking system  
+- Cancellation analytics dashboard  
 
-Frontend communicates with backend via REST APIs.  
-JWT protects secure routes.  
-Environment variables protect sensitive credentials.  
+### 📊 Analytics Includes
+
+- Total cancellations  
+- Total refunded amount  
+- Refund rate  
+- Pending approvals  
+- Refund distribution charts  
+- Cancellation timing analysis  
+- Date range filtering  
+
+---
+
+# 📊 API Overview
+
+### Bookings
+```bash
+POST   /api/bookings
+GET    /api/bookings/me
+GET    /api/bookings/:id
+DELETE /api/bookings/:id
+PATCH  /api/bookings/:id
+```
+
+### Payments
+```bash
+POST /api/payments/create-order
+POST /api/payments/verify-payment
+GET  /api/payments/payment-details
+```
+
+### Refunds
+```bash
+POST /api/payments/refund
+POST /api/payments/admin/refund-approval
+```
 
 ---
 
 # 🔐 Security Implementation
 
-• JWT Authentication  
-• Password Hashing (bcrypt)  
-• Protected API Routes  
-• Role-Based Authorization  
-• Secure File Upload Validation  
-• Production CORS Configuration  
-• Environment Variable Protection  
-• Payment Verification Logic  
+- JWT Authentication  
+- Password hashing (bcrypt)  
+- Role-based access control  
+- Secure CORS configuration  
+- Environment variable protection  
+- Payment signature verification  
+- Refund idempotency protection  
+- Admin audit logging  
 
 ---
 
-# 📂 Project Structure
+# 🧠 Technology Stack
 
-Bharat-Yatra/  
-│  
-├── bharat-yatra-backend/  
-│   ├── routes/  
-│   ├── models/  
-│   ├── middleware/  
-│   ├── config/  
-│   ├── server.js  
-│   └── package.json  
-│  
-├── index.html  
-├── profile.html  
-├── BookHist.html  
-├── ContUs.html  
-├── script.js  
-├── style.css  
-└── README.md  
+### Frontend  
+HTML5, Tailwind CSS, JavaScript  
+
+### Backend  
+Node.js, Express.js, MongoDB Atlas  
+
+### External Services  
+Razorpay (Payments)  
+Cloudinary (Media Storage)  
+Resend (Email API)  
+Dialogflow (AI Chatbot)
+
+### Deployment  
+Netlify (Frontend)  
+Render (Backend)
 
 ---
 
-# ⚙ Local Installation
+# 🎯 Project Highlights
 
-1. Clone repository
-
-git clone https://github.com/Luckyraj9295/Bharat-Yatra.git  
-cd Bharat-Yatra  
-
-2. Install backend dependencies
-
-cd bharat-yatra-backend  
-npm install  
-
-3. Create a `.env` file inside backend folder
-
-MONGO_URI=your_mongodb_connection_string  
-JWT_SECRET=your_secret_key  
-CLOUDINARY_CLOUD_NAME=your_cloud_name  
-CLOUDINARY_API_KEY=your_api_key  
-CLOUDINARY_API_SECRET=your_api_secret  
-RAZORPAY_KEY_ID=your_key_id  
-RAZORPAY_KEY_SECRET=your_key_secret  
-RESEND_API_KEY=your_resend_key  
-EMAIL_USER=your_email  
-
-4. Run backend server
-
-npm start  
-
-Backend runs at:  
-http://localhost:5000  
-
-Open `index.html` in your browser to access frontend locally.
-
----
-
-# 🌍 Deployment
-
-• Backend deployed on Render  
-• Frontend deployed on Netlify  
-• Database hosted on MongoDB Atlas  
-• Media stored on Cloudinary  
-• Payment handled via Razorpay  
-• Email handled via Resend  
-
-All environment variables are securely configured on hosting platforms.
-
----
-
-# 🔮 Future Enhancements
-
-• Booking Cancellation & Refund Flow  
-• Admin Analytics Dashboard  
-• Email Template Branding  
-• Tailwind Production Build Optimization  
-• Multi-Language Support  
-• Mobile Application Version  
+- Complete booking lifecycle management  
+- Financial integrity with admin-controlled refunds  
+- Secure payment verification system  
+- Business analytics dashboard  
+- Production deployment with cloud services  
 
 ---
 
@@ -219,7 +192,7 @@ All environment variables are securely configured on hosting platforms.
 
 Lucky  
 Computer Science Engineering Student  
-Full Stack Web Developer  
+Full Stack Developer  
 
 ---
 
