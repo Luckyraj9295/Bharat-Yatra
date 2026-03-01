@@ -808,9 +808,9 @@ async function processPaymentAsync(userInfo, token) {
         await verifyRazorpayPayment(response, bookingId, token, grandTotal);
       },
       prefill: {
-        name: fullName,
-        email: email,
-        contact: phone
+        name: fullName || 'Guest',
+        email: email || '',
+        contact: phone || ''
       },
       notes: {
         bookingId: bookingId,
@@ -819,14 +819,6 @@ async function processPaymentAsync(userInfo, token) {
       theme: {
         color: '#FF9500'
       },
-      config: {
-        display: {
-          hide: [{ method: 'paylater' }],
-          preferences: {
-            show_default_blocks: true
-          }
-        }
-      },
       modal: {
         ondismiss: () => {
           showToast('Payment cancelled. You can try again.', 'error');
@@ -834,12 +826,15 @@ async function processPaymentAsync(userInfo, token) {
       }
     };
 
-    console.log('🔧 Razorpay options:', {
-      key: options.key,
+    console.log('🔧 Detailed Razorpay options:', {
+      key: options.key?.substring(0, 15) + '...',
       amount: options.amount,
-      order_id: options.order_id,
       currency: options.currency,
-      name: options.name
+      name: options.name,
+      order_id: options.order_id,
+      prefill: options.prefill,
+      notes: options.notes,
+      theme: options.theme
     });
 
     // Check if key is undefined
@@ -876,6 +871,10 @@ async function processPaymentAsync(userInfo, token) {
 function openRazorpayModalDirectly(options) {
   try {
     console.log('🔴 [DIRECT CALL] Creating Razorpay instance...');
+    console.log('📡 Razorpay key available:', !!options.key);
+    console.log('📦 Order ID:', options.order_id);
+    console.log('💵 Amount (paise):', options.amount);
+    
     const razorpay = new window.Razorpay(options);
     console.log('✅ Razorpay instance created');
     
@@ -887,7 +886,8 @@ function openRazorpayModalDirectly(options) {
     console.error('❌ Error opening Razorpay modal:', {
       message: err.message,
       code: err.code,
-      razorpayAvailable: typeof window.Razorpay !== 'undefined'
+      razorpayAvailable: typeof window.Razorpay !== 'undefined',
+      fullError: err
     });
     showToast('❌ Failed to open payment modal: ' + err.message, 'error');
   }
