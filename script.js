@@ -660,8 +660,6 @@ function processPayment() {
 
 // PHASE 2: Async work (booking + order creation)
 async function processPaymentAsync(userInfo, token) {
-  }
-
   const destinationTitle = document.getElementById('destinationSelect').value;
   const destinations = JSON.parse(localStorage.getItem('destinations') || '[]');
   const destinationObj = destinations.find(
@@ -875,8 +873,6 @@ async function processPaymentAsync(userInfo, token) {
     showToast('❌ Error: ' + err.message, 'error');
   }
 }
-
-// ✅ NEW: Direct modal opener (synchronous, preserves click context)
 function openRazorpayModalDirectly(options) {
   try {
     console.log('🔴 [DIRECT CALL] Creating Razorpay instance...');
