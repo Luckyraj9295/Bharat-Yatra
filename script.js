@@ -3,6 +3,36 @@ const API_BASE = `${BASE_URL}/api`;
 const UPLOADS_BASE = BASE_URL;
 const ADMIN_URL = `${window.location.origin}/admin/admin.html`;
 
+// ✅ Verify Razorpay is loaded
+console.log('📦 Checking Razorpay script load status...');
+let razorpayReady = false;
+
+function waitForRazorpay(callback, maxWait = 5000) {
+  const startTime = Date.now();
+  const checkRazorpay = () => {
+    if (typeof window.Razorpay === 'function') {
+      console.log('✅ Razorpay is ready');
+      razorpayReady = true;
+      callback();
+      return;
+    }
+    
+    if (Date.now() - startTime > maxWait) {
+      console.error('❌ Razorpay failed to load after 5 seconds');
+      return;
+    }
+    
+    setTimeout(checkRazorpay, 100);
+  };
+  
+  checkRazorpay();
+}
+
+// Start checking for Razorpay
+waitForRazorpay(() => {
+  console.log('🟢 Razorpay ready for use');
+});
+
 // Toggle more destinations
 const toggleBtn = document.getElementById("toggleDestinationsBtn");
 const moreDestinations = document.getElementById("moreDestinations");
@@ -809,19 +839,69 @@ async function processPayment() {
       throw new Error('Razorpay key not configured. Please check environment variables.');
     }
 
-    console.log('🚀 Opening Razorpay modal...');
-    try {
-      const razorpay = new Razorpay(options);
-      razorpay.open();
-      console.log('✅ Razorpay modal opened');
-    } catch (razorpayErr) {
-      console.error('❌ Razorpay.open() error:', razorpayErr);
-      throw razorpayErr;
+    // Debug: Check if Razorpay script loaded and has required methods
+    if (typeof window.Razorpay !== 'function') {
+      console.error('❌ Razorpay constructor not available!');
+      console.error('window.Razorpay:', typeof window.Razorpay);
+      throw new Error('Razorpay script not properly loaded. Try refreshing the page.');
     }
+
+    console.log('🚀 Opening Razorpay modal on device:', {
+      userAgent: navigator.userAgent,
+      isMobile: /iPhone|iPad|Android/i.test(navigator.userAgent),
+      isOnline: navigator.onLine,
+      razorpayReady: razorpayReady,
+      razorpayType: typeof window.Razorpay
+    });
+
+    // Wait for Razorpay if not ready
+    if (!razorpayReady || typeof window.Razorpay !== 'function') {
+      console.warn('⏳ Razorpay not ready yet, waiting...');
+      return new Promise((resolve, reject) => {
+        waitForRazorpay(() => {
+          openRazorpayModal(options, resolve, reject);
+        }, 3000);
+      });
+    }
+
+    return openRazorpayModal(options, (response) => {
+      // Handler called on success
+    }, (err) => {
+      // Error handler
+    });
 
   } catch (err) {
     console.error('Payment process error:', err);
     showToast('❌ Error: ' + err.message, 'error');
+  }
+}
+
+// Helper function to open Razorpay modal
+function openRazorpayModal(options, successCallback, errorCallback) {
+  try {
+    const razorpay = new window.Razorpay(options);
+    console.log('✅ Razorpay instance created successfully');
+    
+    // Use setTimeout to ensure DOM is ready
+    setTimeout(() => {
+      try {
+        razorpay.open();
+        console.log('✅ Razorpay modal display()  called');
+      } catch (openErr) {
+        console.error('❌ Error calling razorpay.open():', openErr);
+        showToast('❌ Payment modal failed to open: ' + openErr.message, 'error');
+        errorCallback(openErr);
+      }
+    }, 100);
+    
+  } catch (razorpayErr) {
+    console.error('❌ Razorpay constructor error:', {
+      message: razorpayErr.message,
+      stack: razorpayErr.stack,
+      razorpayExists: typeof window.Razorpay
+    });
+    showToast('❌ Payment system error: ' + razorpayErr.message, 'error');
+    errorCallback(razorpayErr);
   }
 }
 
