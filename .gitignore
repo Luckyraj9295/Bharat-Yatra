@@ -2,7 +2,10 @@
 node_modules/
 bharat-yatra-backend/node_modules/
 
-# Backend
+# Environment variables (NEVER commit these!)
+.env
+.env.local
+.env.*.local
 bharat-yatra-backend/.env
 
 # Logs
@@ -19,4 +22,3 @@ Thumbs.db
 # Optional: ignore backend uploaded files
 bharat-yatra-backend/uploads/*
 !bharat-yatra-backend/uploads/.gitkeep
-node_modules
