@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Refund Approvals - Bharat Yatra Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    .status-pending { background-color: #fef08a; color: #854d0e; }
+    .status-completed { background-color: #d1fae5; color: #065f46; }
+    .status-rejected { background-color: #fee2e2; color: #7f1d1d; }
+  </style>
+</head>
+<body class="bg-gray-50">
+  <div class="min-h-screen">
+    <!-- Header -->
+    <header class="bg-orange-600 text-white shadow-lg">
+      <div class="max-w-7xl mx-auto px-4 py-6 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+          <i class="fas fa-mountain-sun text-2xl"></i>
+          <h1 class="text-2xl font-bold">Bharat Yatra Admin</h1>
+        </div>
+        <a href="admin.html" class="hover:bg-orange-700 px-4 py-2 rounded transition">← Back to Dashboard</a>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 py-8">
+      <h2 class="text-3xl font-bold mb-2 text-gray-800">Refund Approvals</h2>
+      <p class="text-gray-600 mb-6">Review and approve/reject pending refund requests</p>
+
+      <!-- Filter Tabs -->
+      <div class="flex gap-4 mb-6 flex-wrap">
+        <button class="filter-btn active px-4 py-2 rounded-lg font-semibold bg-orange-600 text-white" data-status="all">
+          <i class="fas fa-list mr-2"></i>All Requests
+        </button>
+        <button class="filter-btn px-4 py-2 rounded-lg font-semibold bg-yellow-100 text-yellow-800 hover:bg-yellow-200" data-status="pending">
+          <i class="fas fa-hourglass-half mr-2"></i>Pending
+        </button>
+        <button class="filter-btn px-4 py-2 rounded-lg font-semibold bg-green-100 text-green-800 hover:bg-green-200" data-status="completed">
+          <i class="fas fa-check-circle mr-2"></i>Approved
+        </button>
+        <button class="filter-btn px-4 py-2 rounded-lg font-semibold bg-red-100 text-red-800 hover:bg-red-200" data-status="rejected">
+          <i class="fas fa-times-circle mr-2"></i>Rejected
+        </button>
+      </div>
+
+      <!-- Toast Container -->
+      <div id="toastContainer" class="fixed top-4 right-4 space-y-2 z-50"></div>
+
+      <!-- Refunds Table -->
+      <div class="bg-white rounded-lg shadow overflow-hidden">
+        <div id="refundTableContainer" class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="bg-gray-100 border-b border-gray-200">
+              <tr>
+                <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">Booking Ref</th>
+                <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">Customer</th>
+                <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">Destination</th>
+                <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">Refund Amount</th>
+                <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">Status</th>
+                <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">Reason</th>
+                <th class="px-6 py-4 text-center text-sm font-semibold text-gray-700">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="refundsList">
+              <tr>
+                <td colspan="7" class="px-6 py-8 text-center text-gray-500">
+                  <i class="fas fa-spinner fa-spin mr-2"></i>Loading refund requests...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- No Data Message -->
+      <div id="noDataMessage" class="hidden text-center py-12">
+        <i class="fas fa-check-circle text-6xl text-green-500 mb-4 opacity-50"></i>
+        <p class="text-gray-500 text-lg">No refund requests to process</p>
+      </div>
+    </main>
+  </div>
+
+  <!-- Approval Modal -->
+  <div id="approvalModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+      <h3 class="text-xl font-bold mb-4 text-gray-800" id="modalTitle">Approve Refund?</h3>
+      <div class="bg-blue-50 p-4 rounded-lg mb-6 border border-blue-200">
+        <p class="text-sm text-gray-600 mb-2"><strong>Booking Ref:</strong> <span id="modalBookingRef"></span></p>
+        <p class="text-sm text-gray-600 mb-2"><strong>Customer:</strong> <span id="modalCustomer"></span></p>
+        <p class="text-sm text-gray-600 mb-2"><strong>Refund Amount:</strong> <span id="modalRefundAmount" class="text-lg font-bold text-green-600"></span></p>
+        <p class="text-sm text-gray-600"><strong>Reason:</strong> <span id="modalReason"></span></p>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Approval Reason (optional):</label>
+        <textarea id="approvalReason" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500" rows="3" placeholder="e.g., Approved as per policy..."></textarea>
+      </div>
+      <div class="flex gap-3 mt-6">
+        <button id="rejectBtn" class="flex-1 bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg transition">
+          <i class="fas fa-times mr-2"></i>Reject
+        </button>
+        <button id="approveBtn" class="flex-1 bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg transition">
+          <i class="fas fa-check mr-2"></i>Approve
+        </button>
+        <button id="closeModalBtn" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-4 rounded-lg transition">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = "https://bharat-yatra.onrender.com/api";
+    let refunds = [];
+    let selectedRefund = null;
+    let currentFilter = 'all';
+
+    // Get auth token
+    const getToken = () => localStorage.getItem('token');
+
+    // Show toast
+    function showToast(message, type = 'info') {
+      const toastContainer = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = `p-4 rounded-lg shadow-lg text-white ${
+        type === 'success' ? 'bg-green-500' :
+        type === 'error' ? 'bg-red-500' :
+        'bg-blue-500'
+      }`;
+      toast.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'} mr-2"></i>${message}`;
+      toastContainer.appendChild(toast);
+      setTimeout(() => toast.remove(), 4000);
+    }
+
+    // Load all bookings and filter for pending refunds
+    async function loadRefunds() {
+      try {
+        const token = getToken();
+        if (!token) {
+          showToast('Not authenticated. Please login first.', 'error');
+          return;
+        }
+
+        const response = await fetch(`${API_BASE}/bookings`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (!response.ok) throw new Error('Failed to fetch bookings');
+
+        const bookings = await response.json();
+        
+        // Filter for cancelled bookings with pending refunds
+        refunds = bookings.filter(booking => 
+          booking.bookingStatus === 'cancelled' && 
+          booking.refundStatus && 
+          booking.refundStatus !== 'none'
+        ).map(booking => ({
+          _id: booking._id,
+          bookingRef: booking.bookingRef,
+          customer: booking.personalInfo?.email || 'N/A',
+          destination: booking.destination?.title || 'N/A',
+          refundAmount: booking.refundAmount,
+          refundPercentage: booking.refundPercentage,
+          refundStatus: booking.refundStatus,
+          refundReason: booking.refundReason,
+          cancellationReason: booking.cancellationReason,
+          cancellationDate: booking.cancellationRequestedAt
+        }));
+
+        renderRefunds();
+      } catch (error) {
+        console.error('Error loading refunds:', error);
+        showToast('Failed to load refunds: ' + error.message, 'error');
+      }
+    }
+
+    // Render refunds table
+    function renderRefunds() {
+      const refundsList = document.getElementById('refundsList');
+      const noDataMessage = document.getElementById('noDataMessage');
+
+      const filtered = currentFilter === 'all' 
+        ? refunds 
+        : refunds.filter(r => r.refundStatus === currentFilter);
+
+      if (filtered.length === 0) {
+        refundsList.innerHTML = '';
+        noDataMessage.classList.remove('hidden');
+        return;
+      }
+
+      noDataMessage.classList.add('hidden');
+      refundsList.innerHTML = filtered.map(refund => `
+        <tr class="border-b border-gray-200 hover:bg-gray-50">
+          <td class="px-6 py-4 font-mono text-sm font-semibold text-orange-600">${refund.bookingRef}</td>
+          <td class="px-6 py-4 text-sm text-gray-700">${refund.customer}</td>
+          <td class="px-6 py-4 text-sm text-gray-700">${refund.destination}</td>
+          <td class="px-6 py-4 text-sm">
+            <span class="font-bold text-green-600">₹${refund.refundAmount.toLocaleString("en-IN")}</span>
+            <span class="text-gray-500 text-xs"> (${refund.refundPercentage}%)</span>
+          </td>
+          <td class="px-6 py-4 text-sm">
+            <span class="px-3 py-1 rounded-full font-semibold status-${refund.refundStatus}">
+              ${refund.refundStatus.toUpperCase()}
+            </span>
+          </td>
+          <td class="px-6 py-4 text-sm text-gray-600">${refund.refundReason || 'N/A'}</td>
+          <td class="px-6 py-4 text-center">
+            ${refund.refundStatus === 'pending' ? `
+              <button class="approve-refund-btn bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded font-semibold transition" data-id="${refund._id}">
+                <i class="fas fa-check mr-1"></i>Review
+              </button>
+            ` : `
+              <span class="text-gray-500 text-sm">Already processed</span>
+            `}
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    // Filter buttons
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn').forEach(b => {
+          b.classList.remove('active', 'bg-orange-600', 'text-white');
+          b.classList.add('opacity-75');
+        });
+        btn.classList.add('active', 'bg-orange-600', 'text-white');
+        btn.classList.remove('opacity-75');
+        currentFilter = btn.dataset.status;
+        renderRefunds();
+      });
+    });
+
+    // Review refund
+    document.addEventListener('click', (e) => {
+      if (e.target.closest('.approve-refund-btn')) {
+        const refundId = e.target.closest('.approve-refund-btn').dataset.id;
+        selectedRefund = refunds.find(r => r._id === refundId);
+        
+        if (selectedRefund) {
+          document.getElementById('modalBookingRef').textContent = selectedRefund.bookingRef;
+          document.getElementById('modalCustomer').textContent = selectedRefund.customer;
+          document.getElementById('modalRefundAmount').textContent = `₹${selectedRefund.refundAmount.toLocaleString("en-IN")}`;
+          document.getElementById('modalReason').textContent = selectedRefund.refundReason;
+          document.getElementById('approvalReason').value = '';
+          document.getElementById('approvalModal').classList.remove('hidden');
+        }
+      }
+    });
+
+    // Close modal
+    document.getElementById('closeModalBtn').addEventListener('click', () => {
+      document.getElementById('approvalModal').classList.add('hidden');
+    });
+
+    // Approve refund
+    document.getElementById('approveBtn').addEventListener('click', async () => {
+      if (!selectedRefund) return;
+
+      try {
+        const token = getToken();
+        const response = await fetch(`${API_BASE}/payments/admin/refund-approval`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            bookingId: selectedRefund._id,
+            action: 'approve',
+            approvalReason: document.getElementById('approvalReason').value || 'Approved by admin'
+          })
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || 'Approval failed');
+        }
+
+        const result = await response.json();
+        showToast(`✅ Refund approved! Razorpay ID: ${result.data.razorpayRefundId || 'N/A'}`, 'success');
+        document.getElementById('approvalModal').classList.add('hidden');
+        loadRefunds();
+      } catch (error) {
+        console.error('Approval error:', error);
+        showToast('❌ ' + error.message, 'error');
+      }
+    });
+
+    // Reject refund
+    document.getElementById('rejectBtn').addEventListener('click', async () => {
+      if (!selectedRefund) return;
+
+      try {
+        const token = getToken();
+        const response = await fetch(`${API_BASE}/payments/admin/refund-approval`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            bookingId: selectedRefund._id,
+            action: 'reject',
+            approvalReason: document.getElementById('approvalReason').value || 'Rejected by admin'
+          })
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || 'Rejection failed');
+        }
+
+        showToast('❌ Refund request rejected', 'info');
+        document.getElementById('approvalModal').classList.add('hidden');
+        loadRefunds();
+      } catch (error) {
+        console.error('Rejection error:', error);
+        showToast('Error: ' + error.message, 'error');
+      }
+    });
+
+    // Load refunds on page load
+    document.addEventListener('DOMContentLoaded', loadRefunds);
+
+    // Auto-refresh every 30 seconds
+    setInterval(loadRefunds, 30000);
+  </script>
+</body>
+</html>

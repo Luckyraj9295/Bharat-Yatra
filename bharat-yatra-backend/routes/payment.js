@@ -1,11 +1,15 @@
 const express = require('express');
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
+const { Resend } = require('resend');
 const Payment = require('../models/Payment');
 const Booking = require('../models/Booking');
 const auth = require('../middleware/auth');
 
 const router = express.Router();
+
+// Initialize Resend for email notifications
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 // Validate Razorpay credentials on startup
 if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
@@ -373,6 +377,169 @@ router.post('/refund', auth, async (req, res) => {
   }
 });
 
+// ✅ EMAIL HELPER: Send refund approved notification
+const sendRefundApprovedEmail = async (booking) => {
+  if (!process.env.RESEND_API_KEY) {
+    console.warn('⚠️ Resend API key not configured - cannot send refund approval email');
+    return;
+  }
+
+  try {
+    const userEmail = booking.personalInfo?.email || booking.userId?.email;
+    if (!userEmail) {
+      console.warn('⚠️ No user email found for booking:', booking.bookingRef);
+      return;
+    }
+
+    const refundDate = new Date(booking.refundCompletedAt).toLocaleDateString('en-IN');
+    
+    await resend.emails.send({
+      from: "Bharat Yatra <onboarding@resend.dev>",
+      to: userEmail,
+      subject: `✅ Your Refund Has Been Approved - ₹${booking.refundAmount.toLocaleString('en-IN')}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 30px; border-radius: 8px 8px 0 0; text-align: center;">
+            <h1 style="margin: 0; font-size: 28px;">✅ Refund Approved</h1>
+          </div>
+          
+          <div style="background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px; border: 1px solid #e5e7eb;">
+            <p style="color: #374151; font-size: 16px;">Dear <strong>${booking.personalInfo?.name || 'Traveler'}</strong>,</p>
+            
+            <p style="color: #374151; line-height: 1.6;">
+              Your refund request for booking <strong>${booking.bookingRef}</strong> has been approved by our team.
+            </p>
+            
+            <div style="background: white; border-left: 4px solid #10b981; padding: 20px; margin: 20px 0; border-radius: 4px;">
+              <p style="margin: 0 0 10px 0; color: #6b7280; font-size: 14px;">Refund Details</p>
+              <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                  <td style="padding: 8px 0; color: #374151;">Booking Reference</td>
+                  <td style="padding: 8px 0; color: #374151; text-align: right;"><strong>${booking.bookingRef}</strong></td>
+                </tr>
+                <tr style="border-top: 1px solid #e5e7eb;">
+                  <td style="padding: 8px 0; color: #374151;">Refund Amount</td>
+                  <td style="padding: 8px 0; color: #10b981; text-align: right;"><strong>₹${booking.refundAmount.toLocaleString('en-IN')}</strong></td>
+                </tr>
+                <tr style="border-top: 1px solid #e5e7eb;">
+                  <td style="padding: 8px 0; color: #374151;">Refund Percentage</td>
+                  <td style="padding: 8px 0; color: #374151; text-align: right;"><strong>${booking.refundPercentage}%</strong></td>
+                </tr>
+                ${booking.razorpayRefundId ? `
+                <tr style="border-top: 1px solid #e5e7eb;">
+                  <td style="padding: 8px 0; color: #374151;">Refund ID</td>
+                  <td style="padding: 8px 0; color: #6b7280; text-align: right; font-size: 12px;"><code>${booking.razorpayRefundId}</code></td>
+                </tr>
+                ` : ''}
+              </table>
+            </div>
+            
+            <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 15px; border-radius: 4px; margin: 20px 0;">
+              <p style="margin: 0; color: #15803d; font-size: 14px;">
+                <strong>💡 Timeline:</strong> The refund will be credited to your original payment method within <strong>3-5 business days</strong>. If you don't see it after 5 days, please contact our support team.
+              </p>
+            </div>
+            
+            <p style="color: #374151; line-height: 1.6; margin: 20px 0 0 0;">
+              If you have any questions about your refund, please don't hesitate to contact us:
+            </p>
+            <p style="color: #6b7280; font-size: 14px; margin: 5px 0;">
+              📧 Email: bharatyatra001@gmail.com<br/>
+              🌐 Website: https://bharat-yatra.onrender.com
+            </p>
+            
+            <p style="color: #6b7280; font-size: 14px; margin-top: 20px; border-top: 1px solid #e5e7eb; padding-top: 20px;">
+              Best regards,<br/>
+              <strong>Bharat Yatra Team</strong>
+            </p>
+          </div>
+        </div>
+      `,
+    });
+
+    console.log('✅ Refund approval email sent to:', userEmail);
+  } catch (error) {
+    console.error('❌ Failed to send refund approval email:', error.message);
+    // Don't throw - email failure shouldn't block refund processing
+  }
+};
+
+// ✅ EMAIL HELPER: Send refund rejected notification
+const sendRefundRejectedEmail = async (booking, rejectionReason) => {
+  if (!process.env.RESEND_API_KEY) {
+    console.warn('⚠️ Resend API key not configured - cannot send refund rejection email');
+    return;
+  }
+
+  try {
+    const userEmail = booking.personalInfo?.email || booking.userId?.email;
+    if (!userEmail) {
+      console.warn('⚠️ No user email found for booking:', booking.bookingRef);
+      return;
+    }
+
+    await resend.emails.send({
+      from: "Bharat Yatra <onboarding@resend.dev>",
+      to: userEmail,
+      subject: `Update on Your Refund Request - ${booking.bookingRef}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; padding: 30px; border-radius: 8px 8px 0 0; text-align: center;">
+            <h1 style="margin: 0; font-size: 28px;">⚠️ Refund Request Update</h1>
+          </div>
+          
+          <div style="background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px; border: 1px solid #e5e7eb;">
+            <p style="color: #374151; font-size: 16px;">Dear <strong>${booking.personalInfo?.name || 'Traveler'}</strong>,</p>
+            
+            <p style="color: #374151; line-height: 1.6;">
+              Thank you for your refund request for booking <strong>${booking.bookingRef}</strong>. After careful review by our team, we regret to inform you that your refund request could not be approved.
+            </p>
+            
+            <div style="background: white; border-left: 4px solid #f59e0b; padding: 20px; margin: 20px 0; border-radius: 4px;">
+              <p style="margin: 0 0 10px 0; color: #6b7280; font-size: 14px;">Booking Details</p>
+              <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                  <td style="padding: 8px 0; color: #374151;">Booking Reference</td>
+                  <td style="padding: 8px 0; color: #374151; text-align: right;"><strong>${booking.bookingRef}</strong></td>
+                </tr>
+                <tr style="border-top: 1px solid #e5e7eb;">
+                  <td style="padding: 8px 0; color: #374151;">Cancellation Date</td>
+                  <td style="padding: 8px 0; color: #374151; text-align: right;"><strong>${new Date(booking.cancellationRequestedAt).toLocaleDateString('en-IN')}</strong></td>
+                </tr>
+              </table>
+            </div>
+            
+            <div style="background: #fef3c7; border: 1px solid #fcd34d; padding: 15px; border-radius: 4px; margin: 20px 0;">
+              <p style="margin: 0; color: #92400e; font-size: 14px;">
+                <strong>Reason:</strong> ${rejectionReason || 'Please refer to our refund policy for more details.'}
+              </p>
+            </div>
+            
+            <p style="color: #374151; line-height: 1.6; margin: 20px 0;">
+              We understand this may be disappointing. If you believe this decision was made in error or have any questions, please contact our support team - we're here to help!
+            </p>
+            
+            <p style="color: #6b7280; font-size: 14px;">
+              📧 Email: bharatyatra001@gmail.com<br/>
+              🌐 Website: https://bharat-yatra.onrender.com
+            </p>
+            
+            <p style="color: #6b7280; font-size: 14px; margin-top: 20px; border-top: 1px solid #e5e7eb; padding-top: 20px;">
+              Best regards,<br/>
+              <strong>Bharat Yatra Team</strong>
+            </p>
+          </div>
+        </div>
+      `,
+    });
+
+    console.log('✅ Refund rejection email sent to:', userEmail);
+  } catch (error) {
+    console.error('❌ Failed to send refund rejection email:', error.message);
+    // Don't throw - email failure shouldn't block refund processing
+  }
+};
+
 // ✅ ADMIN: APPROVE/REJECT REFUND REQUEST
 router.post('/admin/refund-approval', auth, async (req, res) => {
   try {
@@ -409,18 +576,19 @@ router.post('/admin/refund-approval', auth, async (req, res) => {
 
     if (action === 'reject') {
       // Reject refund
-      await Booking.findByIdAndUpdate(bookingId, {
+      const rejectedBooking = await Booking.findByIdAndUpdate(bookingId, {
         refundStatus: 'rejected',
         refundReason: approvalReason || 'Admin rejected refund request'
-      });
+      }, { new: true });
 
-      // 📧 TODO: Send rejection email to user
+      // 📧 Send rejection email to user
+      await sendRefundRejectedEmail(rejectedBooking, approvalReason || 'Your refund request could not be approved at this time.');
 
       return res.status(200).json({
         success: true,
         message: 'Refund request rejected',
         data: {
-          bookingRef: booking.bookingRef,
+          bookingRef: rejectedBooking.bookingRef,
           refundStatus: 'rejected'
         }
       });
@@ -475,7 +643,8 @@ router.post('/admin/refund-approval', auth, async (req, res) => {
         { new: true }
       );
 
-      // 📧 TODO: Send refund approval email to user with refund details
+      // 📧 Send refund approval email to user with refund details
+      await sendRefundApprovedEmail(approvedBooking);
 
       console.log('✅ Refund Approved and Processed:', {
         bookingRef: approvedBooking.bookingRef,
