@@ -797,13 +797,27 @@ async function processPayment() {
     console.log('🔧 Razorpay options:', {
       key: options.key,
       amount: options.amount,
-      order_id: options.order_id
+      order_id: options.order_id,
+      currency: options.currency,
+      name: options.name
     });
 
+    // Check if key is undefined
+    if (!options.key) {
+      console.error('❌ CRITICAL: Razorpay KEY is undefined!');
+      console.error('Full orderData:', orderData);
+      throw new Error('Razorpay key not configured. Please check environment variables.');
+    }
+
     console.log('🚀 Opening Razorpay modal...');
-    const razorpay = new Razorpay(options);
-    razorpay.open();
-    console.log('✅ Razorpay modal opened');
+    try {
+      const razorpay = new Razorpay(options);
+      razorpay.open();
+      console.log('✅ Razorpay modal opened');
+    } catch (razorpayErr) {
+      console.error('❌ Razorpay.open() error:', razorpayErr);
+      throw razorpayErr;
+    }
 
   } catch (err) {
     console.error('Payment process error:', err);
