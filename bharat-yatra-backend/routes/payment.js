@@ -267,6 +267,14 @@ router.post('/refund', auth, async (req, res) => {
       });
     }
 
+    // ✅ Verify Razorpay Payment ID exists (required for refund)
+    if (!booking.razorpayPaymentId) {
+      return res.status(400).json({
+        success: false,
+        message: '⚠️ Cannot cancel: Razorpay payment reference not found. Contact support.'
+      });
+    }
+
     // Check if already cancelled
     if (booking.bookingStatus === 'cancelled') {
       return res.status(400).json({
@@ -627,6 +635,18 @@ router.post('/admin/refund-approval', auth, isAdmin, async (req, res) => {
     // Process APPROVAL
     if (action === 'approve') {
       let razorpayRefundId = null;
+
+      // ✅ SAFETY CHECK: Verify refund amount and Razorpay payment ID
+      if (!booking.razorpayPaymentId) {
+        return res.status(400).json({
+          success: false,
+          message: '⚠️ Cannot process refund: Razorpay Payment ID not found in booking',
+          data: {
+            bookingRef: booking.bookingRef,
+            reason: 'Missing payment transaction data'
+          }
+        });
+      }
 
       // Process Razorpay refund only if amount > 0
       if (booking.refundAmount > 0) {
