@@ -332,11 +332,22 @@
     }
 
     function updateDaysChart(bookings) {
-      const daysBeforeCancel = bookings.map(b => {
-        const travel = new Date(b.travelDate);
-        const cancel = new Date(b.cancellationRequestedAt);
-        return Math.floor((travel - cancel) / (1000 * 60 * 60 * 24));
-      }).filter(d => d >= 0);
+      // ✅ FIXED: Add null checks and validate dates before calculation
+      const daysBeforeCancel = bookings
+        .map(b => {
+          // Validate required fields exist
+          if (!b.travelDate || !b.cancellationRequestedAt) return null;
+          
+          const travel = new Date(b.travelDate);
+          const cancel = new Date(b.cancellationRequestedAt);
+          
+          // Validate dates are valid
+          if (isNaN(travel.getTime()) || isNaN(cancel.getTime())) return null;
+          
+          const days = Math.floor((travel - cancel) / (1000 * 60 * 60 * 24));
+          return days >= 0 ? days : null; // Only return valid positive values
+        })
+        .filter(d => d !== null && !isNaN(d)); // Filter out nulls and NaN
 
       const bins = {
         'More than 14 days': daysBeforeCancel.filter(d => d > 14).length,
@@ -400,15 +411,26 @@
     }
 
     function applyDateFilter() {
-      const from = new Date(document.getElementById('dateFrom').value);
-      const to = new Date(document.getElementById('dateTo').value);
+      // ✅ FIXED: Validate input values before creating Date objects
+      const fromValue = document.getElementById('dateFrom').value;
+      const toValue = document.getElementById('dateTo').value;
 
-      if (!from || !to) {
+      if (!fromValue || !toValue) {
         showToast('Please select both dates', 'error');
         return;
       }
 
+      const from = new Date(fromValue);
+      const to = new Date(toValue);
+
+      // Validate dates are valid
+      if (isNaN(from.getTime()) || isNaN(to.getTime())) {
+        showToast('Invalid dates selected', 'error');
+        return;
+      }
+
       filteredBookings = allBookings.filter(b => {
+        if (!b.cancellationRequestedAt) return false;
         const cancelDate = new Date(b.cancellationRequestedAt);
         return b.bookingStatus === 'cancelled' && cancelDate >= from && cancelDate <= to;
       });
