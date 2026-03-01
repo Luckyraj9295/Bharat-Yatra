@@ -380,8 +380,55 @@
     function updateTable(bookings) {
       const tbody = document.getElementById('bookingsList');
       tbody.innerHTML = bookings.map(b => {
+        // ✅ FIXED: Add same validation as updateDaysChart for consistency
+        if (!b.travelDate || !b.cancellationRequestedAt) {
+          return `
+            <tr class="border-b border-gray-200 hover:bg-gray-50">
+              <td class="px-6 py-3 font-mono text-sm font-semibold text-orange-600">${b.bookingRef}</td>
+              <td class="px-6 py-3 text-sm text-gray-700">${b.destination?.title || 'N/A'}</td>
+              <td class="px-6 py-3 text-sm text-gray-600">N/A</td>
+              <td class="px-6 py-3 text-sm text-gray-700"><span class="px-2 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-800">N/A</span></td>
+              <td class="px-6 py-3 text-sm font-bold text-gray-700">${b.refundPercentage}%</td>
+              <td class="px-6 py-3 text-sm font-bold text-green-600">₹${b.refundAmount.toLocaleString('en-IN')}</td>
+              <td class="px-6 py-3 text-sm">
+                <span class="px-2 py-1 rounded-full text-xs font-semibold ${
+                  b.refundStatus === 'completed' ? 'bg-green-100 text-green-800' :
+                  b.refundStatus === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                  'bg-red-100 text-red-800'
+                }">
+                  ${b.refundStatus.toUpperCase()}
+                </span>
+              </td>
+            </tr>
+          `;
+        }
+
         const travel = new Date(b.travelDate);
         const cancel = new Date(b.cancellationRequestedAt);
+        
+        // Validate dates are valid
+        if (isNaN(travel.getTime()) || isNaN(cancel.getTime())) {
+          return `
+            <tr class="border-b border-gray-200 hover:bg-gray-50">
+              <td class="px-6 py-3 font-mono text-sm font-semibold text-orange-600">${b.bookingRef}</td>
+              <td class="px-6 py-3 text-sm text-gray-700">${b.destination?.title || 'N/A'}</td>
+              <td class="px-6 py-3 text-sm text-gray-600">Invalid Date</td>
+              <td class="px-6 py-3 text-sm text-gray-700"><span class="px-2 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-800">Error</span></td>
+              <td class="px-6 py-3 text-sm font-bold text-gray-700">${b.refundPercentage}%</td>
+              <td class="px-6 py-3 text-sm font-bold text-green-600">₹${b.refundAmount.toLocaleString('en-IN')}</td>
+              <td class="px-6 py-3 text-sm">
+                <span class="px-2 py-1 rounded-full text-xs font-semibold ${
+                  b.refundStatus === 'completed' ? 'bg-green-100 text-green-800' :
+                  b.refundStatus === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                  'bg-red-100 text-red-800'
+                }">
+                  ${b.refundStatus.toUpperCase()}
+                </span>
+              </td>
+            </tr>
+          `;
+        }
+
         const daysLeft = Math.floor((travel - cancel) / (1000 * 60 * 60 * 24));
 
         return `
