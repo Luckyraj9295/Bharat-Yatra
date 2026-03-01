@@ -9,14 +9,8 @@ const isAdmin = require('../middleware/isAdmin');
 
 const router = express.Router();
 
-// Initialize Resend for email notifications (optional)
-let resend = null;
-if (process.env.RESEND_API_KEY) {
-  resend = new Resend(process.env.RESEND_API_KEY);
-  console.log('✅ Resend email service configured');
-} else {
-  console.warn('⚠️  Resend API key not configured - email notifications disabled');
-}
+// Initialize Resend for email notifications
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 // Validate and initialize Razorpay conditionally
 let razorpay = null;
@@ -441,8 +435,8 @@ router.post('/refund', auth, async (req, res) => {
 
 // ✅ EMAIL HELPER: Send refund approved notification
 const sendRefundApprovedEmail = async (booking) => {
-  if (!resend) {
-    console.warn('⚠️ Email service not configured - skipping refund approval email');
+  if (!process.env.RESEND_API_KEY) {
+    console.warn('⚠️ Resend API key not configured - cannot send refund approval email');
     return;
   }
 
@@ -528,8 +522,8 @@ const sendRefundApprovedEmail = async (booking) => {
 
 // ✅ EMAIL HELPER: Send refund rejected notification
 const sendRefundRejectedEmail = async (booking, rejectionReason) => {
-  if (!resend) {
-    console.warn('⚠️ Email service not configured - skipping refund rejection email');
+  if (!process.env.RESEND_API_KEY) {
+    console.warn('⚠️ Resend API key not configured - cannot send refund rejection email');
     return;
   }
 

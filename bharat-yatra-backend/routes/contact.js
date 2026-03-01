@@ -3,14 +3,7 @@ const router = express.Router();
 const { Resend } = require("resend");
 const Contact = require("../models/Contact");
 
-// Initialize Resend only if API key is provided
-let resend = null;
-if (process.env.RESEND_API_KEY) {
-  resend = new Resend(process.env.RESEND_API_KEY);
-  console.log('✅ Resend email service configured');
-} else {
-  console.warn('⚠️  Resend API key not configured - email notifications disabled');
-}
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 router.get('/', (req, res) => {
   res.json({ status: 'Contact route is active' });
@@ -22,8 +15,8 @@ const isValidEmail = (email) => {
 
 // Helper: Send emails asynchronously using Resend
 const sendContactEmails = async (name, email, message, contactId) => {
-  if (!resend) {
-    console.warn('Resend API key not configured: Skipping email notification');
+  if (!process.env.RESEND_API_KEY) {
+    console.error('Resend API key not configured: RESEND_API_KEY');
     await Contact.findByIdAndUpdate(contactId, {
       mailSent: false,
       mailError: 'Resend API key not configured'
