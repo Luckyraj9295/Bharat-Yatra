@@ -62,6 +62,14 @@ router.post('/create-order', auth, async (req, res) => {
       });
     }
 
+    // ✅ PREVENT RE-CREATION: Don't create new order if payment already completed
+    if (booking.paymentStatus === 'completed') {
+      return res.status(400).json({
+        success: false,
+        message: 'Payment already completed for this booking. Cannot create a new order.'
+      });
+    }
+
     // Create Razorpay order
     const options = {
       amount: Math.round(amount * 100), // Amount in smallest unit (paise)
@@ -82,7 +90,9 @@ router.post('/create-order', auth, async (req, res) => {
     console.log('🔐 Razorpay credentials check:', {
       hasKeyId: !!process.env.RAZORPAY_KEY_ID,
       hasKeySecret: !!process.env.RAZORPAY_KEY_SECRET,
-      keyIdPrefix: process.env.RAZORPAY_KEY_ID?.substring(0, 8) + '...'
+      ...(process.env.NODE_ENV === 'development' && {
+        keyIdPrefix: process.env.RAZORPAY_KEY_ID?.substring(0, 8) + '...'
+      })
     });
 
     const razorpayOrder = await razorpay.orders.create(options);
@@ -159,6 +169,14 @@ router.post('/create-order', auth, async (req, res) => {
 // ✅ VERIFY RAZORPAY PAYMENT
 router.post('/verify-payment', auth, async (req, res) => {
   try {
+    // Check if Razorpay is configured
+    if (!process.env.RAZORPAY_KEY_SECRET || !process.env.RAZORPAY_KEY_ID) {
+      return res.status(503).json({
+        success: false,
+        message: 'Payment service not configured. Razorpay credentials missing.'
+      });
+    }
+
     const { razorpayOrderId, razorpayPaymentId, razorpaySignature, bookingId } = req.body;
 
     // Validate input
@@ -166,6 +184,46 @@ router.post('/verify-payment', auth, async (req, res) => {
       return res.status(400).json({
         success: false,
         message: 'Missing payment verification details'
+      });
+    }
+
+    // ✅ FIRST: Fetch payment WITHOUT updating
+    const payment = await Payment.findOne({ razorpayOrderId });
+
+    if (!payment) {
+      return res.status(404).json({
+        success: false,
+        message: 'Payment record not found'
+      });
+    }
+
+    // ✅ IDEMPOTENCY CHECK (FIRST): If already completed, return success immediately (safe to retry)
+    if (payment.status === 'completed') {
+      return res.status(200).json({
+        success: true,
+        message: 'Payment already verified',
+        data: {
+          paymentId: payment._id,
+          status: payment.status,
+          amount: payment.amount,
+          razorpayPaymentId: payment.razorpayPaymentId
+        }
+      });
+    }
+
+    // ✅ SECURITY CHECK: Verify payment belongs to logged-in user
+    if (payment.user.toString() !== req.user.userId) {
+      return res.status(403).json({
+        success: false,
+        message: 'Unauthorized: Payment does not belong to your account'
+      });
+    }
+
+    // ✅ INTEGRITY CHECK: Verify booking ID matches payment record
+    if (payment.booking.toString() !== bookingId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Booking ID mismatch: Payment does not match the requested booking'
       });
     }
 
@@ -197,11 +255,11 @@ router.post('/verify-payment', auth, async (req, res) => {
     // 🔍 Fetch payment details from Razorpay API to get the actual payment method
     let paymentMethod = 'unknown';
     try {
-      const auth = Buffer.from(`${process.env.RAZORPAY_KEY_ID}:${process.env.RAZORPAY_KEY_SECRET}`).toString('base64');
+      const razorpayAuthHeader = Buffer.from(`${process.env.RAZORPAY_KEY_ID}:${process.env.RAZORPAY_KEY_SECRET}`).toString('base64');
       const paymentDetailsRes = await fetch(`https://api.razorpay.com/v1/payments/${razorpayPaymentId}`, {
         method: 'GET',
         headers: {
-          'Authorization': `Basic ${auth}`,
+          'Authorization': `Basic ${razorpayAuthHeader}`,
           'Content-Type': 'application/json'
         }
       });
@@ -226,8 +284,8 @@ router.post('/verify-payment', auth, async (req, res) => {
       console.warn('⚠️ Error fetching payment details from Razorpay:', err.message);
     }
 
-    // Update payment record with successful details
-    const payment = await Payment.findOneAndUpdate(
+    // ✅ NOW UPDATE: After all checks pass, update payment record with successful details
+    const updatedPayment = await Payment.findOneAndUpdate(
       { razorpayOrderId },
       {
         razorpayPaymentId,
@@ -238,21 +296,6 @@ router.post('/verify-payment', auth, async (req, res) => {
       },
       { new: true }
     );
-
-    if (!payment) {
-      return res.status(404).json({
-        success: false,
-        message: 'Payment record not found'
-      });
-    }
-
-    // ✅ SECURITY CHECK: Verify payment belongs to logged-in user
-    if (payment.user.toString() !== req.user.userId) {
-      return res.status(403).json({
-        success: false,
-        message: 'Unauthorized: Payment does not belong to your account'
-      });
-    }
 
     // Update booking with Razorpay payment details including actual payment method
     const updatedBooking = await Booking.findByIdAndUpdate(
@@ -279,9 +322,9 @@ router.post('/verify-payment', auth, async (req, res) => {
       success: true,
       message: 'Payment verified successfully',
       data: {
-        paymentId: payment._id,
-        status: payment.status,
-        amount: payment.amount,
+        paymentId: updatedPayment._id,
+        status: updatedPayment.status,
+        amount: updatedPayment.amount,
         razorpayPaymentId: razorpayPaymentId,
         paymentMethod: paymentMethod
       }
@@ -322,9 +365,9 @@ router.post('/payment-failed', auth, async (req, res) => {
       });
     }
 
-    // Update payment status to failed
+    // Update payment status to failed (prevent race condition: don't overwrite completed)
     await Payment.findOneAndUpdate(
-      { booking: bookingId },
+      { booking: bookingId, status: { $ne: 'completed' } },
       { status: 'failed' }
     );
 
@@ -1090,6 +1133,14 @@ router.post('/admin/refund-approval', auth, isAdmin, async (req, res) => {
 
     // Process APPROVAL
     if (action === 'approve') {
+      // Check if Razorpay is configured
+      if (!process.env.RAZORPAY_KEY_SECRET || !process.env.RAZORPAY_KEY_ID) {
+        return res.status(503).json({
+          success: false,
+          message: 'Payment service not configured. Razorpay credentials missing.'
+        });
+      }
+
       let razorpayRefundId = null;
 
       // ✅ SAFETY CHECK: Verify refund amount and Razorpay payment ID
@@ -1107,11 +1158,11 @@ router.post('/admin/refund-approval', auth, isAdmin, async (req, res) => {
       // Process Razorpay refund only if amount > 0
       if (booking.refundAmount > 0) {
         try {
-          const auth = Buffer.from(`${process.env.RAZORPAY_KEY_ID}:${process.env.RAZORPAY_KEY_SECRET}`).toString('base64');
+          const razorpayAuthHeader = Buffer.from(`${process.env.RAZORPAY_KEY_ID}:${process.env.RAZORPAY_KEY_SECRET}`).toString('base64');
           const refundRes = await fetch(`https://api.razorpay.com/v1/payments/${booking.razorpayPaymentId}/refund`, {
             method: 'POST',
             headers: {
-              'Authorization': `Basic ${auth}`,
+              'Authorization': `Basic ${razorpayAuthHeader}`,
               'Content-Type': 'application/json'
             },
             body: JSON.stringify({
