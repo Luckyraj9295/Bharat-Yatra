@@ -874,12 +874,21 @@ function openRazorpayModalDirectly(options) {
     console.log('📡 Razorpay key available:', !!options.key);
     console.log('📦 Order ID:', options.order_id);
     console.log('💵 Amount (paise):', options.amount);
+
+    const scrollYBeforeCheckout = window.scrollY;
     
     const razorpay = new window.Razorpay(options);
     console.log('✅ Razorpay instance created');
     
     // Call open() immediately - still in "click" context
     razorpay.open();
+
+    // Guard against browser/layout jump to top when checkout iframe is injected
+    requestAnimationFrame(() => {
+      if (Math.abs(window.scrollY - scrollYBeforeCheckout) > 40) {
+        window.scrollTo({ top: scrollYBeforeCheckout, behavior: 'auto' });
+      }
+    });
     console.log('✅ Razorpay modal opened successfully');
 
   } catch (err) {
