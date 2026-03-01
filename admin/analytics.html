@@ -222,7 +222,10 @@
       document.getElementById('totalCancellations').textContent = cancelled.length;
       document.getElementById('totalRefunded').textContent = `₹${refunded.reduce((sum, b) => sum + (b.refundAmount || 0), 0).toLocaleString('en-IN')}`;
       document.getElementById('pendingApprovals').textContent = pending.length;
-      document.getElementById('refundRate').textContent = `${Math.round((refunded.length / cancelled.length) * 100 || 0)}%`;
+      
+      // ✅ FIXED: Handle division by zero when no cancellations
+      const refundRate = cancelled.length === 0 ? 0 : Math.round((refunded.length / cancelled.length) * 100);
+      document.getElementById('refundRate').textContent = `${refundRate}%`;
 
       // Update charts
       updateStatusChart(cancelled);
