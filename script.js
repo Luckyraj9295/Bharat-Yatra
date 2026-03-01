@@ -883,6 +883,11 @@ function openRazorpayModalDirectly(options) {
     // Call open() immediately - still in "click" context
     razorpay.open();
 
+    // Fallback: if Razorpay renders as a broken top strip, normalize to centered modal
+    setTimeout(() => {
+      normalizeRazorpayCheckoutLayout();
+    }, 250);
+
     // Guard against browser/layout jump to top when checkout iframe is injected
     requestAnimationFrame(() => {
       if (Math.abs(window.scrollY - scrollYBeforeCheckout) > 40) {
@@ -900,6 +905,44 @@ function openRazorpayModalDirectly(options) {
     });
     showToast('❌ Failed to open payment modal: ' + err.message, 'error');
   }
+}
+
+function normalizeRazorpayCheckoutLayout() {
+  if (window.innerWidth < 768) return;
+
+  const frame = document.querySelector('iframe[name*="razorpay-checkout-frame"]');
+  if (!frame) return;
+
+  const rect = frame.getBoundingClientRect();
+  const looksLikeTopStrip =
+    rect.top <= 16 &&
+    rect.width >= window.innerWidth * 0.9 &&
+    rect.height > 0 &&
+    rect.height <= 260;
+
+  if (!looksLikeTopStrip) return;
+
+  const modalWidth = Math.min(520, window.innerWidth - 32);
+  const modalHeight = Math.min(720, Math.floor(window.innerHeight * 0.9));
+
+  frame.style.setProperty('position', 'fixed', 'important');
+  frame.style.setProperty('top', '50%', 'important');
+  frame.style.setProperty('left', '50%', 'important');
+  frame.style.setProperty('transform', 'translate(-50%, -50%)', 'important');
+  frame.style.setProperty('width', `${modalWidth}px`, 'important');
+  frame.style.setProperty('height', `${modalHeight}px`, 'important');
+  frame.style.setProperty('max-width', 'calc(100vw - 32px)', 'important');
+  frame.style.setProperty('max-height', '90vh', 'important');
+  frame.style.setProperty('z-index', '2147483647', 'important');
+
+  const backdrop = document.querySelector('.razorpay-backdrop');
+  if (backdrop) {
+    backdrop.style.setProperty('position', 'fixed', 'important');
+    backdrop.style.setProperty('inset', '0', 'important');
+    backdrop.style.setProperty('z-index', '2147483646', 'important');
+  }
+
+  console.warn('⚠️ Razorpay frame rendered as top strip; applied centered fallback layout.');
 }
 
 // Helper function to open Razorpay modal (legacy - keeping for backward compat)

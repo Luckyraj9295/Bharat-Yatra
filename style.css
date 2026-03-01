@@ -165,12 +165,6 @@ body {
   isolation: isolate;
 }
 
-/* ========== Razorpay Modal Fixes for Desktop ========== */
-/* Ensure Razorpay iframe appears on all screen sizes */
-body iframe[name*="razorpay-checkout-frame"] {
-  z-index: 999999999 !important;
-}
-
 .passenger {
     margin-bottom: 20px;
   }
