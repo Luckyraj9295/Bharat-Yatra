@@ -18,23 +18,32 @@ if (process.env.RESEND_API_KEY) {
   console.warn('⚠️  Resend API key not configured - email notifications disabled');
 }
 
-// Validate Razorpay credentials on startup
-if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
-  console.error('⚠️ WARNING: Razorpay credentials not configured!');
-  console.error('Missing:', {
+// Validate and initialize Razorpay conditionally
+let razorpay = null;
+if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
+  razorpay = new Razorpay({
+    key_id: process.env.RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_KEY_SECRET
+  });
+  console.log('✅ Razorpay Payment Gateway configured');
+} else {
+  console.warn('⚠️  WARNING: Razorpay credentials not configured!');
+  console.warn('Missing:', {
     RAZORPAY_KEY_ID: process.env.RAZORPAY_KEY_ID ? '✅ Set' : '❌ Missing',
     RAZORPAY_KEY_SECRET: process.env.RAZORPAY_KEY_SECRET ? '✅ Set' : '❌ Missing'
   });
 }
 
-// Initialize Razorpay
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET
-});
-
 // ✅ CREATE RAZORPAY ORDER
 router.post('/create-order', auth, async (req, res) => {
+  // Check if Razorpay is configured
+  if (!razorpay) {
+    return res.status(503).json({
+      success: false,
+      message: 'Payment service not available. Razorpay not configured.'
+    });
+  }
+
   try {
     const { bookingId, amount } = req.body;
 
