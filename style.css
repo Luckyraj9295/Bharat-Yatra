@@ -171,18 +171,6 @@ body iframe[name*="razorpay-checkout-frame"] {
   z-index: 999999999 !important;
 }
 
-/* Keep Razorpay checkout pinned to viewport even on long pages */
-body .razorpay-container,
-body .razorpay-backdrop,
-body .razorpay-checkout-frame {
-  position: fixed !important;
-  inset: 0 !important;
-}
-
-body .razorpay-checkout-frame {
-  margin: auto !important;
-}
-
 .passenger {
     margin-bottom: 20px;
   }
