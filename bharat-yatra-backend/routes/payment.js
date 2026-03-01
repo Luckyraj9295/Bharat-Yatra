@@ -5,6 +5,7 @@ const { Resend } = require('resend');
 const Payment = require('../models/Payment');
 const Booking = require('../models/Booking');
 const auth = require('../middleware/auth');
+const isAdmin = require('../middleware/isAdmin');
 
 const router = express.Router();
 
@@ -541,15 +542,9 @@ const sendRefundRejectedEmail = async (booking, rejectionReason) => {
 };
 
 // ✅ ADMIN: APPROVE/REJECT REFUND REQUEST
-router.post('/admin/refund-approval', auth, async (req, res) => {
+router.post('/admin/refund-approval', auth, isAdmin, async (req, res) => {
   try {
     const { bookingId, action, approvalReason } = req.body; // action: 'approve' or 'reject'
-
-    // TODO: Add admin authorization check
-    // const user = await User.findById(req.user.userId);
-    // if (user.role !== 'admin') {
-    //   return res.status(403).json({ success: false, message: 'Admin access required' });
-    // }
 
     if (!['approve', 'reject'].includes(action)) {
       return res.status(400).json({
