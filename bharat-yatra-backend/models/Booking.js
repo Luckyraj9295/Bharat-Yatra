@@ -109,6 +109,16 @@ const bookingSchema = new mongoose.Schema({
     type: Date,
     default: null
   },
+  // 📊 AUDIT TRACKING
+  adminApprovedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null // Which admin approved this refund
+  },
+  adminApprovalReason: {
+    type: String,
+    default: null // Admin's notes on why they approved/rejected
+  },
   timestamp: { type: Date, default: Date.now }
 }, {
   timestamps: true

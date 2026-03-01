@@ -553,12 +553,38 @@ router.post('/admin/refund-approval', auth, isAdmin, async (req, res) => {
       });
     }
 
-    // Find booking
-    const booking = await Booking.findById(bookingId);
+    // Find booking with user details for email
+    const booking = await Booking.findById(bookingId).populate('user', 'email');
     if (!booking) {
       return res.status(404).json({
         success: false,
         message: 'Booking not found'
+      });
+    }
+
+    // ❌ PREVENT DOUBLE REFUND ATTEMPT
+    if (booking.refundStatus === 'completed') {
+      return res.status(400).json({
+        success: false,
+        message: `⚠️ This refund has already been processed (completed).`,
+        data: {
+          bookingRef: booking.bookingRef,
+          refundStatus: 'completed',
+          razorpayRefundId: booking.razorpayRefundId,
+          completedAt: booking.refundCompletedAt
+        }
+      });
+    }
+
+    if (booking.refundStatus === 'rejected') {
+      return res.status(400).json({
+        success: false,
+        message: `⚠️ This refund request has already been rejected.`,
+        data: {
+          bookingRef: booking.bookingRef,
+          refundStatus: 'rejected',
+          reason: booking.adminApprovalReason
+        }
       });
     }
 
@@ -570,21 +596,30 @@ router.post('/admin/refund-approval', auth, isAdmin, async (req, res) => {
     }
 
     if (action === 'reject') {
-      // Reject refund
+      // Reject refund with audit tracking
       const rejectedBooking = await Booking.findByIdAndUpdate(bookingId, {
         refundStatus: 'rejected',
-        refundReason: approvalReason || 'Admin rejected refund request'
-      }, { new: true });
+        adminApprovedBy: req.user.userId, // Track which admin rejected
+        adminApprovalReason: approvalReason || 'Admin rejected refund request'
+      }, { new: true }).populate('adminApprovedBy', 'email');
 
       // 📧 Send rejection email to user
       await sendRefundRejectedEmail(rejectedBooking, approvalReason || 'Your refund request could not be approved at this time.');
+
+      console.log('❌ Refund Rejected:', {
+        bookingRef: rejectedBooking.bookingRef,
+        rejectedBy: req.user.userId,
+        reason: approvalReason
+      });
 
       return res.status(200).json({
         success: true,
         message: 'Refund request rejected',
         data: {
           bookingRef: rejectedBooking.bookingRef,
-          refundStatus: 'rejected'
+          refundStatus: 'rejected',
+          rejectedBy: rejectedBooking.adminApprovedBy?.email,
+          reason: rejectedBooking.adminApprovalReason
         }
       });
     }
@@ -627,22 +662,25 @@ router.post('/admin/refund-approval', auth, isAdmin, async (req, res) => {
         }
       }
 
-      // Mark as COMPLETED
+      // Mark as COMPLETED with audit tracking
       const approvedBooking = await Booking.findByIdAndUpdate(
         bookingId,
         {
           refundStatus: 'completed',
           razorpayRefundId: razorpayRefundId,
-          refundCompletedAt: new Date()
+          refundCompletedAt: new Date(),
+          adminApprovedBy: req.user.userId, // Track which admin approved
+          adminApprovalReason: approvalReason || 'Refund approved by admin' // Admin's notes
         },
         { new: true }
-      );
+      ).populate('adminApprovedBy', 'email');
 
       // 📧 Send refund approval email to user with refund details
       await sendRefundApprovedEmail(approvedBooking);
 
       console.log('✅ Refund Approved and Processed:', {
         bookingRef: approvedBooking.bookingRef,
+        approvedBy: req.user.userId,
         razorpayRefundId,
         amount: approvedBooking.refundAmount
       });
@@ -654,7 +692,9 @@ router.post('/admin/refund-approval', auth, isAdmin, async (req, res) => {
           bookingRef: approvedBooking.bookingRef,
           refundAmount: approvedBooking.refundAmount,
           refundStatus: 'completed',
-          razorpayRefundId
+          razorpayRefundId,
+          approvedBy: approvedBooking.adminApprovedBy?.email,
+          approvalReason: approvedBooking.adminApprovalReason
         }
       });
     }
