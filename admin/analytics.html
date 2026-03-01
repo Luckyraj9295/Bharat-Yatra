@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cancellation Analytics - Bharat Yatra Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    .stat-card { transition: transform 0.3s, box-shadow 0.3s; }
+    .stat-card:hover { transform: translateY(-4px); box-shadow: 0 8px 16px rgba(0,0,0,0.1); }
+    .chart-container { position: relative; height: 300px; }
+  </style>
+</head>
+<body class="bg-gray-50">
+  <div class="min-h-screen">
+    <!-- Header -->
+    <header class="bg-orange-600 text-white shadow-lg">
+      <div class="max-w-7xl mx-auto px-4 py-6 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+          <i class="fas fa-chart-line text-2xl"></i>
+          <h1 class="text-2xl font-bold">Cancellation Analytics</h1>
+        </div>
+        <div class="flex gap-2">
+          <a href="admin.html" class="hover:bg-orange-700 px-4 py-2 rounded transition">← Back to Admin</a>
+          <button id="logoutBtn" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded">Logout</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 py-8">
+      <!-- Date Range Filter -->
+      <div class="bg-white rounded-lg shadow p-6 mb-6">
+        <h2 class="text-lg font-bold mb-4 text-gray-800">Filters</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">From Date</label>
+            <input type="date" id="dateFrom" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">To Date</label>
+            <input type="date" id="dateTo" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
+          </div>
+          <div class="flex items-end gap-2">
+            <button id="filterBtn" class="flex-1 bg-orange-600 hover:bg-orange-700 text-white font-semibold py-2 px-4 rounded-lg transition">
+              <i class="fas fa-filter mr-2"></i>Apply Filter
+            </button>
+            <button id="resetBtn" class="flex-1 bg-gray-400 hover:bg-gray-500 text-white font-semibold py-2 px-4 rounded-lg transition">
+              <i class="fas fa-redo mr-2"></i>Reset
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Key Metrics -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div class="stat-card bg-white rounded-lg shadow p-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-gray-500 text-sm">Total Cancellations</p>
+              <p class="text-3xl font-bold text-gray-800" id="totalCancellations">0</p>
+            </div>
+            <i class="fas fa-times-circle text-4xl text-red-400 opacity-50"></i>
+          </div>
+        </div>
+
+        <div class="stat-card bg-white rounded-lg shadow p-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-gray-500 text-sm">Total Refunded</p>
+              <p class="text-3xl font-bold text-green-600" id="totalRefunded">₹0</p>
+            </div>
+            <i class="fas fa-money-bill text-4xl text-green-400 opacity-50"></i>
+          </div>
+        </div>
+
+        <div class="stat-card bg-white rounded-lg shadow p-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-gray-500 text-sm">Pending Approvals</p>
+              <p class="text-3xl font-bold text-yellow-600" id="pendingApprovals">0</p>
+            </div>
+            <i class="fas fa-hourglass-half text-4xl text-yellow-400 opacity-50"></i>
+          </div>
+        </div>
+
+        <div class="stat-card bg-white rounded-lg shadow p-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-gray-500 text-sm">Refund Rate</p>
+              <p class="text-3xl font-bold text-blue-600" id="refundRate">0%</p>
+            </div>
+            <i class="fas fa-percentage text-4xl text-blue-400 opacity-50"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <!-- Refund Status Distribution -->
+        <div class="bg-white rounded-lg shadow p-6">
+          <h3 class="text-lg font-bold mb-4 text-gray-800">Refund Status Distribution</h3>
+          <div class="chart-container">
+            <canvas id="statusChart"></canvas>
+          </div>
+          <div class="mt-4 text-sm text-gray-600">
+            <p id="statusSummary"></p>
+          </div>
+        </div>
+
+        <!-- Cancellation Reasons -->
+        <div class="bg-white rounded-lg shadow p-6">
+          <h3 class="text-lg font-bold mb-4 text-gray-800">Top Cancellation Reasons</h3>
+          <div class="chart-container">
+            <canvas id="reasonChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Refund Percentage Distribution -->
+        <div class="bg-white rounded-lg shadow p-6">
+          <h3 class="text-lg font-bold mb-4 text-gray-800">Refund Amount Distribution</h3>
+          <div class="chart-container">
+            <canvas id="refundAmountChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Days Until Travel Date -->
+        <div class="bg-white rounded-lg shadow p-6">
+          <h3 class="text-lg font-bold mb-4 text-gray-800">Cancellation Timing (Days Before Travel)</h3>
+          <div class="chart-container">
+            <canvas id="daysChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Detailed Table -->
+      <div class="bg-white rounded-lg shadow overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+          <h3 class="text-lg font-bold text-gray-800">Cancelled Bookings Details</h3>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="bg-gray-100 border-b border-gray-200">
+              <tr>
+                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Booking Ref</th>
+                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Destination</th>
+                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Cancelled</th>
+                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Days Before</th>
+                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Refund %</th>
+                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Amount</th>
+                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Status</th>
+              </tr>
+            </thead>
+            <tbody id="bookingsList">
+              <tr>
+                <td colspan="7" class="px-6 py-8 text-center text-gray-500">
+                  <i class="fas fa-spinner fa-spin mr-2"></i>Loading...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toastContainer" class="fixed top-4 right-4 space-y-2 z-50"></div>
+
+  <script>
+    const API_BASE = "https://bharat-yatra.onrender.com/api";
+    let allBookings = [];
+    let filteredBookings = [];
+    let charts = {};
+
+    const getToken = () => localStorage.getItem('token');
+
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = `p-4 rounded-lg shadow-lg text-white ${
+        type === 'success' ? 'bg-green-500' :
+        type === 'error' ? 'bg-red-500' :
+        'bg-blue-500'
+      }`;
+      toast.textContent = message;
+      container.appendChild(toast);
+      setTimeout(() => toast.remove(), 4000);
+    }
+
+    async function loadBookings() {
+      try {
+        const token = getToken();
+        if (!token) {
+          showToast('Not authenticated', 'error');
+          return;
+        }
+
+        const response = await fetch(`${API_BASE}/bookings`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (!response.ok) throw new Error('Failed to load bookings');
+
+        allBookings = await response.json();
+        filteredBookings = allBookings.filter(b => b.bookingStatus === 'cancelled');
+        updateAnalytics();
+      } catch (error) {
+        console.error('Error:', error);
+        showToast('Failed to load data: ' + error.message, 'error');
+      }
+    }
+
+    function updateAnalytics() {
+      const cancelled = filteredBookings;
+      const refunded = cancelled.filter(b => b.refundStatus === 'completed');
+      const pending = cancelled.filter(b => b.refundStatus === 'pending');
+
+      // Update metrics
+      document.getElementById('totalCancellations').textContent = cancelled.length;
+      document.getElementById('totalRefunded').textContent = `₹${refunded.reduce((sum, b) => sum + (b.refundAmount || 0), 0).toLocaleString('en-IN')}`;
+      document.getElementById('pendingApprovals').textContent = pending.length;
+      document.getElementById('refundRate').textContent = `${Math.round((refunded.length / cancelled.length) * 100 || 0)}%`;
+
+      // Update charts
+      updateStatusChart(cancelled);
+      updateReasonChart(cancelled);
+      updateRefundAmountChart(cancelled);
+      updateDaysChart(cancelled);
+      updateTable(cancelled);
+    }
+
+    function updateStatusChart(bookings) {
+      const statusCounts = {
+        pending: bookings.filter(b => b.refundStatus === 'pending').length,
+        completed: bookings.filter(b => b.refundStatus === 'completed').length,
+        rejected: bookings.filter(b => b.refundStatus === 'rejected').length
+      };
+
+      const ctx = document.getElementById('statusChart').getContext('2d');
+      if (charts.status) charts.status.destroy();
+
+      charts.status = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Pending Approval', 'Completed', 'Rejected'],
+          datasets: [{
+            data: [statusCounts.pending, statusCounts.completed, statusCounts.rejected],
+            backgroundColor: ['#FBBF24', '#34D399', '#F87171'],
+            borderColor: '#fff',
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'bottom' } }
+        }
+      });
+
+      document.getElementById('statusSummary').innerHTML = `
+        ⏳ Pending: ${statusCounts.pending} | 
+        ✅ Completed: ${statusCounts.completed} | 
+        ❌ Rejected: ${statusCounts.rejected}
+      `;
+    }
+
+    function updateReasonChart(bookings) {
+      const reasons = {};
+      bookings.forEach(b => {
+        const reason = b.cancellationReason || 'Not specified';
+        reasons[reason] = (reasons[reason] || 0) + 1;
+      });
+
+      const sorted = Object.entries(reasons).sort((a, b) => b[1] - a[1]).slice(0, 5);
+
+      const ctx = document.getElementById('reasonChart').getContext('2d');
+      if (charts.reason) charts.reason.destroy();
+
+      charts.reason = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: sorted.map(r => r[0].substring(0, 20)),
+          datasets: [{
+            label: 'Count',
+            data: sorted.map(r => r[1]),
+            backgroundColor: '#F97316',
+            borderRadius: 4
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } }
+        }
+      });
+    }
+
+    function updateRefundAmountChart(bookings) {
+      const percentages = {
+        '100%': bookings.filter(b => b.refundPercentage === 100).length,
+        '50%': bookings.filter(b => b.refundPercentage === 50).length,
+        '0%': bookings.filter(b => b.refundPercentage === 0).length
+      };
+
+      const ctx = document.getElementById('refundAmountChart').getContext('2d');
+      if (charts.refundAmount) charts.refundAmount.destroy();
+
+      charts.refundAmount = new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels: ['100% Refund', '50% Refund', 'No Refund'],
+          datasets: [{
+            data: [percentages['100%'], percentages['50%'], percentages['0%']],
+            backgroundColor: ['#10B981', '#F59E0B', '#EF4444'],
+            borderColor: '#fff',
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'bottom' } }
+        }
+      });
+    }
+
+    function updateDaysChart(bookings) {
+      const daysBeforeCancel = bookings.map(b => {
+        const travel = new Date(b.travelDate);
+        const cancel = new Date(b.cancellationRequestedAt);
+        return Math.floor((travel - cancel) / (1000 * 60 * 60 * 24));
+      }).filter(d => d >= 0);
+
+      const bins = {
+        'More than 14 days': daysBeforeCancel.filter(d => d > 14).length,
+        '7-14 days': daysBeforeCancel.filter(d => d >= 7 && d <= 14).length,
+        'Less than 7 days': daysBeforeCancel.filter(d => d < 7).length
+      };
+
+      const ctx = document.getElementById('daysChart').getContext('2d');
+      if (charts.days) charts.days.destroy();
+
+      charts.days = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: Object.keys(bins),
+          datasets: [{
+            label: 'Count',
+            data: Object.values(bins),
+            backgroundColor: ['#059669', '#D97706', '#DC2626'],
+            borderRadius: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } }
+        }
+      });
+    }
+
+    function updateTable(bookings) {
+      const tbody = document.getElementById('bookingsList');
+      tbody.innerHTML = bookings.map(b => {
+        const travel = new Date(b.travelDate);
+        const cancel = new Date(b.cancellationRequestedAt);
+        const daysLeft = Math.floor((travel - cancel) / (1000 * 60 * 60 * 24));
+
+        return `
+          <tr class="border-b border-gray-200 hover:bg-gray-50">
+            <td class="px-6 py-3 font-mono text-sm font-semibold text-orange-600">${b.bookingRef}</td>
+            <td class="px-6 py-3 text-sm text-gray-700">${b.destination?.title || 'N/A'}</td>
+            <td class="px-6 py-3 text-sm text-gray-600">${new Date(b.cancellationRequestedAt).toLocaleDateString('en-IN')}</td>
+            <td class="px-6 py-3 text-sm text-gray-700">
+              <span class="px-2 py-1 rounded-full text-xs font-semibold ${daysLeft > 14 ? 'bg-green-100 text-green-800' : daysLeft > 7 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}">
+                ${daysLeft} days
+              </span>
+            </td>
+            <td class="px-6 py-3 text-sm font-bold text-gray-700">${b.refundPercentage}%</td>
+            <td class="px-6 py-3 text-sm font-bold text-green-600">₹${b.refundAmount.toLocaleString('en-IN')}</td>
+            <td class="px-6 py-3 text-sm">
+              <span class="px-2 py-1 rounded-full text-xs font-semibold ${
+                b.refundStatus === 'completed' ? 'bg-green-100 text-green-800' :
+                b.refundStatus === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                'bg-red-100 text-red-800'
+              }">
+                ${b.refundStatus.toUpperCase()}
+              </span>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function applyDateFilter() {
+      const from = new Date(document.getElementById('dateFrom').value);
+      const to = new Date(document.getElementById('dateTo').value);
+
+      if (!from || !to) {
+        showToast('Please select both dates', 'error');
+        return;
+      }
+
+      filteredBookings = allBookings.filter(b => {
+        const cancelDate = new Date(b.cancellationRequestedAt);
+        return b.bookingStatus === 'cancelled' && cancelDate >= from && cancelDate <= to;
+      });
+
+      updateAnalytics();
+      showToast(`Filtered to ${filteredBookings.length} cancellations`, 'success');
+    }
+
+    function resetFilter() {
+      filteredBookings = allBookings.filter(b => b.bookingStatus === 'cancelled');
+      document.getElementById('dateFrom').value = '';
+      document.getElementById('dateTo').value = '';
+      updateAnalytics();
+      showToast('Filter reset', 'info');
+    }
+
+    // Set default date range (last 30 days)
+    function setDefaultDates() {
+      const to = new Date();
+      const from = new Date(to.getTime() - 30 * 24 * 60 * 60 * 1000);
+      
+      document.getElementById('dateFrom').valueAsDate = from;
+      document.getElementById('dateTo').valueAsDate = to;
+    }
+
+    // Event listeners
+    document.getElementById('filterBtn').addEventListener('click', applyDateFilter);
+    document.getElementById('resetBtn').addEventListener('click', resetFilter);
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      localStorage.removeItem('token');
+      window.location.href = '/index.html';
+    });
+
+    // Initialize
+    setDefaultDates();
+    loadBookings();
+  </script>
+</body>
+</html>
