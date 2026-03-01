@@ -142,6 +142,38 @@ router.post('/verify-payment', auth, async (req, res) => {
       });
     }
 
+    // 🔍 Fetch payment details from Razorpay API to get the actual payment method
+    let paymentMethod = 'unknown';
+    try {
+      const auth = Buffer.from(`${process.env.RAZORPAY_KEY_ID}:${process.env.RAZORPAY_KEY_SECRET}`).toString('base64');
+      const paymentDetailsRes = await fetch(`https://api.razorpay.com/v1/payments/${razorpayPaymentId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Basic ${auth}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (paymentDetailsRes.ok) {
+        const paymentDetails = await paymentDetailsRes.json();
+        // Map Razorpay method names to our enum values
+        const methodMap = {
+          'card': 'card',
+          'netbanking': 'netbanking',
+          'wallet': 'wallet',
+          'upi': 'upi',
+          'emandate': 'card',
+          'emi': 'card'
+        };
+        paymentMethod = methodMap[paymentDetails.method] || 'unknown';
+        console.log('💳 Payment method from Razorpay:', paymentDetails.method, '→', paymentMethod);
+      } else {
+        console.warn('⚠️ Could not fetch payment details from Razorpay:', paymentDetailsRes.status);
+      }
+    } catch (err) {
+      console.warn('⚠️ Error fetching payment details from Razorpay:', err.message);
+    }
+
     // Update payment record with successful details
     const payment = await Payment.findOneAndUpdate(
       { razorpayOrderId },
@@ -149,7 +181,8 @@ router.post('/verify-payment', auth, async (req, res) => {
         razorpayPaymentId,
         razorpaySignature,
         status: 'completed',
-        completedAt: new Date()
+        completedAt: new Date(),
+        paymentMethod: paymentMethod
       },
       { new: true }
     );
@@ -161,14 +194,14 @@ router.post('/verify-payment', auth, async (req, res) => {
       });
     }
 
-    // Update booking with Razorpay payment details
+    // Update booking with Razorpay payment details including actual payment method
     const updatedBooking = await Booking.findByIdAndUpdate(
       payment.booking,
       { 
         paymentStatus: 'completed',
         razorpayPaymentId: razorpayPaymentId,
         razorpayOrderId: razorpayOrderId,
-        paymentMethod: payment.paymentMethod || 'unknown',
+        paymentMethod: paymentMethod,
         paymentCompletedAt: new Date()
       },
       { new: true }
@@ -182,7 +215,7 @@ router.post('/verify-payment', auth, async (req, res) => {
         status: payment.status,
         amount: payment.amount,
         razorpayPaymentId: razorpayPaymentId,
-        paymentMethod: payment.paymentMethod || 'unknown'
+        paymentMethod: paymentMethod
       }
     });
 
