@@ -246,6 +246,14 @@ router.post('/verify-payment', auth, async (req, res) => {
       });
     }
 
+    // ✅ SECURITY CHECK: Verify payment belongs to logged-in user
+    if (payment.user.toString() !== req.user.userId) {
+      return res.status(403).json({
+        success: false,
+        message: 'Unauthorized: Payment does not belong to your account'
+      });
+    }
+
     // Update booking with Razorpay payment details including actual payment method
     const updatedBooking = await Booking.findByIdAndUpdate(
       payment.booking,
@@ -257,7 +265,15 @@ router.post('/verify-payment', auth, async (req, res) => {
         paymentCompletedAt: new Date()
       },
       { new: true }
-    );
+    ).populate('destination');
+
+    // 📧 Send booking confirmation email (non-blocking, fire-and-forget)
+    const userEmail = updatedBooking.personalInfo?.email;
+    if (userEmail && updatedBooking) {
+      sendBookingConfirmationEmail(userEmail, updatedBooking, paymentMethod).catch(err => {
+        console.error('⚠️ Email delivery failed (non-blocking):', err.message);
+      });
+    }
 
     res.status(200).json({
       success: true,
@@ -276,6 +292,73 @@ router.post('/verify-payment', auth, async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Payment verification failed',
+      error: error.message
+    });
+  }
+});
+
+// ✅ HANDLE PAYMENT FAILURE / CANCELLATION
+router.post('/payment-failed', auth, async (req, res) => {
+  try {
+    const { bookingId, reason = 'Payment cancelled or failed' } = req.body;
+
+    if (!bookingId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Booking ID is required'
+      });
+    }
+
+    // Verify booking exists and belongs to user
+    const booking = await Booking.findOne({
+      _id: bookingId,
+      user: req.user.userId
+    }).populate('destination');
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found or unauthorized'
+      });
+    }
+
+    // Update payment status to failed
+    await Payment.findOneAndUpdate(
+      { booking: bookingId },
+      { status: 'failed' }
+    );
+
+    // 📧 Send payment failed email (non-blocking)
+    const userEmail = booking.personalInfo?.email;
+    if (userEmail) {
+      sendPaymentFailedEmail(userEmail, {
+        name: booking.personalInfo?.name,
+        bookingRef: booking.bookingRef,
+        destination: booking.destination?.title || 'Your Booking',
+        travelDate: new Date(booking.travelDate).toLocaleDateString('en-IN'),
+        amount: booking.totalPrice,
+        reason: reason
+      }).catch(err => {
+        console.error('⚠️ Payment failed email delivery failed:', err.message);
+      });
+    }
+
+    console.log('⚠️ Payment failed for booking:', booking.bookingRef, 'Reason:', reason);
+
+    res.status(200).json({
+      success: true,
+      message: 'Payment failure recorded. Please try again or contact support.',
+      data: {
+        bookingRef: booking.bookingRef,
+        nextSteps: 'You can retry payment anytime from your booking.'
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Payment failure handling error:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to handle payment failure',
       error: error.message
     });
   }
@@ -391,16 +474,20 @@ router.post('/refund', auth, async (req, res) => {
       { new: true }
     );
 
-    // 📧 TODO: Send cancellation confirmation email to user (refund pending approval)
-    // const User = require('../models/User');
-    // const user = await User.findById(booking.user);
-    // if (user && user.email) {
-    //   await sendCancellationPendingNotificationEmail(user.email, {
-    //     bookingRef: updatedBooking.bookingRef,
-    //     refundAmount,
-    //     refundReason
-    //   });
-    // }
+    // 📧 Send cancellation confirmation email to user (refund pending approval)
+    const userEmail = updatedBooking.personalInfo?.email;
+    if (userEmail) {
+      sendCancellationPendingNotificationEmail(userEmail, {
+        name: updatedBooking.personalInfo?.name,
+        bookingRef: updatedBooking.bookingRef,
+        destination: updatedBooking.destination?.title || 'Your Booking',
+        refundAmount,
+        refundPercentage,
+        refundReason
+      }).catch(err => {
+        console.error('⚠️ Cancellation email failed (non-blocking):', err.message);
+      });
+    }
 
     // ✅ Send notification to admins for refund approval
     console.log('⏳ Refund Pending Admin Approval:', {
@@ -434,6 +521,326 @@ router.post('/refund', auth, async (req, res) => {
 });
 
 // ✅ EMAIL HELPER: Send refund approved notification
+
+
+
+const sendPaymentFailedEmail = async (userEmail, details) => {
+  if (!process.env.RESEND_API_KEY) {
+    console.warn('⚠️ Resend API key not configured - cannot send payment failed email');
+    return;
+  }
+
+  try {
+    await resend.emails.send({
+      from: "Bharat Yatra <onboarding@resend.dev>",
+      to: userEmail,
+      subject: `Payment Failed - Retry Your Booking ${details.bookingRef}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; background: #fef2f2; padding: 20px; min-height: 100vh;">
+          <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.15);">
+            <!-- Header with warning -->
+            <div style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; padding: 32px 24px; text-align: center;">
+              <div style="font-size: 48px; margin-bottom: 12px;">⚠️</div>
+              <h1 style="margin: 0; font-size: 24px; font-weight: bold;">Payment Could Not Be Processed</h1>
+              <p style="margin: 8px 0 0 0; font-size: 14px; opacity: 0.9;">But don't worry, your booking is still reserved</p>
+            </div>
+
+            <!-- Main Content -->
+            <div style="padding: 32px 24px;">
+              <p style="color: #374151; font-size: 16px; line-height: 1.6; margin-bottom: 24px;">
+                Dear ${details.name || userEmail.split('@')[0]},<br/>
+                We were unable to process your payment for your Bharat Yatra booking. This could be due to:
+              </p>
+
+              <!-- Reasons -->
+              <div style="background: #fef2f2; border-left: 4px solid #ef4444; padding: 16px; margin-bottom: 24px; border-radius: 4px;">
+                <ul style="margin: 0; padding-left: 20px; color: #7f1d1d; font-size: 14px; line-height: 1.8;">
+                  <li>Insufficient funds on your card/account</li>
+                  <li>Card limit exceeded</li>
+                  <li>Network/connectivity issues during payment</li>
+                  <li>Payment cancelled by you</li>
+                  <li>Bank declined the transaction</li>
+                </ul>
+              </div>
+
+              <!-- Booking Details -->
+              <div style="background: #f9fafb; padding: 20px; border-radius: 8px; margin-bottom: 24px;">
+                <h3 style="margin: 0 0 16px 0; color: #1f2937; font-size: 16px; font-weight: bold;">📋 Your Booking Details</h3>
+                <table style="width: 100%; color: #374151; font-size: 14px;">
+                  <tr style="border-bottom: 1px solid #e5e7eb;">
+                    <td style="padding: 12px 0; font-weight: bold;">Booking Reference</td>
+                    <td style="padding: 12px 0; text-align: right; color: #ef4444; font-weight: bold;">${details.bookingRef}</td>
+                  </tr>
+                  <tr style="border-bottom: 1px solid #e5e7eb;">
+                    <td style="padding: 12px 0; font-weight: bold;">Destination</td>
+                    <td style="padding: 12px 0; text-align: right;">${details.destination}</td>
+                  </tr>
+                  <tr style="border-bottom: 1px solid #e5e7eb;">
+                    <td style="padding: 12px 0; font-weight: bold;">Travel Date</td>
+                    <td style="padding: 12px 0; text-align: right;">${details.travelDate}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 12px 0; font-weight: bold;">Amount to Pay</td>
+                    <td style="padding: 12px 0; text-align: right; color: #ef4444; font-weight: bold;">₹${Number(details.amount).toLocaleString('en-IN')}</td>
+                  </tr>
+                </table>
+              </div>
+
+              <!-- Call to Action -->
+              <div style="background: linear-gradient(135deg, #f59e42 0%, #ff8c42 100%); padding: 24px; border-radius: 8px; text-align: center; margin-bottom: 24px;">
+                <p style="margin: 0 0 16px 0; color: white; font-size: 14px;">
+                  <strong>Your booking is still reserved for you!</strong><br/>
+                  Please complete your payment as soon as possible.
+                </p>
+                <a href="${process.env.FRONTEND_URL || 'https://bharat-yaatra.netlify.app'}/BookHist.html" style="display: inline-block; background: white; color: #f59e42; padding: 12px 28px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 14px;">
+                  Retry Payment Now
+                </a>
+              </div>
+
+              <!-- Help Section -->
+              <div style="background: #eff6ff; border-left: 4px solid #3b82f6; padding: 16px; margin-bottom: 24px; border-radius: 4px;">
+                <h3 style="margin: 0 0 12px 0; color: #1e40af; font-size: 14px; font-weight: bold;">💡 Troubleshooting Tips</h3>
+                <ul style="margin: 0; padding-left: 20px; color: #1e40af; font-size: 14px; line-height: 1.8;">
+                  <li>Check if you have sufficient balance</li>
+                  <li>Try a different payment method</li>
+                  <li>Clear your browser cache and try again</li>
+                  <li>Check your internet connection</li>
+                  <li>Contact your bank to verify transaction limits</li>
+                </ul>
+              </div>
+
+              <!-- Support -->
+              <p style="color: #6b7280; font-size: 14px; line-height: 1.6; text-align: center; margin-bottom: 16px;">
+                Still having issues?<br/>
+                Contact our support team: <a href="mailto:bharatyatra001@gmail.com" style="color: #f59e42; text-decoration: none; font-weight: bold;">bharatyatra001@gmail.com</a><br/>
+                Phone: <strong>+91 98765 43210</strong>
+              </p>
+
+              <p style="color: #9ca3af; font-size: 13px; line-height: 1.6; text-align: center;">
+                <strong>Note:</strong> Your booking will be held for 24 hours. After that, we may release the slot. Please complete payment soon.
+              </p>
+            </div>
+
+            <!-- Footer -->
+            <div style="background: #f9fafb; border-top: 1px solid #e5e7eb; padding: 24px; text-align: center; color: #9ca3af; font-size: 12px;">
+              <p style="margin: 0 0 12px 0;">© 2024 Bharat Yatra. All rights reserved.</p>
+              <p style="margin: 0;">We're here to help you explore incredible India! 🇮🇳✈️</p>
+            </div>
+          </div>
+        </div>
+      `
+    });
+
+    console.log('✅ Payment failed notification email sent to:', userEmail);
+  } catch (error) {
+    console.error('❌ Failed to send payment failed email:', error.message);
+  }
+};
+
+const sendBookingConfirmationEmail = async (userEmail, booking, paymentMethod) => {
+  if (!process.env.RESEND_API_KEY) {
+    console.warn('⚠️ Resend API key not configured - cannot send booking confirmation email');
+    return;
+  }
+
+  try {
+    const destinationName = booking.destination?.title || 'Your Destination';
+    const travelDate = new Date(booking.travelDate).toLocaleDateString('en-IN', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+    const travelersInfo = booking.travelers?.map((t, i) => 
+      `${i + 1}. ${t.name} (Age: ${t.age}, ${t.gender})`
+    ).join('<br/>') || 'Information not available';
+
+    const paymentMethodDisplay = {
+      'card': '💳 Credit/Debit Card',
+      'upi': '📱 UPI',
+      'netbanking': '🏦 Net Banking',
+      'wallet': '👛 Digital Wallet',
+      'card_international': '💳 International Card'
+    }[paymentMethod] || '💳 ' + (paymentMethod || 'Payment');
+
+    await resend.emails.send({
+      from: "Bharat Yatra <onboarding@resend.dev>",
+      to: userEmail,
+      subject: `Booking Confirmed! 🎉 - ${booking.bookingRef}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; background: linear-gradient(135deg, #f59e42 0%, #ff8c42 100%); padding: 20px; min-height: 100vh;">
+          <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.15);">
+            <!-- Header with gradient -->
+            <div style="background: linear-gradient(135deg, #f59e42 0%, #ff8c42 100%); color: white; padding: 32px 24px; text-align: center;">
+              <div style="font-size: 48px; margin-bottom: 12px;">🎉</div>
+              <h1 style="margin: 0; font-size: 28px; font-weight: bold;">Your Booking is Confirmed!</h1>
+              <p style="margin: 8px 0 0 0; font-size: 16px; opacity: 0.9;">Get ready for an unforgettable journey</p>
+            </div>
+
+            <!-- Main Content -->
+            <div style="padding: 32px 24px;">
+              <!-- Greeting -->
+              <p style="color: #374151; font-size: 16px; line-height: 1.6; margin-bottom: 24px;">
+                Dear ${booking.personalInfo?.name || userEmail.split('@')[0]},<br/>
+                Thank you for booking with Bharat Yatra! Your payment has been processed successfully and your trip is confirmed.
+              </p>
+
+              <!-- Booking Reference -->
+              <div style="background: #fef3c7; border-left: 4px solid #f59e42; padding: 16px; border-radius: 4px; margin-bottom: 24px;">
+                <p style="margin: 0; color: #92400e; font-size: 12px; font-weight: bold; text-transform: uppercase;">Booking Reference</p>
+                <p style="margin: 8px 0 0 0; color: #1f2937; font-size: 20px; font-weight: bold;">${booking.bookingRef}</p>
+              </div>
+
+              <!-- Trip Details -->
+              <div style="background: #f9fafb; padding: 20px; border-radius: 8px; margin-bottom: 24px;">
+                <h3 style="margin: 0 0 16px 0; color: #1f2937; font-size: 16px; font-weight: bold;">📋 Trip Details</h3>
+                <table style="width: 100%; color: #374151; font-size: 14px;">
+                  <tr style="border-bottom: 1px solid #e5e7eb;">
+                    <td style="padding: 12px 0; font-weight: bold;">Destination</td>
+                    <td style="padding: 12px 0; text-align: right; color: #f59e42; font-weight: bold;">${destinationName}</td>
+                  </tr>
+                  <tr style="border-bottom: 1px solid #e5e7eb;">
+                    <td style="padding: 12px 0; font-weight: bold;">Package Type</td>
+                    <td style="padding: 12px 0; text-align: right;">${booking.packageType || 'Standard'}</td>
+                  </tr>
+                  <tr style="border-bottom: 1px solid #e5e7eb;">
+                    <td style="padding: 12px 0; font-weight: bold;">Travel Date</td>
+                    <td style="padding: 12px 0; text-align: right;">${travelDate}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 12px 0; font-weight: bold;">Number of Travelers</td>
+                    <td style="padding: 12px 0; text-align: right;">${booking.travelers?.length || 1} ${booking.travelers?.length > 1 ? 'Persons' : 'Person'}</td>
+                  </tr>
+                </table>
+              </div>
+
+              <!-- Travelers Information -->
+              <div style="background: #f9fafb; padding: 20px; border-radius: 8px; margin-bottom: 24px;">
+                <h3 style="margin: 0 0 16px 0; color: #1f2937; font-size: 16px; font-weight: bold;">👥 Travelers</h3>
+                <div style="color: #374151; font-size: 14px; line-height: 1.8;">
+                  ${travelersInfo}
+                </div>
+              </div>
+
+              <!-- Payment Information -->
+              <div style="background: #f9fafb; padding: 20px; border-radius: 8px; margin-bottom: 24px;">
+                <h3 style="margin: 0 0 16px 0; color: #1f2937; font-size: 16px; font-weight: bold;">💳 Payment Information</h3>
+                <table style="width: 100%; color: #374151; font-size: 14px;">
+                  <tr style="border-bottom: 1px solid #e5e7eb;">
+                    <td style="padding: 12px 0; font-weight: bold;">Payment Method</td>
+                    <td style="padding: 12px 0; text-align: right;">${paymentMethodDisplay}</td>
+                  </tr>
+                  <tr style="border-bottom: 1px solid #e5e7eb;">
+                    <td style="padding: 12px 0; font-weight: bold;">Payment Status</td>
+                    <td style="padding: 12px 0; text-align: right;"><span style="background: #dcfce7; color: #166534; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 12px;">✓ COMPLETED</span></td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 12px 0; font-weight: bold; font-size: 16px;">Total Amount Paid</td>
+                    <td style="padding: 12px 0; text-align: right; color: #f59e42; font-weight: bold; font-size: 16px;">₹${Number(booking.totalPrice || 0).toLocaleString('en-IN')}</td>
+                  </tr>
+                </table>
+              </div>
+
+              <!-- What's Next -->
+              <div style="background: #eff6ff; border-left: 4px solid #3b82f6; padding: 16px; margin-bottom: 24px; border-radius: 4px;">
+                <h3 style="margin: 0 0 12px 0; color: #1e40af; font-size: 14px; font-weight: bold;">📝 What's Next?</h3>
+                <ul style="margin: 0; padding-left: 20px; color: #1e40af; font-size: 14px; line-height: 1.8;">
+                  <li>Check your email for additional trip details and itinerary</li>
+                  <li>Download the Bharat Yatra app for real-time updates</li>
+                  <li>Our team will contact you 48 hours before your trip starts</li>
+                  <li>Pack and get ready for an amazing adventure!</li>
+                </ul>
+              </div>
+
+              <!-- Important Info -->
+              <div style="background: #fef2f2; border-left: 4px solid #ef4444; padding: 16px; margin-bottom: 24px; border-radius: 4px;">
+                <h3 style="margin: 0 0 12px 0; color: #7f1d1d; font-size: 14px; font-weight: bold;">⚠️ Cancellation Policy</h3>
+                <p style="margin: 0; color: #7f1d1d; font-size: 13px; line-height: 1.6;">
+                  <strong>More than 14 days:</strong> 100% refund | <strong>7-14 days:</strong> 50% refund | <strong>Less than 7 days:</strong> Non-refundable. <a href="#" style="color: #ef4444; text-decoration: none; font-weight: bold;">View full policy</a>
+                </p>
+              </div>
+
+              <!-- Contact Support -->
+              <p style="color: #6b7280; font-size: 14px; line-height: 1.6; text-align: center; margin-bottom: 0;">
+                Questions? Contact our support team at <a href="mailto:bharatyatra001@gmail.com" style="color: #f59e42; text-decoration: none; font-weight: bold;">bharatyatra001@gmail.com</a> or call <strong>+91 98765 43210</strong>
+              </p>
+            </div>
+
+            <!-- Footer -->
+            <div style="background: #f9fafb; border-top: 1px solid #e5e7eb; padding: 24px; text-align: center; color: #9ca3af; font-size: 12px;">
+              <p style="margin: 0 0 12px 0;">© 2024 Bharat Yatra. All rights reserved.</p>
+              <p style="margin: 0;">Happy Travels! 🌍✈️</p>
+            </div>
+          </div>
+        </div>
+      `
+    });
+
+    console.log('✅ Booking confirmation email sent to:', userEmail);
+  } catch (error) {
+    console.error('❌ Failed to send booking confirmation email:', error.message);
+  }
+};
+
+const sendCancellationPendingNotificationEmail = async (userEmail, details) => {
+  if (!process.env.RESEND_API_KEY) {
+    console.warn('⚠️ Resend API key not configured - cannot send cancellation email');
+    return;
+  }
+
+  try {
+    await resend.emails.send({
+      from: "Bharat Yatra <onboarding@resend.dev>",
+      to: userEmail,
+      subject: `Cancellation Request Received - ${details.bookingRef}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; background: #f9fafb; padding: 20px;">
+          <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 8px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <h2 style="color: #1f2937; margin-bottom: 16px;">Cancellation Request Received</h2>
+            
+            <p style="color: #374151; line-height: 1.6;">Dear ${details.name || userEmail.split('@')[0]},</p>
+            
+            <p style="color: #374151; line-height: 1.6;">We have received your cancellation request for your booking with us. Here are the details:</p>
+            
+            <div style="background: #f3f4f6; border-left: 4px solid #f59e42; padding: 16px; margin: 20px 0; border-radius: 4px;">
+              <table style="width: 100%; color: #374151; font-size: 14px;">
+                <tr>
+                  <td style="padding: 8px 0; font-weight: bold;">Booking Reference</td>
+                  <td style="padding: 8px 0; text-align: right;"><strong>${details.bookingRef}</strong></td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0;">Destination</td>
+                  <td style="padding: 8px 0; text-align: right;">${details.destination}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0;">Refund Amount (${details.refundPercentage}%)</td>
+                  <td style="padding: 8px 0; text-align: right;">₹${Number(details.refundAmount).toLocaleString('en-IN')}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0;">Status</td>
+                  <td style="padding: 8px 0; text-align: right;"><span style="color: #ea580c; font-weight: bold;">Pending Admin Approval</span></td>
+                </tr>
+              </table>
+            </div>
+            
+            <p style="color: #6b7280; line-height: 1.6; font-size: 14px;">Your refund will be processed within <strong>1-2 business days</strong> after our admin team reviews and approves your cancellation request.</p>
+            
+            <p style="color: #374151; line-height: 1.6;">If you have any questions, please don't hesitate to contact our support team at <a href="mailto:bharatyatra001@gmail.com" style="color: #f59e42; text-decoration: none;">bharatyatra001@gmail.com</a></p>
+            
+            <div style="border-top: 1px solid #e5e7eb; margin-top: 24px; padding-top: 16px; text-align: center; color: #9ca3af; font-size: 12px;">
+              <p>© 2024 Bharat Yatra. All rights reserved.</p>
+            </div>
+          </div>
+        </div>
+      `
+    });
+
+    console.log('✅ Cancellation pending notification email sent to:', userEmail);
+  } catch (error) {
+    console.error('❌ Failed to send cancellation email:', error.message);
+  }
+};
+
 const sendRefundApprovedEmail = async (booking) => {
   if (!process.env.RESEND_API_KEY) {
     console.warn('⚠️ Resend API key not configured - cannot send refund approval email');
@@ -460,7 +867,7 @@ const sendRefundApprovedEmail = async (booking) => {
           </div>
           
           <div style="background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px; border: 1px solid #e5e7eb;">
-            <p style="color: #374151; font-size: 16px;">Dear <strong>${booking.personalInfo?.name || 'Traveler'}</strong>,</p>
+            <p style="color: #374151; font-size: 16px;">Dear <strong>${booking.personalInfo?.name || userEmail.split('@')[0]}</strong>,</p>
             
             <p style="color: #374151; line-height: 1.6;">
               Your refund request for booking <strong>${booking.bookingRef}</strong> has been approved by our team.
@@ -545,7 +952,7 @@ const sendRefundRejectedEmail = async (booking, rejectionReason) => {
           </div>
           
           <div style="background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px; border: 1px solid #e5e7eb;">
-            <p style="color: #374151; font-size: 16px;">Dear <strong>${booking.personalInfo?.name || 'Traveler'}</strong>,</p>
+            <p style="color: #374151; font-size: 16px;">Dear <strong>${booking.personalInfo?.name || userEmail.split('@')[0]}</strong>,</p>
             
             <p style="color: #374151; line-height: 1.6;">
               Thank you for your refund request for booking <strong>${booking.bookingRef}</strong>. After careful review by our team, we regret to inform you that your refund request could not be approved.
@@ -659,7 +1066,9 @@ router.post('/admin/refund-approval', auth, isAdmin, async (req, res) => {
       }, { new: true }).populate('adminApprovedBy', 'email');
 
       // 📧 Send rejection email to user
-      await sendRefundRejectedEmail(rejectedBooking, approvalReason || 'Your refund request could not be approved at this time.');
+      sendRefundRejectedEmail(rejectedBooking, approvalReason || 'Your refund request could not be approved at this time.').catch(err => {
+        console.error('⚠️ Rejection email failed (non-blocking):', err.message);
+      });
 
       console.log('❌ Refund Rejected:', {
         bookingRef: rejectedBooking.bookingRef,
@@ -743,7 +1152,9 @@ router.post('/admin/refund-approval', auth, isAdmin, async (req, res) => {
       ).populate('adminApprovedBy', 'email');
 
       // 📧 Send refund approval email to user with refund details
-      await sendRefundApprovedEmail(approvedBooking);
+      sendRefundApprovedEmail(approvedBooking).catch(err => {
+        console.error('⚠️ Approval email failed (non-blocking):', err.message);
+      });
 
       console.log('✅ Refund Approved and Processed:', {
         bookingRef: approvedBooking.bookingRef,

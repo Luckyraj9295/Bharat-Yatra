@@ -743,6 +743,8 @@ async function processPaymentAsync(userInfo, token) {
     specialRequests
   };
 
+  let bookingId = null; // Track for error handling
+
   try {
     // Step 1: Create booking
     const bookingRes = await fetch(`${API_BASE}/bookings`, {
@@ -760,7 +762,7 @@ async function processPaymentAsync(userInfo, token) {
     }
 
     const booking = await bookingRes.json();
-    const bookingId = booking._id;
+    bookingId = booking._id;
     
     console.log('✅ Booking created:', bookingId);
     showToast('✅ Booking created! Redirecting to payment...', 'success');
@@ -820,8 +822,10 @@ async function processPaymentAsync(userInfo, token) {
         color: '#FF9500'
       },
       modal: {
-        ondismiss: () => {
+        ondismiss: async () => {
           showToast('Payment cancelled. You can try again.', 'error');
+          // Notify backend of payment failure
+          notifyPaymentFailed(bookingId, token, 'User cancelled payment during checkout');
         }
       }
     };
@@ -865,6 +869,13 @@ async function processPaymentAsync(userInfo, token) {
   } catch (err) {
     console.error('Payment process error:', err);
     showToast('❌ Error: ' + err.message, 'error');
+    
+    // Notify backend of payment failure if booking was created
+    if (bookingId && token) {
+      notifyPaymentFailed(bookingId, token, `Payment initiation failed: ${err.message}`).catch(() => {
+        // Silently fail if notification doesn't go through
+      });
+    }
   }
 }
 function openRazorpayModalDirectly(options) {
@@ -1005,6 +1016,32 @@ function openRazorpayModal(options, successCallback, errorCallback) {
     });
     showToast('❌ Payment system error: ' + razorpayErr.message, 'error');
     errorCallback(razorpayErr);
+  }
+}
+
+// Notify backend of payment failure and trigger email
+async function notifyPaymentFailed(bookingId, token, reason = 'Payment cancelled') {
+  try {
+    const response = await fetch(`${API_BASE}/payments/payment-failed`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + token
+      },
+      body: JSON.stringify({
+        bookingId: bookingId,
+        reason: reason
+      })
+    });
+
+    const data = await response.json();
+    if (data.success) {
+      console.log('✅ Payment failure notification sent to user');
+    } else {
+      console.warn('⚠️ Failed to notify payment failure:', data.message);
+    }
+  } catch (error) {
+    console.error('❌ Error notifying payment failure:', error.message);
   }
 }
 
