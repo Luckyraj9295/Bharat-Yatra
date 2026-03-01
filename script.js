@@ -636,7 +636,8 @@ function storeBookingInLocalStorage(ref, totalPrice) {
 }
 
 // ===================== Razorpay Payment Integration =====================
-async function processPayment() {
+// PHASE 1: Validate and prepare (immediate)
+function processPayment() {
   const termsChecked = document.getElementById('termsCheck').checked;
   if (!termsChecked) {
     showToast('Please accept the Terms & Conditions to proceed.', 'error');
@@ -648,6 +649,17 @@ async function processPayment() {
   if (!userInfo || !token) {
     showToast('You must be signed in to complete the booking.', 'error');
     return;
+  }
+
+  // Show loading immediately
+  showToast('⏳ Processing your booking...', 'info');
+  
+  // Then do async work
+  processPaymentAsync(userInfo, token);
+}
+
+// PHASE 2: Async work (booking + order creation)
+async function processPaymentAsync(userInfo, token) {
   }
 
   const destinationTitle = document.getElementById('destinationSelect').value;
@@ -854,21 +866,9 @@ async function processPayment() {
       razorpayType: typeof window.Razorpay
     });
 
-    // Wait for Razorpay if not ready
-    if (!razorpayReady || typeof window.Razorpay !== 'function') {
-      console.warn('⏳ Razorpay not ready yet, waiting...');
-      return new Promise((resolve, reject) => {
-        waitForRazorpay(() => {
-          openRazorpayModal(options, resolve, reject);
-        }, 3000);
-      });
-    }
-
-    return openRazorpayModal(options, (response) => {
-      // Handler called on success
-    }, (err) => {
-      // Error handler
-    });
+    // ✅ CRITICAL FIX: Open modal synchronously (not in async/await chain)
+    // This preserves the "direct user click" context for browser security
+    openRazorpayModalDirectly(options);
 
   } catch (err) {
     console.error('Payment process error:', err);
@@ -876,7 +876,28 @@ async function processPayment() {
   }
 }
 
-// Helper function to open Razorpay modal
+// ✅ NEW: Direct modal opener (synchronous, preserves click context)
+function openRazorpayModalDirectly(options) {
+  try {
+    console.log('🔴 [DIRECT CALL] Creating Razorpay instance...');
+    const razorpay = new window.Razorpay(options);
+    console.log('✅ Razorpay instance created');
+    
+    // Call open() immediately - still in "click" context
+    razorpay.open();
+    console.log('✅ Razorpay modal opened successfully');
+
+  } catch (err) {
+    console.error('❌ Error opening Razorpay modal:', {
+      message: err.message,
+      code: err.code,
+      razorpayAvailable: typeof window.Razorpay !== 'undefined'
+    });
+    showToast('❌ Failed to open payment modal: ' + err.message, 'error');
+  }
+}
+
+// Helper function to open Razorpay modal (legacy - keeping for backward compat)
 function openRazorpayModal(options, successCallback, errorCallback) {
   try {
     const razorpay = new window.Razorpay(options);
