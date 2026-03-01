@@ -239,10 +239,19 @@ async function loadBookings() {
           <p class='text-white text-base mb-1'>${dateRangeHtml}</p>
           <p class='text-white text-base'>${booking.packageType} | ${booking.travelers.length} ${booking.travelers.length === 1 ? 'Traveler' : 'Travelers'}</p>
         </div>
-        <div class='absolute top-4 right-4 z-20'>
+        <div class='absolute top-4 right-4 z-20 flex flex-col gap-2'>
           <span class='inline-flex items-center text-sm font-semibold ${
+            booking.bookingStatus === 'cancelled' ? "text-red-700 bg-red-100" : 
             isUpcoming ? "text-blue-700 bg-blue-100" : "text-orange-800 bg-orange-100"
-          } rounded-full px-3 py-1'>${isUpcoming ? "Upcoming" : "Completed"}</span>
+          } rounded-full px-3 py-1'>${
+            booking.bookingStatus === 'cancelled' ? "❌ Cancelled" : 
+            isUpcoming ? "Upcoming" : "Completed"
+          }</span>
+          ${booking.bookingStatus === 'cancelled' && booking.refundStatus !== 'none' ? `
+            <span class='inline-flex items-center text-xs font-semibold text-green-700 bg-green-100 rounded-full px-3 py-1'>
+              ✓ Refund: ₹${(booking.refundAmount || 0).toLocaleString("en-IN")}
+            </span>
+          ` : ''}
         </div>
       </div>
     `;
@@ -398,7 +407,22 @@ if (daysDiff > 1) {
     </p>
     ${travelersHtml}
     ${specialRequestSection}
-    ${isUpcoming ? `<button id="popupCancelBtn" class="cancel-btn bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-full text-sm font-semibold transition mt-4 w-full"><svg xmlns="http://www.w3.org/2000/svg" class="inline w-4 h-4 mr-1 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg> Cancel Booking</button>` : ""}
+    ${booking.bookingStatus === 'cancelled' ? `
+      <div class='bg-red-50 border-l-4 border-red-600 p-4 mt-4 rounded'>
+        <p class='text-red-800 font-semibold mb-2'>❌ Booking Cancelled</p>
+        <p class='text-sm text-red-700 mb-2'><strong>Reason:</strong> ${booking.cancellationReason || 'N/A'}</p>
+        <p class='text-sm text-red-700'><strong>Cancelled on:</strong> ${new Date(booking.cancellationRequestedAt).toLocaleDateString()}</p>
+        ${booking.refundStatus !== 'none' ? `
+          <div class='bg-green-50 border-l-4 border-green-600 p-3 mt-3 rounded'>
+            <p class='text-green-800 font-semibold mb-1'>✓ Refund Processed</p>
+            <p class='text-sm text-green-700'><strong>Amount:</strong> ₹${(booking.refundAmount || 0).toLocaleString("en-IN")} (${booking.refundPercentage || 0}%)</p>
+            <p class='text-sm text-green-700'><strong>Reason:</strong> ${booking.refundReason || 'N/A'}</p>
+            <p class='text-sm text-green-700'><strong>Status:</strong> ${booking.refundStatus.toUpperCase()}</p>
+            ${booking.razorpayRefundId ? `<p class='text-sm text-gray-600'><strong>Refund ID:</strong> ${booking.razorpayRefundId.slice(-12)}</p>` : ''}
+          </div>
+        ` : ''}
+      </div>
+    ` : `${isUpcoming ? `<button id="popupCancelBtn" class="cancel-btn bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-full text-sm font-semibold transition mt-4 w-full"><svg xmlns="http://www.w3.org/2000/svg" class="inline w-4 h-4 mr-1 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg> Cancel Booking</button>` : ""}` }
   `;
 
   modal.classList.remove("hidden");
@@ -465,63 +489,93 @@ showBookingModal(booking);// re-render modal
     const cancelBtn = document.getElementById("popupCancelBtn");
     if (!cancelBtn) return;
 
-    if (daysDiff < 7) {
+    // Calculate refund policy
+    const travelDate = new Date(booking.travelDate);
+    const today = new Date();
+    const daysUntilTravel = Math.ceil((travelDate - today) / (1000 * 60 * 60 * 24));
+
+    let refundPercentage = 0;
+    let refundAmount = 0;
+    let refundMsg = '';
+
+    if (daysUntilTravel > 14) {
+      refundPercentage = 100;
+      refundMsg = '✅ Full Refund (100%) - Cancelled 14+ days before';
+    } else if (daysUntilTravel >= 7) {
+      refundPercentage = 50;
+      refundMsg = '📊 Partial Refund (50%) - Cancelled 7-14 days before';
+    } else {
+      refundPercentage = 0;
+      refundMsg = '❌ No Refund - Cancelled less than 7 days before (Non-refundable policy)';
+    }
+
+    refundAmount = (booking.totalPrice * refundPercentage) / 100;
+
+    if (daysUntilTravel < 7) {
       cancelBtn.disabled = true;
       cancelBtn.classList.add("opacity-50", "cursor-not-allowed");
-      cancelBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="inline w-4 h-4 mr-1 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg> Cannot Cancel (< 7 days left for journey)`;
+      cancelBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="inline w-4 h-4 mr-1 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg> Cannot Cancel (< 7 days)`;
       return;
     }
 
     cancelBtn.addEventListener("click", () => {
       const confirmBox = document.createElement("div");
-      confirmBox.className = "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50";
+      confirmBox.className = "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4";
       confirmBox.innerHTML = `
-        <div class='bg-white rounded-xl shadow-lg p-6 text-center w-72'>
-          <h2 class='text-lg font-semibold mb-4 text-orange-700'>Cancel Booking?</h2>
-          <p class='text-sm text-gray-600 mb-6'>Are you sure you want to cancel this booking?</p>
+        <div class='bg-white rounded-xl shadow-lg p-8 max-w-md w-full'>
+          <h2 class='text-lg font-semibold mb-4 text-orange-700 text-center'>Cancel Booking?</h2>
+          <div class='bg-blue-50 p-4 rounded-lg mb-6 border border-blue-200'>
+            <p class='text-sm font-semibold text-blue-900 mb-2'>Refund Details:</p>
+            <p class='text-sm text-blue-800 mb-2'>${refundMsg}</p>
+            <p class='text-lg font-bold text-green-600'>Refund Amount: ₹${refundAmount.toLocaleString("en-IN")}</p>
+          </div>
+          <p class='text-sm text-gray-600 mb-6 text-center'>Refund will be processed to your original payment method within 3-5 business days.</p>
           <div class='flex justify-center gap-4'>
-            <button id='confirmYes' class='bg-red-500 text-white px-4 py-2 rounded-full hover:bg-red-600 transition'>Yes</button>
-            <button id='confirmNo' class='bg-gray-300 text-gray-800 px-4 py-2 rounded-full hover:bg-gray-400 transition'>No</button>
+            <button id='confirmYes' class='bg-red-500 text-white px-6 py-2 rounded-full hover:bg-red-600 transition font-semibold'>Yes, Cancel</button>
+            <button id='confirmNo' class='bg-gray-300 text-gray-800 px-6 py-2 rounded-full hover:bg-gray-400 transition font-semibold'>No, Keep It</button>
           </div>
         </div>
       `;
       document.body.appendChild(confirmBox);
 
       confirmBox.querySelector("#confirmYes").addEventListener("click", async () => {
-  try {
-  const token = localStorage.getItem("token");
-  const res = await fetch(`${API_BASE}/bookings/${booking._id}`, {
-    method: "DELETE",
-    headers: { Authorization: "Bearer " + token },
-  });
+        try {
+          const token = localStorage.getItem("token");
+          
+          // Call refund endpoint
+          const refundRes = await fetch(`${API_BASE}/payments/refund`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Bearer " + token
+            },
+            body: JSON.stringify({
+              bookingId: booking._id,
+              cancellationReason: "User requested cancellation"
+            })
+          });
 
-  if (!res.ok) throw new Error("Cancel failed");
+          if (!refundRes.ok) {
+            const errorData = await refundRes.json();
+            throw new Error(errorData.message || "Refund failed");
+          }
 
-  // ✅ Show success toast
-  showToast("Booking cancelled successfully.", "success");
+          const refundData = await refundRes.json();
 
-  // Close modal and confirm box first
-  confirmBox.remove();
-  document.getElementById("bookingModal").classList.add("hidden");
+          showToast("✅ Booking cancelled and refund initiated!", "success");
+          confirmBox.remove();
+          document.getElementById("bookingModal").classList.add("hidden");
 
-  // Animate card removal
-  const card = document.querySelector(`[data-id="${booking._id}"]`);
-  if (card) {
-    card.classList.add("transition-opacity", "duration-500", "ease-in-out", "opacity-0", "scale-95");
+          // Reload bookings to show updated status
+          setTimeout(() => {
+            loadBookings();
+          }, 1000);
 
-    setTimeout(() => {
-      card.remove();
-      loadBookings();
-    }, 500);
-  }
-} catch (err) {
-  console.error(err);
-  // ❌ Show error toast
-  showToast("Failed to cancel booking. Try again.", "error");
-}
-
-});
-
+        } catch (err) {
+          console.error(err);
+          showToast("❌ " + (err.message || "Failed to cancel booking. Try again."), "error");
+        }
+      });
 
       confirmBox.querySelector("#confirmNo").addEventListener("click", () => {
         confirmBox.remove();
@@ -530,6 +584,7 @@ showBookingModal(booking);// re-render modal
   }, 100);
 }
 
+});
 
 document.addEventListener("DOMContentLoaded", () => {
   loadBookings();

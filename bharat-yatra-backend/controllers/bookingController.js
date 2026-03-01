@@ -89,16 +89,29 @@ exports.getAllBookings = async (_, res) => {
 // ❌ Cancel a booking by its owner
 exports.cancelBooking = async (req, res) => {
   try {
-    const booking = await Booking.findOneAndDelete({
-      _id: req.params.id,
-      user: req.user.userId
-    });
+    const { cancellationReason } = req.body;
+    
+    const booking = await Booking.findOneAndUpdate(
+      {
+        _id: req.params.id,
+        user: req.user.userId
+      },
+      {
+        bookingStatus: 'cancelled',
+        cancellationReason: cancellationReason || 'User requested cancellation',
+        cancellationRequestedAt: new Date()
+      },
+      { new: true }
+    );
 
     if (!booking) {
       return res.status(404).json({ message: 'Booking not found or unauthorized.' });
     }
 
-    res.json({ message: 'Booking cancelled successfully.' });
+    res.json({ 
+      message: 'Booking marked as cancelled. Processing refund...',
+      booking
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

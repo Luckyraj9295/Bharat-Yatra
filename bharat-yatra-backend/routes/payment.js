@@ -229,6 +229,167 @@ router.post('/verify-payment', auth, async (req, res) => {
   }
 });
 
+// ✅ PROCESS REFUND FOR CANCELLED BOOKING
+router.post('/refund', auth, async (req, res) => {
+  try {
+    const { bookingId, cancellationReason } = req.body;
+
+    if (!bookingId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Booking ID is required'
+      });
+    }
+
+    // Find booking
+    const booking = await Booking.findOne({
+      _id: bookingId,
+      user: req.user.userId
+    }).populate('destination');
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found or unauthorized'
+      });
+    }
+
+    // Check if already cancelled
+    if (booking.bookingStatus === 'cancelled') {
+      return res.status(400).json({
+        success: false,
+        message: 'Booking is already cancelled'
+      });
+    }
+
+    // Calculate refund based on cancellation policy
+    const travelDate = new Date(booking.travelDate);
+    const today = new Date();
+    const daysUntilTravel = Math.ceil((travelDate - today) / (1000 * 60 * 60 * 24));
+
+    let refundPercentage = 0;
+    let refundReason = '';
+
+    if (daysUntilTravel > 14) {
+      refundPercentage = 100;
+      refundReason = 'Full refund: Cancelled more than 14 days before travel';
+    } else if (daysUntilTravel >= 7) {
+      refundPercentage = 50;
+      refundReason = 'Partial refund (50%): Cancelled 7-14 days before travel';
+    } else {
+      refundPercentage = 0;
+      refundReason = 'No refund: Cancelled less than 7 days before travel (non-refundable)';
+    }
+
+    const refundAmount = (booking.totalPrice * refundPercentage) / 100;
+
+    console.log('💰 Refund Calculation:', {
+      bookingRef: booking.bookingRef,
+      totalPrice: booking.totalPrice,
+      daysUntilTravel,
+      refundPercentage,
+      refundAmount
+    });
+
+    // Find payment record
+    const payment = await Payment.findOne({
+      razorpayPaymentId: booking.razorpayPaymentId
+    });
+
+    if (!payment || !booking.razorpayPaymentId) {
+      return res.status(400).json({
+        success: false,
+        message: 'No payment found for this booking'
+      });
+    }
+
+    // Process Razorpay refund if refund amount > 0
+    let razorpayRefundId = null;
+    if (refundAmount > 0) {
+      try {
+        const auth = Buffer.from(`${process.env.RAZORPAY_KEY_ID}:${process.env.RAZORPAY_KEY_SECRET}`).toString('base64');
+        const refundRes = await fetch(`https://api.razorpay.com/v1/payments/${booking.razorpayPaymentId}/refund`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Basic ${auth}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            amount: Math.round(refundAmount * 100) // Convert to paise
+          })
+        });
+
+        if (!refundRes.ok) {
+          const errorData = await refundRes.json();
+          throw new Error(`Razorpay refund failed: ${errorData.error?.description || 'Unknown error'}`);
+        }
+
+        const refundData = await refundRes.json();
+        razorpayRefundId = refundData.id;
+
+        console.log('✅ Razorpay refund processed:', razorpayRefundId);
+      } catch (err) {
+        console.error('❌ Razorpay refund error:', err.message);
+        return res.status(500).json({
+          success: false,
+          message: 'Failed to process refund',
+          error: err.message
+        });
+      }
+    }
+
+    // Update booking with cancellation and refund details
+    const updatedBooking = await Booking.findByIdAndUpdate(
+      bookingId,
+      {
+        bookingStatus: 'cancelled',
+        cancellationReason: cancellationReason || 'User requested cancellation',
+        cancellationRequestedAt: new Date(),
+        refundStatus: refundAmount > 0 ? 'completed' : 'none',
+        refundAmount: refundAmount,
+        refundPercentage: refundPercentage,
+        refundReason: refundReason,
+        razorpayRefundId: razorpayRefundId,
+        refundCompletedAt: refundAmount > 0 ? new Date() : null
+      },
+      { new: true }
+    );
+
+    // 📧 TODO: Send refund confirmation email to user
+    // const User = require('../models/User');
+    // const user = await User.findById(booking.user);
+    // if (user && user.email) {
+    //   await sendRefundNotificationEmail(user.email, {
+    //     bookingRef: updatedBooking.bookingRef,
+    //     refundAmount,
+    //     refundReason,
+    //     guestEmail: booking.personalInfo.email
+    //   });
+    // }
+
+    res.status(200).json({
+      success: true,
+      message: 'Refund processed successfully',
+      data: {
+        bookingRef: updatedBooking.bookingRef,
+        refundAmount,
+        refundPercentage,
+        refundReason,
+        refundStatus: updatedBooking.refundStatus,
+        razorpayRefundId
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Refund error:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Refund processing failed',
+      error: error.message
+    });
+  }
+});
+
 // ✅ GET PAYMENT DETAILS
 router.get('/details/:orderId', auth, async (req, res) => {
   try {

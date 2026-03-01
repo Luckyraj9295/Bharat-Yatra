@@ -71,6 +71,44 @@ const bookingSchema = new mongoose.Schema({
     type: Date,
     default: null
   },
+  bookingStatus: {
+    type: String,
+    enum: ['active', 'cancelled'],
+    default: 'active'
+  },
+  cancellationReason: {
+    type: String,
+    default: null
+  },
+  cancellationRequestedAt: {
+    type: Date,
+    default: null
+  },
+  refundStatus: {
+    type: String,
+    enum: ['none', 'pending', 'approved', 'rejected', 'completed'],
+    default: 'none'
+  },
+  refundAmount: {
+    type: Number,
+    default: 0
+  },
+  refundPercentage: {
+    type: Number,
+    default: 0
+  },
+  refundReason: {
+    type: String,
+    default: null
+  },
+  razorpayRefundId: {
+    type: String,
+    default: null
+  },
+  refundCompletedAt: {
+    type: Date,
+    default: null
+  },
   timestamp: { type: Date, default: Date.now }
 }, {
   timestamps: true
