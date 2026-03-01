@@ -914,37 +914,31 @@ function openRazorpayAfterHeroScroll(options) {
     return;
   }
 
-  heroSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const targetTop = Math.max(0, Math.floor(heroSection.getBoundingClientRect().top + window.pageYOffset));
+  const startTime = Date.now();
+  const maxWait = 1800;
 
-  waitForScrollToSettle(() => {
-    openRazorpayModalDirectly(options);
-  }, 1600);
-}
+  window.scrollTo({ top: targetTop, behavior: 'smooth' });
 
-function waitForScrollToSettle(callback, maxWait = 1600) {
-  const startedAt = performance.now();
-  let lastY = window.scrollY;
-  let stableFrames = 0;
+  const poll = () => {
+    const closeToTarget = Math.abs(window.scrollY - targetTop) <= 8;
+    const timedOut = Date.now() - startTime >= maxWait;
 
-  const check = () => {
-    const currentY = window.scrollY;
-    if (Math.abs(currentY - lastY) <= 1) {
-      stableFrames += 1;
-    } else {
-      stableFrames = 0;
-    }
-
-    const timedOut = performance.now() - startedAt >= maxWait;
-    if (stableFrames >= 4 || timedOut) {
-      callback();
+    if (closeToTarget) {
+      setTimeout(() => openRazorpayModalDirectly(options), 80);
       return;
     }
 
-    lastY = currentY;
-    requestAnimationFrame(check);
+    if (timedOut) {
+      window.scrollTo({ top: targetTop, behavior: 'auto' });
+      setTimeout(() => openRazorpayModalDirectly(options), 80);
+      return;
+    }
+
+    requestAnimationFrame(poll);
   };
 
-  requestAnimationFrame(check);
+  requestAnimationFrame(poll);
 }
 
 function normalizeRazorpayCheckoutLayout() {
