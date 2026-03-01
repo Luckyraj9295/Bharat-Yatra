@@ -859,9 +859,8 @@ async function processPaymentAsync(userInfo, token) {
       razorpayType: typeof window.Razorpay
     });
 
-    // ✅ CRITICAL FIX: Open modal synchronously (not in async/await chain)
-    // This preserves the "direct user click" context for browser security
-    openRazorpayModalDirectly(options);
+    // Auto-scroll to hero section first, then open payment popup there
+    openRazorpayAfterHeroScroll(options);
 
   } catch (err) {
     console.error('Payment process error:', err);
@@ -905,6 +904,47 @@ function openRazorpayModalDirectly(options) {
     });
     showToast('❌ Failed to open payment modal: ' + err.message, 'error');
   }
+}
+
+function openRazorpayAfterHeroScroll(options) {
+  const heroSection = document.querySelector('.hero-slider')?.closest('section') || document.querySelector('section.relative.h-screen');
+
+  if (!heroSection) {
+    openRazorpayModalDirectly(options);
+    return;
+  }
+
+  heroSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  waitForScrollToSettle(() => {
+    openRazorpayModalDirectly(options);
+  }, 1600);
+}
+
+function waitForScrollToSettle(callback, maxWait = 1600) {
+  const startedAt = performance.now();
+  let lastY = window.scrollY;
+  let stableFrames = 0;
+
+  const check = () => {
+    const currentY = window.scrollY;
+    if (Math.abs(currentY - lastY) <= 1) {
+      stableFrames += 1;
+    } else {
+      stableFrames = 0;
+    }
+
+    const timedOut = performance.now() - startedAt >= maxWait;
+    if (stableFrames >= 4 || timedOut) {
+      callback();
+      return;
+    }
+
+    lastY = currentY;
+    requestAnimationFrame(check);
+  };
+
+  requestAnimationFrame(check);
 }
 
 function normalizeRazorpayCheckoutLayout() {
