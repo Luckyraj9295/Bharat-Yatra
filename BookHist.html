@@ -562,7 +562,7 @@ showBookingModal(booking);// re-render modal
 
           const refundData = await refundRes.json();
 
-          showToast("✅ Booking cancelled and refund initiated!", "success");
+          showToast(`⏳ Booking cancelled! Refund (₹${refundData.data.refundAmount.toLocaleString("en-IN")}) awaiting admin approval.`, "info");
           confirmBox.remove();
           document.getElementById("bookingModal").classList.add("hidden");
 

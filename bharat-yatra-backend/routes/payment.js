@@ -254,6 +254,14 @@ router.post('/refund', auth, async (req, res) => {
       });
     }
 
+    // ⚠️ Check payment status - must be completed to cancel
+    if (booking.paymentStatus !== 'completed') {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot cancel booking. Payment status: ${booking.paymentStatus}. Only paid bookings can be cancelled.`
+      });
+    }
+
     // Check if already cancelled
     if (booking.bookingStatus === 'cancelled') {
       return res.status(400).json({
@@ -303,80 +311,55 @@ router.post('/refund', auth, async (req, res) => {
       });
     }
 
-    // Process Razorpay refund if refund amount > 0
-    let razorpayRefundId = null;
-    if (refundAmount > 0) {
-      try {
-        const auth = Buffer.from(`${process.env.RAZORPAY_KEY_ID}:${process.env.RAZORPAY_KEY_SECRET}`).toString('base64');
-        const refundRes = await fetch(`https://api.razorpay.com/v1/payments/${booking.razorpayPaymentId}/refund`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Basic ${auth}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            amount: Math.round(refundAmount * 100) // Convert to paise
-          })
-        });
+    // DO NOT process Razorpay refund automatically
+    // Wait for admin approval first
+    // Refund will be processed in the admin approval endpoint
 
-        if (!refundRes.ok) {
-          const errorData = await refundRes.json();
-          throw new Error(`Razorpay refund failed: ${errorData.error?.description || 'Unknown error'}`);
-        }
-
-        const refundData = await refundRes.json();
-        razorpayRefundId = refundData.id;
-
-        console.log('✅ Razorpay refund processed:', razorpayRefundId);
-      } catch (err) {
-        console.error('❌ Razorpay refund error:', err.message);
-        return res.status(500).json({
-          success: false,
-          message: 'Failed to process refund',
-          error: err.message
-        });
-      }
-    }
-
-    // Update booking with cancellation and refund details
+    // Update booking with cancellation details (refund marked as PENDING)
     const updatedBooking = await Booking.findByIdAndUpdate(
       bookingId,
       {
         bookingStatus: 'cancelled',
         cancellationReason: cancellationReason || 'User requested cancellation',
         cancellationRequestedAt: new Date(),
-        refundStatus: refundAmount > 0 ? 'completed' : 'none',
+        refundStatus: refundAmount > 0 ? 'pending' : 'none', // Mark as PENDING for admin approval
         refundAmount: refundAmount,
         refundPercentage: refundPercentage,
         refundReason: refundReason,
-        razorpayRefundId: razorpayRefundId,
-        refundCompletedAt: refundAmount > 0 ? new Date() : null
+        razorpayRefundId: null // Will be set after admin approval
       },
       { new: true }
     );
 
-    // 📧 TODO: Send refund confirmation email to user
+    // 📧 TODO: Send cancellation confirmation email to user (refund pending approval)
     // const User = require('../models/User');
     // const user = await User.findById(booking.user);
     // if (user && user.email) {
-    //   await sendRefundNotificationEmail(user.email, {
+    //   await sendCancellationPendingNotificationEmail(user.email, {
     //     bookingRef: updatedBooking.bookingRef,
     //     refundAmount,
-    //     refundReason,
-    //     guestEmail: booking.personalInfo.email
+    //     refundReason
     //   });
     // }
 
+    // ✅ Send notification to admins for refund approval
+    console.log('⏳ Refund Pending Admin Approval:', {
+      bookingRef: updatedBooking.bookingRef,
+      refundAmount,
+      refundPercentage,
+      status: 'PENDING'
+    });
+
     res.status(200).json({
       success: true,
-      message: 'Refund processed successfully',
+      message: 'Cancellation request submitted. Awaiting admin approval for refund.',
       data: {
         bookingRef: updatedBooking.bookingRef,
         refundAmount,
         refundPercentage,
         refundReason,
-        refundStatus: updatedBooking.refundStatus,
-        razorpayRefundId
+        refundStatus: 'pending',
+        estimatedRefundTime: '1-2 business days after admin approval'
       }
     });
 
@@ -385,6 +368,137 @@ router.post('/refund', auth, async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Refund processing failed',
+      error: error.message
+    });
+  }
+});
+
+// ✅ ADMIN: APPROVE/REJECT REFUND REQUEST
+router.post('/admin/refund-approval', auth, async (req, res) => {
+  try {
+    const { bookingId, action, approvalReason } = req.body; // action: 'approve' or 'reject'
+
+    // TODO: Add admin authorization check
+    // const user = await User.findById(req.user.userId);
+    // if (user.role !== 'admin') {
+    //   return res.status(403).json({ success: false, message: 'Admin access required' });
+    // }
+
+    if (!['approve', 'reject'].includes(action)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Action must be either "approve" or "reject"'
+      });
+    }
+
+    // Find booking
+    const booking = await Booking.findById(bookingId);
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found'
+      });
+    }
+
+    if (booking.refundStatus !== 'pending') {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot process. Refund status is: ${booking.refundStatus}`
+      });
+    }
+
+    if (action === 'reject') {
+      // Reject refund
+      await Booking.findByIdAndUpdate(bookingId, {
+        refundStatus: 'rejected',
+        refundReason: approvalReason || 'Admin rejected refund request'
+      });
+
+      // 📧 TODO: Send rejection email to user
+
+      return res.status(200).json({
+        success: true,
+        message: 'Refund request rejected',
+        data: {
+          bookingRef: booking.bookingRef,
+          refundStatus: 'rejected'
+        }
+      });
+    }
+
+    // Process APPROVAL
+    if (action === 'approve') {
+      let razorpayRefundId = null;
+
+      // Process Razorpay refund only if amount > 0
+      if (booking.refundAmount > 0) {
+        try {
+          const auth = Buffer.from(`${process.env.RAZORPAY_KEY_ID}:${process.env.RAZORPAY_KEY_SECRET}`).toString('base64');
+          const refundRes = await fetch(`https://api.razorpay.com/v1/payments/${booking.razorpayPaymentId}/refund`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Basic ${auth}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              amount: Math.round(booking.refundAmount * 100) // Convert to paise
+            })
+          });
+
+          if (!refundRes.ok) {
+            const errorData = await refundRes.json();
+            throw new Error(`Razorpay refund failed: ${errorData.error?.description || 'Unknown error'}`);
+          }
+
+          const refundData = await refundRes.json();
+          razorpayRefundId = refundData.id;
+
+          console.log('✅ Razorpay refund processed:', razorpayRefundId);
+        } catch (err) {
+          console.error('❌ Razorpay refund error:', err.message);
+          return res.status(500).json({
+            success: false,
+            message: 'Failed to process Razorpay refund',
+            error: err.message
+          });
+        }
+      }
+
+      // Mark as COMPLETED
+      const approvedBooking = await Booking.findByIdAndUpdate(
+        bookingId,
+        {
+          refundStatus: 'completed',
+          razorpayRefundId: razorpayRefundId,
+          refundCompletedAt: new Date()
+        },
+        { new: true }
+      );
+
+      // 📧 TODO: Send refund approval email to user with refund details
+
+      console.log('✅ Refund Approved and Processed:', {
+        bookingRef: approvedBooking.bookingRef,
+        razorpayRefundId,
+        amount: approvedBooking.refundAmount
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: 'Refund approved and processed successfully',
+        data: {
+          bookingRef: approvedBooking.bookingRef,
+          refundAmount: approvedBooking.refundAmount,
+          refundStatus: 'completed',
+          razorpayRefundId
+        }
+      });
+    }
+  } catch (error) {
+    console.error('❌ Refund approval error:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Refund approval processing failed',
       error: error.message
     });
   }
