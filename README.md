@@ -88,7 +88,6 @@ https://bharat-yatra.onrender.com
 2. Refund marked **Pending Approval**  
 3. Admin reviews request  
 4. Razorpay refund executed (if approved)  
-5. Email notification sent  
 
 ### Security Controls
 
