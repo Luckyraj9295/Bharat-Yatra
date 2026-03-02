@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const { Resend } = require('resend');
 const Payment = require('../models/Payment');
 const Booking = require('../models/Booking');
+const User = require('../models/User');
 const auth = require('../middleware/auth');
 const isAdmin = require('../middleware/isAdmin');
 
@@ -16,6 +17,11 @@ const RESEND_FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'Bharat Yatra <onboar
 // Prefer booking personal email, then linked user email
 const resolveBookingEmail = (booking) =>
   booking?.personalInfo?.email || booking?.user?.email || booking?.userId?.email || null;
+
+const getUserProfileContact = async (userId) => {
+  if (!userId) return null;
+  return User.findById(userId).select('email name').lean();
+};
 
 if (process.env.RESEND_API_KEY && !process.env.RESEND_FROM_EMAIL) {
   console.warn('⚠️ RESEND_FROM_EMAIL is not set. Using onboarding@resend.dev may restrict delivery to unverified recipients.');
@@ -383,10 +389,15 @@ router.post('/payment-failed', auth, async (req, res) => {
     );
 
     // 📧 Send payment failed email (non-blocking)
-    const userEmail = resolveBookingEmail(booking);
+    // Priority: user profile email (from profile page) -> booking email fallback
+    const userProfile = await getUserProfileContact(req.user.userId);
+    const userEmail = userProfile?.email || resolveBookingEmail(booking);
+
+    let emailDispatched = false;
     if (userEmail) {
+      emailDispatched = true;
       sendPaymentFailedEmail(userEmail, {
-        name: booking.personalInfo?.fullName,
+        name: userProfile?.name || booking.personalInfo?.fullName,
         bookingRef: booking.bookingRef,
         destination: booking.destination?.title || 'Your Booking',
         travelDate: new Date(booking.travelDate).toLocaleDateString('en-IN'),
@@ -404,6 +415,7 @@ router.post('/payment-failed', auth, async (req, res) => {
       message: 'Payment failure recorded. Please try again or contact support.',
       data: {
         bookingRef: booking.bookingRef,
+        emailDispatched,
         nextSteps: 'You can retry payment anytime from your booking.'
       }
     });
@@ -531,10 +543,12 @@ router.post('/refund', auth, async (req, res) => {
     );
 
     // 📧 Send cancellation confirmation email to user (refund pending approval)
-    const userEmail = resolveBookingEmail(updatedBooking) || resolveBookingEmail(booking);
+    // Priority: user profile email (from profile page) -> booking email fallback
+    const userProfile = await getUserProfileContact(req.user.userId);
+    const userEmail = userProfile?.email || resolveBookingEmail(updatedBooking) || resolveBookingEmail(booking);
     if (userEmail) {
       sendCancellationPendingNotificationEmail(userEmail, {
-        name: updatedBooking.personalInfo?.fullName,
+        name: userProfile?.name || updatedBooking.personalInfo?.fullName,
         bookingRef: updatedBooking.bookingRef,
         destination: booking.destination?.title || 'Your Booking',
         refundAmount,
