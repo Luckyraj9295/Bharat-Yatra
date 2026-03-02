@@ -1037,11 +1037,7 @@ async function notifyPaymentFailed(bookingId, token, reason = 'Payment cancelled
 
     const data = await response.json();
     if (data.success) {
-      if (data?.data?.emailDispatched) {
-        console.log('✅ Payment failure email dispatch triggered successfully');
-      } else {
-        console.warn('⚠️ Payment failure recorded, but no email address was available for dispatch');
-      }
+      console.log('✅ Payment failure recorded successfully');
     } else {
       console.warn('⚠️ Failed to notify payment failure:', data.message);
     }

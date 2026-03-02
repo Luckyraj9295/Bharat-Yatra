@@ -325,13 +325,7 @@ router.post('/verify-payment', auth, async (req, res) => {
       { new: true }
     ).populate('destination');
 
-    // 📧 Send booking confirmation email (non-blocking, fire-and-forget)
-    const userEmail = updatedBooking.personalInfo?.email;
-    if (userEmail && updatedBooking) {
-      sendBookingConfirmationEmail(userEmail, updatedBooking, paymentMethod).catch(err => {
-        console.error('⚠️ Email delivery failed (non-blocking):', err.message);
-      });
-    }
+    // 🔕 Booking confirmation notification disabled by request
 
     res.status(200).json({
       success: true,
@@ -388,25 +382,8 @@ router.post('/payment-failed', auth, async (req, res) => {
       { status: 'failed' }
     );
 
-    // 📧 Send payment failed email (non-blocking)
-    // Priority: user profile email (from profile page) -> booking email fallback
-    const userProfile = await getUserProfileContact(req.user.userId);
-    const userEmail = userProfile?.email || resolveBookingEmail(booking);
-
-    let emailDispatched = false;
-    if (userEmail) {
-      emailDispatched = true;
-      sendPaymentFailedEmail(userEmail, {
-        name: userProfile?.name || booking.personalInfo?.fullName,
-        bookingRef: booking.bookingRef,
-        destination: booking.destination?.title || 'Your Booking',
-        travelDate: new Date(booking.travelDate).toLocaleDateString('en-IN'),
-        amount: booking.totalPrice,
-        reason: reason
-      }).catch(err => {
-        console.error('⚠️ Payment failed email delivery failed:', err.message);
-      });
-    }
+    // 🔕 Payment failure notification disabled by request
+    const emailDispatched = false;
 
     console.log('⚠️ Payment failed for booking:', booking.bookingRef, 'Reason:', reason);
 
@@ -542,22 +519,7 @@ router.post('/refund', auth, async (req, res) => {
       { new: true }
     );
 
-    // 📧 Send cancellation confirmation email to user (refund pending approval)
-    // Priority: user profile email (from profile page) -> booking email fallback
-    const userProfile = await getUserProfileContact(req.user.userId);
-    const userEmail = userProfile?.email || resolveBookingEmail(updatedBooking) || resolveBookingEmail(booking);
-    if (userEmail) {
-      sendCancellationPendingNotificationEmail(userEmail, {
-        name: userProfile?.name || updatedBooking.personalInfo?.fullName,
-        bookingRef: updatedBooking.bookingRef,
-        destination: booking.destination?.title || 'Your Booking',
-        refundAmount,
-        refundPercentage,
-        refundReason
-      }).catch(err => {
-        console.error('⚠️ Cancellation email failed (non-blocking):', err.message);
-      });
-    }
+    // 🔕 Cancellation confirmation notification disabled by request
 
     // ✅ Send notification to admins for refund approval
     console.log('⏳ Refund Pending Admin Approval:', {
@@ -1135,10 +1097,7 @@ router.post('/admin/refund-approval', auth, isAdmin, async (req, res) => {
         adminApprovalReason: approvalReason || 'Admin rejected refund request'
       }, { new: true }).populate('adminApprovedBy', 'email');
 
-      // 📧 Send rejection email to user
-      sendRefundRejectedEmail(rejectedBooking, approvalReason || 'Your refund request could not be approved at this time.').catch(err => {
-        console.error('⚠️ Rejection email failed (non-blocking):', err.message);
-      });
+      // 🔕 Refund rejection notification disabled by request
 
       console.log('❌ Refund Rejected:', {
         bookingRef: rejectedBooking.bookingRef,
@@ -1229,10 +1188,7 @@ router.post('/admin/refund-approval', auth, isAdmin, async (req, res) => {
         { new: true }
       ).populate('adminApprovedBy', 'email');
 
-      // 📧 Send refund approval email to user with refund details
-      sendRefundApprovedEmail(approvedBooking).catch(err => {
-        console.error('⚠️ Approval email failed (non-blocking):', err.message);
-      });
+      // 🔕 Refund approval notification disabled by request
 
       console.log('✅ Refund Approved and Processed:', {
         bookingRef: approvedBooking.bookingRef,
