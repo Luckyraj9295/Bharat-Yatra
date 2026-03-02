@@ -825,7 +825,7 @@ async function processPaymentAsync(userInfo, token) {
         ondismiss: async () => {
           showToast('Payment cancelled. You can try again.', 'error');
           // Notify backend of payment failure
-          notifyPaymentFailed(bookingId, token, 'User cancelled payment during checkout');
+          await notifyPaymentFailed(bookingId, token, 'User cancelled payment during checkout');
         }
       }
     };
@@ -1024,6 +1024,7 @@ async function notifyPaymentFailed(bookingId, token, reason = 'Payment cancelled
   try {
     const response = await fetch(`${API_BASE}/payments/payment-failed`, {
       method: 'POST',
+      keepalive: true,
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + token

@@ -11,6 +11,15 @@ const router = express.Router();
 
 // Initialize Resend for email notifications
 const resend = new Resend(process.env.RESEND_API_KEY);
+const RESEND_FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'Bharat Yatra <onboarding@resend.dev>';
+
+// Prefer booking personal email, then linked user email
+const resolveBookingEmail = (booking) =>
+  booking?.personalInfo?.email || booking?.user?.email || booking?.userId?.email || null;
+
+if (process.env.RESEND_API_KEY && !process.env.RESEND_FROM_EMAIL) {
+  console.warn('⚠️ RESEND_FROM_EMAIL is not set. Using onboarding@resend.dev may restrict delivery to unverified recipients.');
+}
 
 // Validate and initialize Razorpay conditionally
 let razorpay = null;
@@ -356,7 +365,9 @@ router.post('/payment-failed', auth, async (req, res) => {
     const booking = await Booking.findOne({
       _id: bookingId,
       user: req.user.userId
-    }).populate('destination');
+    })
+      .populate('destination')
+      .populate('user', 'email');
 
     if (!booking) {
       return res.status(404).json({
@@ -372,10 +383,10 @@ router.post('/payment-failed', auth, async (req, res) => {
     );
 
     // 📧 Send payment failed email (non-blocking)
-    const userEmail = booking.personalInfo?.email;
+    const userEmail = resolveBookingEmail(booking);
     if (userEmail) {
       sendPaymentFailedEmail(userEmail, {
-        name: booking.personalInfo?.name,
+        name: booking.personalInfo?.fullName,
         bookingRef: booking.bookingRef,
         destination: booking.destination?.title || 'Your Booking',
         travelDate: new Date(booking.travelDate).toLocaleDateString('en-IN'),
@@ -423,7 +434,9 @@ router.post('/refund', auth, async (req, res) => {
     const booking = await Booking.findOne({
       _id: bookingId,
       user: req.user.userId
-    }).populate('destination');
+    })
+      .populate('destination')
+      .populate('user', 'email');
 
     if (!booking) {
       return res.status(404).json({
@@ -518,12 +531,12 @@ router.post('/refund', auth, async (req, res) => {
     );
 
     // 📧 Send cancellation confirmation email to user (refund pending approval)
-    const userEmail = updatedBooking.personalInfo?.email;
+    const userEmail = resolveBookingEmail(updatedBooking) || resolveBookingEmail(booking);
     if (userEmail) {
       sendCancellationPendingNotificationEmail(userEmail, {
-        name: updatedBooking.personalInfo?.name,
+        name: updatedBooking.personalInfo?.fullName,
         bookingRef: updatedBooking.bookingRef,
-        destination: updatedBooking.destination?.title || 'Your Booking',
+        destination: booking.destination?.title || 'Your Booking',
         refundAmount,
         refundPercentage,
         refundReason
@@ -575,7 +588,7 @@ const sendPaymentFailedEmail = async (userEmail, details) => {
 
   try {
     await resend.emails.send({
-      from: "Bharat Yatra <onboarding@resend.dev>",
+      from: RESEND_FROM_EMAIL,
       to: userEmail,
       subject: `Payment Failed - Retry Your Booking ${details.bookingRef}`,
       html: `
@@ -707,7 +720,7 @@ const sendBookingConfirmationEmail = async (userEmail, booking, paymentMethod) =
     }[paymentMethod] || '💳 ' + (paymentMethod || 'Payment');
 
     await resend.emails.send({
-      from: "Bharat Yatra <onboarding@resend.dev>",
+      from: RESEND_FROM_EMAIL,
       to: userEmail,
       subject: `Booking Confirmed! 🎉 - ${booking.bookingRef}`,
       html: `
@@ -833,7 +846,7 @@ const sendCancellationPendingNotificationEmail = async (userEmail, details) => {
 
   try {
     await resend.emails.send({
-      from: "Bharat Yatra <onboarding@resend.dev>",
+      from: RESEND_FROM_EMAIL,
       to: userEmail,
       subject: `Cancellation Request Received - ${details.bookingRef}`,
       html: `
@@ -900,7 +913,7 @@ const sendRefundApprovedEmail = async (booking) => {
     const refundDate = new Date(booking.refundCompletedAt).toLocaleDateString('en-IN');
     
     await resend.emails.send({
-      from: "Bharat Yatra <onboarding@resend.dev>",
+      from: RESEND_FROM_EMAIL,
       to: userEmail,
       subject: `✅ Your Refund Has Been Approved - ₹${booking.refundAmount.toLocaleString('en-IN')}`,
       html: `
@@ -985,7 +998,7 @@ const sendRefundRejectedEmail = async (booking, rejectionReason) => {
     }
 
     await resend.emails.send({
-      from: "Bharat Yatra <onboarding@resend.dev>",
+      from: RESEND_FROM_EMAIL,
       to: userEmail,
       subject: `Update on Your Refund Request - ${booking.bookingRef}`,
       html: `
