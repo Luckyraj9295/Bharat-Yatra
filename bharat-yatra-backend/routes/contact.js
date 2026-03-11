@@ -3,7 +3,7 @@ const router = express.Router();
 const { Resend } = require("resend");
 const Contact = require("../models/Contact");
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 router.get('/', (req, res) => {
   res.json({ status: 'Contact route is active' });

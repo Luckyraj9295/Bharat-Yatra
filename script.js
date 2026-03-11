@@ -636,6 +636,13 @@ function storeBookingInLocalStorage(ref, totalPrice) {
 }
 
 // ===================== Razorpay Payment Integration =====================
+function getStoredAuthToken() {
+  const rawToken = localStorage.getItem('token') || localStorage.getItem('authToken') || '';
+  const normalized = String(rawToken).replace(/^Bearer\s+/i, '').trim();
+  if (!normalized || normalized === 'null' || normalized === 'undefined') return null;
+  return normalized;
+}
+
 // PHASE 1: Validate and prepare (immediate)
 function processPayment() {
   const termsChecked = document.getElementById('termsCheck').checked;
@@ -644,8 +651,8 @@ function processPayment() {
     return;
   }
 
-  const userInfo = JSON.parse(localStorage.getItem('userInfo') || 'null');
-  const token = localStorage.getItem('token');
+  const userInfo = JSON.parse(localStorage.getItem('userInfo') || localStorage.getItem('loggedInUser') || 'null');
+  const token = getStoredAuthToken();
   if (!userInfo || !token) {
     showToast('You must be signed in to complete the booking.', 'error');
     return;
@@ -2086,7 +2093,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if (res.ok) {
       // Store token and user info
       localStorage.setItem("authToken", data.token);
+      localStorage.setItem("token", data.token);
       localStorage.setItem("loggedInUser", JSON.stringify(data.user));
+      localStorage.setItem("userInfo", JSON.stringify(data.user));
 
       showToast("Login successful!", "success");
 

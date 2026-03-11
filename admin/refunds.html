@@ -10,9 +10,34 @@
     .status-pending { background-color: #fef08a; color: #854d0e; }
     .status-completed { background-color: #d1fae5; color: #065f46; }
     .status-rejected { background-color: #fee2e2; color: #7f1d1d; }
+    .site-brand-badge {
+      position: fixed;
+      top: 14px;
+      left: 14px;
+      z-index: 1200;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.55rem 0.85rem;
+      border-radius: 999px;
+      color: #9a3412;
+      text-decoration: none;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      background: linear-gradient(135deg, rgba(255, 247, 237, 0.95), rgba(255, 237, 213, 0.95));
+      border: 1px solid rgba(251, 146, 60, 0.45);
+      box-shadow: 0 8px 24px rgba(154, 52, 18, 0.14);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    .site-brand-badge i { color: #ea580c; }
   </style>
 </head>
 <body class="bg-gray-50">
+  <a href="../index.html" class="site-brand-badge">
+    <i class="fas fa-mountain-sun"></i>
+    Bharat Yaatra
+  </a>
   <div class="min-h-screen">
     <!-- Header -->
     <header class="bg-orange-600 text-white shadow-lg">

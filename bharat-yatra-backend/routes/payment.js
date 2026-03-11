@@ -11,7 +11,7 @@ const isAdmin = require('../middleware/isAdmin');
 const router = express.Router();
 
 // Initialize Resend for email notifications
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 const RESEND_FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'Bharat Yaatra <onboarding@resend.dev>';
 
 // Prefer booking personal email, then linked user email

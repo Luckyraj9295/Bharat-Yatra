@@ -10,24 +10,60 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="style.css">
   <script src="script.js" defer></script>
+  <style>
+    .profile-bg {
+      background:
+        radial-gradient(circle at 8% 10%, rgba(251, 146, 60, 0.2), transparent 26%),
+        radial-gradient(circle at 92% 84%, rgba(251, 191, 36, 0.16), transparent 26%),
+        linear-gradient(140deg, #fff8f1 0%, #fff7ed 40%, #ffedd5 100%);
+    }
+    .profile-shell {
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.8), rgba(255, 247, 237, 0.75));
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(251, 146, 60, 0.2);
+      box-shadow: 0 26px 60px rgba(154, 52, 18, 0.14);
+    }
+    .profile-title {
+      letter-spacing: 0.02em;
+      background: linear-gradient(90deg, #7c2d12 0%, #ea580c 45%, #c2410c 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .profile-input {
+      background: rgba(255, 255, 255, 0.85);
+      border: 1px solid rgba(251, 146, 60, 0.18);
+      transition: all 0.2s ease;
+    }
+    .profile-input:focus {
+      background: #fff;
+      border-color: rgba(249, 115, 22, 0.5);
+      box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.12);
+    }
+  </style>
 </head>
-<body class="bg-orange-50 text-gray-800">
+<body class="profile-bg text-gray-800">
+  <a href="index.html" class="site-brand-badge">
+    <i class="fas fa-mountain-sun"></i>
+    Bharat Yaatra
+  </a>
   
 
   <div id="toastContainer"></div>
 
-  <div class="max-w-4xl mx-auto mt-12 p-6 rounded-[2rem] shadow-2xl transition-transform duration-300 " style="background: linear-gradient(135deg, rgba(255, 186, 115, 0.25) 0%, rgba(255,255,255,0.35) 100%); backdrop-filter: blur(12px) saturate(160%); -webkit-backdrop-filter: blur(12px) saturate(160%); border: 1.5px solid rgba(255,255,255,0.25);">
+  <div class="profile-shell max-w-4xl mx-auto mt-12 p-6 rounded-[2rem] transition-transform duration-300 md:p-8">
     <div class="mb-4">
       <a href="index.html" class="inline-block mb-6 text-orange-600 hover:text-orange-800 font-semibold transition"><svg xmlns="http://www.w3.org/2000/svg" class="inline w-5 h-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>Back to Home</a>
     </div>
     <div class="flex justify-between items-center mb-6">
-      <h2 class="text-3xl font-bold">My Profile</h2>
+      <h2 class="profile-title text-3xl font-extrabold md:text-4xl">My Profile</h2>
       <button id="logoutBtn" class="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white font-semibold px-4 py-2 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-md">
         <i class="fas fa-sign-out-alt"></i> Logout
       </button>
     </div>
 
-    <div class="flex items-center space-x-6 mb-8">
+    <div class="flex items-center space-x-6 mb-8 rounded-2xl border border-orange-100 bg-white/65 p-4 md:p-5">
   <div class="relative w-24 h-24">
     <img id="profilePreview" src="https://ui-avatars.com/api/?name=User&background=F59E42&color=fff&rounded=true" alt="Profile Photo" class="rounded-full w-full h-full object-cover border-4 border-orange-300" />
     <input type="file" id="profilePhoto" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer" />
@@ -44,27 +80,27 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <label class="block font-medium mb-1">Full Name</label>
-          <input type="text" id="editName" class="w-full border px-4 py-2 rounded-lg focus:ring-2 focus:ring-orange-400" required>
+          <input type="text" id="editName" class="profile-input w-full px-4 py-2 rounded-lg" required>
         </div>
         <div>
           <label class="block font-medium mb-1">Email Address</label>
-          <input type="email" id="editEmail" class="w-full border px-4 py-2 rounded-lg focus:ring-2 focus:ring-orange-400" required>
+          <input type="email" id="editEmail" class="profile-input w-full px-4 py-2 rounded-lg" required>
         </div>
         <div>
           <label class="block font-medium mb-1">Phone Number</label>
-          <input type="tel" id="editPhone" class="w-full border px-4 py-2 rounded-lg focus:ring-2 focus:ring-orange-400" required>
+          <input type="tel" id="editPhone" class="profile-input w-full px-4 py-2 rounded-lg" required>
         </div>
         <div>
           <label class="block font-medium mb-1">State</label>
-          <input type="text" id="editState" class="w-full border px-4 py-2 rounded-lg focus:ring-2 focus:ring-orange-400">
+          <input type="text" id="editState" class="profile-input w-full px-4 py-2 rounded-lg">
         </div>
         <div>
           <label class="block font-medium mb-1">City</label>
-          <input type="text" id="editCity" class="w-full border px-4 py-2 rounded-lg focus:ring-2 focus:ring-orange-400">
+          <input type="text" id="editCity" class="profile-input w-full px-4 py-2 rounded-lg">
         </div>
         <div>
           <label class="block font-medium mb-1">PIN Code</label>
-          <input type="text" id="editPin" class="w-full border px-4 py-2 rounded-lg focus:ring-2 focus:ring-orange-400">
+          <input type="text" id="editPin" class="profile-input w-full px-4 py-2 rounded-lg">
         </div>
       </div>
 

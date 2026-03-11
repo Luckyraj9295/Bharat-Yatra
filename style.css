@@ -219,4 +219,43 @@ body > #toastContainer {
   .animate-jump {
     animation: jump 1s ease-in-out infinite;
   }
+
+  .site-brand-badge {
+    position: fixed;
+    top: 14px;
+    left: 14px;
+    z-index: 1200;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.55rem 0.85rem;
+    border-radius: 999px;
+    color: #9a3412;
+    text-decoration: none;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    background: linear-gradient(135deg, rgba(255, 247, 237, 0.95), rgba(255, 237, 213, 0.95));
+    border: 1px solid rgba(251, 146, 60, 0.45);
+    box-shadow: 0 8px 24px rgba(154, 52, 18, 0.14);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  .site-brand-badge:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 26px rgba(154, 52, 18, 0.18);
+  }
+
+  .site-brand-badge i {
+    color: #ea580c;
+  }
+
+  @media (max-width: 640px) {
+    .site-brand-badge {
+      top: 10px;
+      left: 10px;
+      font-size: 0.85rem;
+      padding: 0.45rem 0.7rem;
+    }
+  }
   

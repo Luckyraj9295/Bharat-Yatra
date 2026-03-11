@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" type="image/png" href="/images/mountain-sun-solid.png" />
-  <title>My Trips</title>
+  <title>My Trips | Bharat Yaatra</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
@@ -33,9 +33,36 @@
         stroke-dashoffset: 0;
       }
     }
+    .site-brand-badge {
+      position: fixed;
+      top: 14px;
+      left: 14px;
+      z-index: 1200;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.55rem 0.85rem;
+      border-radius: 999px;
+      color: #9a3412;
+      text-decoration: none;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      background: linear-gradient(135deg, rgba(255, 247, 237, 0.95), rgba(255, 237, 213, 0.95));
+      border: 1px solid rgba(251, 146, 60, 0.45);
+      box-shadow: 0 8px 24px rgba(154, 52, 18, 0.14);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    .site-brand-badge i {
+      color: #ea580c;
+    }
   </style>
 </head>
 <body class="bg-gradient-to-br from-orange-100 to-white min-h-screen text-gray-800">
+  <a href="index.html" class="site-brand-badge">
+    <span aria-hidden="true">▲</span>
+    Bharat Yaatra
+  </a>
   <div class="max-w-4xl mx-auto p-6">
     <a href="index.html" class="inline-block mb-6 text-orange-600 hover:text-orange-800 font-semibold transition"><svg xmlns="http://www.w3.org/2000/svg" class="inline w-5 h-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>Back to Home</a>
     <h1 class="text-4xl font-bold mb-10 text-center text-orange-600">My Bookings</h1>
