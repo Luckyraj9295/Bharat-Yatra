@@ -2062,14 +2062,6 @@ window.nextStep = function(currentStep) {
 
     if (typeof originalNextStep === 'function') originalNextStep(currentStep);
 };
-window.addEventListener('load', function () {
-  const loader = document.getElementById('loadingScreen');
-  if (loader) {
-    setTimeout(() => {
-      loader.classList.add('hidden');
-    }, 1500); // Optional delay (1.5s)
-  }
-});
 document.addEventListener("DOMContentLoaded", () => {
     const button = document.getElementById("toggleDestinationsBtn");
     const toggleText = document.getElementById("toggleText");

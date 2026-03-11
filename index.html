@@ -14,23 +14,23 @@
     
 </head>
 <body class="font-sans min-h-screen bg-gradient-to-br from-white/70 via-orange-100/60 to-orange-300/40 backdrop-blur-xl">
-    <div id="loadingScreen" class="fixed inset-0 bg-white z-[9999] flex items-center justify-center">
-  <div class="w-full flex flex-col items-center justify-center">
+        <div id="loadingScreen" class="fixed inset-0 bg-white z-[9999] flex items-center justify-center">
+    <div id="loaderContainer" class="w-full flex flex-col items-center justify-center px-4">
     <!-- Top Images Row -->
-    <div class="flex justify-center gap-2 md:gap-4 mt-4 mb-6">
+        <div id="loaderTopRow" class="flex justify-center gap-2 md:gap-4 mt-4 mb-6">
       <img src="https://www.maharashtragadkille.com/system/images/000/739/785/af744f9ee458fa033f65cf02b9fcf7e2/banner/HD-wallpaper-baba-kedarnath-kedarnath-lord-shiva.jpg?1711926830" alt="Kedarnath" class="w-20 h-28 object-cover rounded-2xl shadow-md -rotate-6" />
       <img src="https://images.unsplash.com/photo-1626621331169-5f34be280ed9?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Nnx8a3VsbHUlMjBtYW5hbGl8ZW58MHx8MHx8fDA%3D" alt="Manali" class="w-20 h-28 object-cover rounded-2xl shadow-md rotate-3" />
       <img src="https://images.unsplash.com/photo-1678966432189-d58296e45ad2?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8aW5kaWElMjBnYXRlfGVufDB8fDB8fHww" alt="India Gate" class="w-20 h-28 object-cover rounded-2xl shadow-md -rotate-3" />
       <img src="https://plus.unsplash.com/premium_photo-1697730412085-6f10bddf58c7?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8c2lra2ltJTIwdG91cmlzbXxlbnwwfHwwfHx8MA%3D%3D" alt="Sikkim" class="w-20 h-28 object-cover rounded-2xl shadow-md rotate-6" />
     </div>
     <!-- Center Logo and Text -->
-    <div class="flex flex-col items-center justify-center flex-1 py-4">
+        <div id="loaderCenter" class="flex flex-col items-center justify-center flex-1 py-4">
       <img src="images/mountain-sun-solid.png" alt="Logo" class="w-16 h-16 mx-auto animate-bounce mb-4" />
-      <h1 class="text-3xl font-extrabold text-orange-600 tracking-wide mb-2">Bharat <span class="text-[#1a237e]">Yatra</span></h1>
-      <p class="text-gray-500 text-base mt-2">Explore Incredible India</p>
+            <h1 id="loaderTitle" class="text-3xl font-extrabold text-orange-600 tracking-wide mb-2">Bharat <span class="text-[#1a237e]">Yatra</span></h1>
+            <p id="loaderTypeText" data-full-text="Explore Incredible India" class="text-gray-500 text-base mt-2">Explore Incredible India</p>
     </div>
     <!-- Bottom Images Row -->
-    <div class="flex justify-center gap-2 md:gap-4 mt-6 mb-4">
+        <div id="loaderBottomRow" class="flex justify-center gap-2 md:gap-4 mt-6 mb-4">
       <img src="https://images.pexels.com/photos/460672/pexels-photo-460672.jpeg" alt="London" class="w-20 h-28 object-cover rounded-2xl shadow-md rotate-3" />
       <img src="https://images.pexels.com/photos/164631/pexels-photo-164631.jpeg" alt="Santorini" class="w-20 h-28 object-cover rounded-2xl shadow-md -rotate-3" />
       <img src="https://images.pexels.com/photos/208745/pexels-photo-208745.jpeg" alt="Golden Gate" class="w-20 h-28 object-cover rounded-2xl shadow-md rotate-6" />
@@ -1176,6 +1176,8 @@
     <!-- Toast Notification Container -->
 <div id="toastContainer" class="fixed top-6 right-6 z-[9999] flex flex-col space-y-3 pointer-events-none"></div>
 
+    <script src="https://unpkg.com/framer-motion/dist/framer-motion.js"></script>
+    <script src="welcome-overlay.js"></script>
     <script src="script.js"></script>
 </body>
 <!-- Logout Confirmation Modal -->
