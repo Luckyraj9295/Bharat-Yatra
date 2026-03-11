@@ -12,7 +12,7 @@ const router = express.Router();
 
 // Initialize Resend for email notifications
 const resend = new Resend(process.env.RESEND_API_KEY);
-const RESEND_FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'Bharat Yatra <onboarding@resend.dev>';
+const RESEND_FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'Bharat Yaatra <onboarding@resend.dev>';
 
 // Prefer booking personal email, then linked user email
 const resolveBookingEmail = (booking) =>
@@ -581,7 +581,7 @@ const sendPaymentFailedEmail = async (userEmail, details) => {
             <div style="padding: 32px 24px;">
               <p style="color: #374151; font-size: 16px; line-height: 1.6; margin-bottom: 24px;">
                 Dear ${details.name || userEmail.split('@')[0]},<br/>
-                We were unable to process your payment for your Bharat Yatra booking. This could be due to:
+                We were unable to process your payment for your Bharat Yaatra booking. This could be due to:
               </p>
 
               <!-- Reasons -->
@@ -655,7 +655,7 @@ const sendPaymentFailedEmail = async (userEmail, details) => {
 
             <!-- Footer -->
             <div style="background: #f9fafb; border-top: 1px solid #e5e7eb; padding: 24px; text-align: center; color: #9ca3af; font-size: 12px;">
-              <p style="margin: 0 0 12px 0;">© 2024 Bharat Yatra. All rights reserved.</p>
+              <p style="margin: 0 0 12px 0;">© 2024 Bharat Yaatra. All rights reserved.</p>
               <p style="margin: 0;">We're here to help you explore incredible India! 🇮🇳✈️</p>
             </div>
           </div>
@@ -714,7 +714,7 @@ const sendBookingConfirmationEmail = async (userEmail, booking, paymentMethod) =
               <!-- Greeting -->
               <p style="color: #374151; font-size: 16px; line-height: 1.6; margin-bottom: 24px;">
                 Dear ${booking.personalInfo?.name || userEmail.split('@')[0]},<br/>
-                Thank you for booking with Bharat Yatra! Your payment has been processed successfully and your trip is confirmed.
+                Thank you for booking with Bharat Yaatra! Your payment has been processed successfully and your trip is confirmed.
               </p>
 
               <!-- Booking Reference -->
@@ -778,7 +778,7 @@ const sendBookingConfirmationEmail = async (userEmail, booking, paymentMethod) =
                 <h3 style="margin: 0 0 12px 0; color: #1e40af; font-size: 14px; font-weight: bold;">📝 What's Next?</h3>
                 <ul style="margin: 0; padding-left: 20px; color: #1e40af; font-size: 14px; line-height: 1.8;">
                   <li>Check your email for additional trip details and itinerary</li>
-                  <li>Download the Bharat Yatra app for real-time updates</li>
+                  <li>Download the Bharat Yaatra app for real-time updates</li>
                   <li>Our team will contact you 48 hours before your trip starts</li>
                   <li>Pack and get ready for an amazing adventure!</li>
                 </ul>
@@ -800,7 +800,7 @@ const sendBookingConfirmationEmail = async (userEmail, booking, paymentMethod) =
 
             <!-- Footer -->
             <div style="background: #f9fafb; border-top: 1px solid #e5e7eb; padding: 24px; text-align: center; color: #9ca3af; font-size: 12px;">
-              <p style="margin: 0 0 12px 0;">© 2024 Bharat Yatra. All rights reserved.</p>
+              <p style="margin: 0 0 12px 0;">© 2024 Bharat Yaatra. All rights reserved.</p>
               <p style="margin: 0;">Happy Travels! 🌍✈️</p>
             </div>
           </div>
@@ -860,7 +860,7 @@ const sendCancellationPendingNotificationEmail = async (userEmail, details) => {
             <p style="color: #374151; line-height: 1.6;">If you have any questions, please don't hesitate to contact our support team at <a href="mailto:bharatyatra001@gmail.com" style="color: #f59e42; text-decoration: none;">bharatyatra001@gmail.com</a></p>
             
             <div style="border-top: 1px solid #e5e7eb; margin-top: 24px; padding-top: 16px; text-align: center; color: #9ca3af; font-size: 12px;">
-              <p>© 2024 Bharat Yatra. All rights reserved.</p>
+              <p>© 2024 Bharat Yaatra. All rights reserved.</p>
             </div>
           </div>
         </div>
@@ -945,7 +945,7 @@ const sendRefundApprovedEmail = async (booking) => {
             
             <p style="color: #6b7280; font-size: 14px; margin-top: 20px; border-top: 1px solid #e5e7eb; padding-top: 20px;">
               Best regards,<br/>
-              <strong>Bharat Yatra Team</strong>
+              <strong>Bharat Yaatra Team</strong>
             </p>
           </div>
         </div>
@@ -1021,7 +1021,7 @@ const sendRefundRejectedEmail = async (booking, rejectionReason) => {
             
             <p style="color: #6b7280; font-size: 14px; margin-top: 20px; border-top: 1px solid #e5e7eb; padding-top: 20px;">
               Best regards,<br/>
-              <strong>Bharat Yatra Team</strong>
+              <strong>Bharat Yaatra Team</strong>
             </p>
           </div>
         </div>

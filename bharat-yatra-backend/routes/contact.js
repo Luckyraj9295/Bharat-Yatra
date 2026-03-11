@@ -38,7 +38,7 @@ const sendContactEmails = async (name, email, message, contactId) => {
         <p><strong>Message:</strong></p>
         <p>${message}</p>
         <hr/>
-        <p>This message was sent from Bharat Yatra Contact Page.</p>
+        <p>This message was sent from Bharat Yaatra Contact Page.</p>
       `,
     });
 
@@ -51,19 +51,19 @@ const sendContactEmails = async (name, email, message, contactId) => {
     // 📩 Auto-reply to User (best-effort)
     try {
       const userRes = await resend.emails.send({
-        from: "Bharat Yatra <onboarding@resend.dev>",
+        from: "Bharat Yaatra <onboarding@resend.dev>",
         to: email,
-        subject: "We received your enquiry - Bharat Yatra",
+        subject: "We received your enquiry - Bharat Yaatra",
         html: `
           <h3>Hello ${name},</h3>
-          <p>Thank you for contacting Bharat Yatra.</p>
+          <p>Thank you for contacting Bharat Yaatra.</p>
           <p>Our team has received your message and will get back to you shortly.</p>
           <br/>
           <p><strong>Your Message:</strong></p>
           <p>${message}</p>
           <br/>
           <p>Regards,</p>
-          <p><strong>Bharat Yatra Team</strong></p>
+          <p><strong>Bharat Yaatra Team</strong></p>
         `,
       });
       console.log('✅ User auto-reply sent:', userRes.data?.id);

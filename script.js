@@ -802,7 +802,7 @@ async function processPaymentAsync(userInfo, token) {
       key: orderData.data.keyId,
       amount: orderData.data.amount * 100, // Convert to paise
       currency: 'INR',
-      name: 'Bharat Yatra',
+      name: 'Bharat Yaatra',
       description: `Booking for ${destinationTitle}`,
       order_id: orderData.data.orderId,
       handler: async (response) => {

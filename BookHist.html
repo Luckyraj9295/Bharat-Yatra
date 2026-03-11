@@ -830,7 +830,7 @@ document.addEventListener("click", async function (e) {
     doc.setFontSize(16);
     doc.setTextColor(255, 87, 34);
     doc.setFont("helvetica", "bold");
-    doc.text("BHARAT YATRA", 30, 16);
+    doc.text("Bharat Yaatra", 30, 16);
     doc.setFontSize(10);
     doc.setTextColor(80);
     doc.setFont("helvetica", "normal");
@@ -842,7 +842,7 @@ document.addEventListener("click", async function (e) {
     // Watermark
     doc.setTextColor(240);
     doc.setFontSize(60);
-    doc.text("BHARAT YATRA", 35, 160, { angle: 45 });
+    doc.text("Bharat Yaatra", 35, 160, { angle: 45 });
     doc.setTextColor(0);
     doc.setGState && doc.setGState(new doc.GState({ opacity: 0.08 }));
     doc.addImage(logo, "PNG", 60, 100, 100, 100);
@@ -945,13 +945,13 @@ doc.text(`Total: ${rupee}${grandTotal.toLocaleString("en-IN")}`, 120, y + 28);
 
 
     // --- QR CODE ---
-    const qrText = `BHARAT YATRA BOOKING
+    const qrText = `Bharat Yaatra BOOKING
 Destination: ${cleanTitle} | ${days}D/${nights}N
 Package: ${packageType} | ${travelers.length}
 Date: ${dateRange}
 Reference: ${bookingRef}
 Total: ₹${grandTotal.toLocaleString("en-IN")}
-Thank you for booking with Bharat Yatra!`;
+Thank you for booking with Bharat Yaatra!`;
     const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(qrText)}&size=80x80`;
     const qrImg = new Image();
     qrImg.crossOrigin = "Anonymous";
@@ -975,7 +975,7 @@ Thank you for booking with Bharat Yatra!`;
       doc.setFontSize(16);
       doc.setTextColor(255, 87, 34);
       doc.setFont("helvetica", "bold");
-      doc.text("BHARAT YATRA", 30, 16);
+      doc.text("Bharat Yaatra", 30, 16);
       doc.setFontSize(10);
       doc.setTextColor(80);
       doc.setFont("helvetica", "normal");
@@ -983,7 +983,7 @@ Thank you for booking with Bharat Yatra!`;
 
       doc.setTextColor(240);
       doc.setFontSize(60);
-      doc.text("BHARAT YATRA", 35, 160, { angle: 45 });
+      doc.text("Bharat Yaatra", 35, 160, { angle: 45 });
       doc.setTextColor(0);
 
       doc.setFontSize(18);
@@ -995,7 +995,7 @@ Thank you for booking with Bharat Yatra!`;
       const terms = [
         "1. Valid only for traveler listed.",
         "2. Carry government ID during travel.",
-        "3. Bharat Yatra not liable for delays.",
+        "3. Bharat Yaatra not liable for delays.",
         "4. Booking changes 72+ hrs prior.",
         "5. Cancellations 7+ days before only.",
         "6. No-shows = no refund.",
@@ -1025,7 +1025,7 @@ Thank you for booking with Bharat Yatra!`;
       doc.setTextColor(0);
       doc.text("Warm regards,", 25, 250);
       doc.setFont("helvetica", "bold");
-      doc.text("BHARAT YATRA TEAM", 25, 257);
+      doc.text("Bharat Yaatra TEAM", 25, 257);
       doc.setFont("helvetica", "normal");
       doc.setFontSize(10);
       doc.setTextColor(100);

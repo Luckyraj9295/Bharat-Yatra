@@ -1,8 +1,8 @@
-# 🌏 Bharat Yatra  
+# 🌏 Bharat Yaatra  
 
 ### Full-Stack Travel Booking Platform with Payment & Refund Governance
 
-Bharat Yatra is a production-grade full-stack travel booking platform demonstrating complete financial transaction management—from payment processing to admin-controlled refund governance with real-time analytics.
+Bharat Yaatra is a production-grade full-stack travel booking platform demonstrating complete financial transaction management—from payment processing to admin-controlled refund governance with real-time analytics.
 
 ---
 

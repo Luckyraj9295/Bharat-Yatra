@@ -57,7 +57,7 @@ app.use('/api/payments', paymentRoutes);
 
 // Health check
 app.get('/', (req, res) =>
-  res.json({ status: 'Bharat Yatra API running successfully' })
+  res.json({ status: 'Bharat Yaatra API running successfully' })
 );
 
 // Global error handler

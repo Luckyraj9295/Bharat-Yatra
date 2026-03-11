@@ -1,7 +1,7 @@
 {
   "name": "bharat-yatra-backend",
   "version": "1.0.0",
-  "description": "Travel agency backend for Bharat Yatra",
+  "description": "Travel agency backend for Bharat Yaatra",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
